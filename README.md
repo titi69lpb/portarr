@@ -36,7 +36,6 @@ Ce n'est pas une suite de gestion média complète — pour ça, gardez les inte
 Les derniers ajouts (films et séries) dans un carrousel de posters animé — chaque carte renvoie vers la fiche du média sur Plex Web — et ce qui est en cours de lecture sur le serveur.
 
 <img src="docs/screenshots/dashboard-hero.png" alt="En-tête du dashboard et lecture en cours" width="800">
-<br>
 <img src="docs/screenshots/recently-added.png" alt="Carrousels des derniers ajouts" width="800">
 
 Un calendrier des sorties à venir, alimenté par Sonarr/Radarr :
@@ -245,7 +244,6 @@ Recently-added movies and shows in an animated poster carousel — each card lin
 Server-wide stats from Tautulli, and each user's own pending Overseerr requests:
 
 <img src="docs/screenshots/stats.png" alt="Box Office stats" width="800">
-<br>
 <img src="docs/screenshots/requests.png" alt="Pending requests" width="800">
 An upcoming-releases calendar sourced from Sonarr/Radarr:
 ### Global search
