@@ -4,14 +4,200 @@
   <h3>A lightweight, modern portal for your Plex community — the friendly Organizr replacement.</h3>
 
   <p>
-    <a href="#screenshots">Screenshots</a> ·
-    <a href="#features">Features</a> ·
-    <a href="#configuration">Configuration</a> ·
-    <a href="#deploy-docker">Deploy</a>
+    🇫🇷 <a href="#français">Français</a> &nbsp;·&nbsp; 🇬🇧 <a href="#english">English</a>
   </p>
 </div>
 
 ---
+
+# Français
+
+<a id="français"></a>
+
+<p align="right"><a href="#english">🇬🇧 Read this in English</a></p>
+
+## Pourquoi Portarr
+
+Si vous faites tourner Plex pour votre famille ou vos amis, vous êtes probablement déjà passé par [Organizr](https://organizr.app) pour leur donner une seule page d'accueil plutôt que cinq favoris différents. Portarr, c'est ce que cette page peut devenir quand elle est pensée spécifiquement pour une communauté Plex plutôt que d'être un dashboard générique : elle connaît votre bibliothèque, vos demandes et vos utilisateurs — parce qu'elle parle directement à Plex, Sonarr, Radarr, Overseerr et Tautulli, pas à travers des iframes.
+
+Concrètement, ça donne :
+
+- **Une vraie connexion Plex**, pas un mot de passe de portail partagé — chaque utilisateur se connecte avec son propre compte Plex, et l'accès suit exactement ce que votre serveur partage réellement.
+- **Un contenu qui s'adapte à qui regarde** — historique de visionnage personnel, stats personnelles, uniquement ses propres demandes en attente.
+- **Pas d'iframes à dompter** — pas de galère avec X-Frame-Options, pas de CSS qui se bat entre cinq thèmes différents. Une interface cohérente, rendue côté serveur, rapide.
+- **Un admin qui n'a pas besoin de toucher au serveur** pour poster une annonce, envoyer un mail groupé, ou voir qui utilise vraiment le portail.
+
+Ce n'est pas une suite de gestion média complète — pour ça, gardez les interfaces natives des \*arr. Portarr, c'est la page que voient vos utilisateurs.
+
+## Captures d'écran
+
+### Dashboard
+
+Les derniers ajouts (films et séries) dans un carrousel de posters animé — chaque carte renvoie vers la fiche du média sur Plex Web — et ce qui est en cours de lecture sur le serveur.
+
+<img src="docs/screenshots/dashboard-hero.png" alt="En-tête du dashboard et lecture en cours" width="800">
+<img src="docs/screenshots/recently-added.png" alt="Carrousels des derniers ajouts" width="800">
+
+Un calendrier des sorties à venir, alimenté par Sonarr/Radarr :
+
+<img src="docs/screenshots/calendar.png" alt="Calendrier des sorties" width="800">
+
+Les statistiques globales issues de Tautulli, et les demandes Overseerr en attente propres à chaque utilisateur :
+
+<img src="docs/screenshots/stats.png" alt="Statistiques" width="800">
+<img src="docs/screenshots/requests.png" alt="Demandes en attente" width="800">
+
+### Recherche globale
+
+Recherchez dans votre bibliothèque Plex depuis n'importe où dans l'app ; les résultats renvoient vers Plex Web.
+
+<img src="docs/screenshots/search.png" alt="Recherche globale" width="800">
+
+### Explorateur de fichiers *(optionnel)*
+
+Navigation en lecture seule dans un dossier monté, avec téléchargement via URL signée (reprise de téléchargement supportée). N'apparaît que si `FILES_ROOT_PATH` est configuré.
+
+<img src="docs/screenshots/files.png" alt="Explorateur de fichiers" width="800">
+
+### Panneau d'administration
+
+Gérez les membres, les mailings, le stockage et les annonces du dashboard sans redéploiement.
+
+<img src="docs/screenshots/admin.png" alt="Accueil administration" width="800">
+
+Une vue des membres croisée avec l'activité Plex/Tautulli et le statut d'abonnement à la newsletter :
+
+<img src="docs/screenshots/members.png" alt="Administration des membres" width="800">
+
+Des modèles de mail réutilisables, un historique d'envoi, et la newsletter automatisée, au même endroit :
+
+<img src="docs/screenshots/mailings.png" alt="Administration des mailings" width="800">
+
+*(Toutes les captures ci-dessus proviennent d'une instance réelle en production, avec noms d'utilisateurs et emails remplacés par des valeurs génériques.)*
+
+## Fonctionnalités
+
+- **Connexion Plex SSO** — flux OAuth PIN, pas de système de comptes séparé. L'accès est réservé aux comptes que votre serveur Plex partage réellement.
+- **Dashboard** — carrousel des derniers ajouts, calendrier des sorties, lecture en cours, demandes en attente, stats Tautulli globales et personnelles, historique de visionnage perso, widget stockage optionnel.
+- **Recherche globale** — recherche dans votre bibliothèque Plex, liens directs vers Plex Web.
+- **Explorateur de fichiers** *(optionnel)* — navigation en lecture seule dans un dossier, téléchargements signés et reprenables ; sert les fichiers directement ou redirige vers un service proxy séparé.
+- **Annonces** — une bannière gérée par l'admin sur le dashboard, sans redéploiement.
+- **Mailing** — diffusion vers vos utilisateurs (par groupe d'activité ou sélection manuelle), modèles Markdown réutilisables, envoi de test obligatoire avant tout envoi de masse.
+- **Newsletter** — récap automatique des nouveautés, opt-in/opt-out par utilisateur, archive web publique, déclenchement cron ou manuel.
+- **Notifications de disponibilité** — email automatique quand une demande Overseerr approuvée devient disponible.
+- **Panneau d'administration** — annonces, modèles de mail + historique, vue des membres, synchronisation Plex manuelle, usage du stockage.
+
+## Stack technique
+
+Next.js 14 (App Router, TypeScript) · SQLite (`better-sqlite3`) · Docker
+
+## Prérequis
+
+- Un serveur Plex Media Server, avec un token API pour un compte pouvant voir votre bibliothèque et vos utilisateurs partagés.
+- Des instances Sonarr et Radarr (pour le calendrier des sorties).
+- Tautulli (pour la lecture en cours et les stats).
+- Overseerr (pour le suivi des demandes).
+- Un compte SMTP (pour le mailing/newsletter/notifications).
+- Node.js 20+ (pour le dev local) ou Docker (pour le déploiement).
+
+## Configuration
+
+Copiez `.env.example` vers `.env.local` (dev) ou `.env` (Docker) et remplissez-le. Chaque variable marquée **obligatoire** doit être définie, sinon l'app refuse de démarrer avec une erreur claire listant exactement ce qui manque ; tout ce qui est marqué **optionnel** peut rester non défini et l'app fonctionne quand même — la fonctionnalité correspondante n'apparaît simplement pas.
+
+| Variable | Obligatoire | Débloque |
+|---|---|---|
+| `DATABASE_PATH` | ✅ | Emplacement du fichier SQLite |
+| `SESSION_SECRET` | ✅ | Signature du cookie de session (32+ caractères aléatoires) |
+| `PLEX_URL`, `PLEX_SERVER_TOKEN`, `PLEX_SERVER_NAME`, `PLEX_CLIENT_IDENTIFIER` | ✅ | Accès API Plex + connexion |
+| `TAUTULLI_URL`, `TAUTULLI_API_KEY` | ✅ | Lecture en cours, statistiques |
+| `SONARR_URL`, `SONARR_API_KEY` | ✅ | Calendrier des sorties (séries) |
+| `RADARR_URL`, `RADARR_API_KEY` | ✅ | Calendrier des sorties (films) |
+| `OVERSEERR_URL`, `OVERSEERR_API_KEY` | ✅ | Demandes en attente, notifications de disponibilité |
+| `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `MAIL_FROM_ADDRESS`, `MAIL_FROM_NAME` | ✅ | Mailing, newsletter, notifications de disponibilité |
+| `NEWSLETTER_CRON_SECRET` | ✅ | Authentification des endpoints cron newsletter/notifications |
+| `PUBLIC_BASE_URL` | ✅ | Liens absolus dans les emails sortants |
+| `SHORTCUT_<NOM>_URL` / `SHORTCUT_<NOM>_ICON_URL` (×6 : `PLEX`, `OVERSEERR`, `TAUTULLI`, `WIZARR`, `POSTERR`, `PLEX_REWIND`) | optionnel | Un raccourci dans la sidebar, un par paire définie. Les deux variables doivent être définies pour afficher une icône ; un raccourci avec seulement `_URL` s'affiche en lien texte seul. Totalement absent = ce raccourci n'apparaît pas. |
+| `FILES_ROOT_PATH` | optionnel | La page `/files`, le lien sidebar "Fichiers", et la route de téléchargement |
+| `FS_TIMEOUT_MS` | optionnel | Timeout (ms) pour les appels filesystem sur le montage — défaut `5000` |
+| `DOWNLOAD_SIGNING_SECRET` | optionnel | Requis seulement avec `DOWNLOAD_PROXY_URL` — signe les URLs de redirection |
+| `DOWNLOAD_PROXY_URL` | optionnel | Redirige les téléchargements vers un proxy séparé au lieu de les streamer via cette app — voir [Proxy de téléchargement](#proxy-de-téléchargement-optionnel) |
+| `STORAGE_VOLUMES` | optionnel | Tableau JSON (`[{"name":"...","path":"..."}]`) des volumes montés à afficher en barres d'usage sur `/admin` |
+| `KUMA_URL`, `KUMA_API_KEY` | optionnel | Un badge de statut "tout est en ligne" / "N services en panne" sur le dashboard, alimenté par [Uptime Kuma](https://github.com/louislam/uptime-kuma) |
+
+Référence complète avec commentaires : [`.env.example`](.env.example).
+
+## Lancer en local
+
+```bash
+cp .env.example .env.local   # remplissez avec de vraies valeurs
+npm install
+npm run dev
+```
+
+## Tests & build
+
+```bash
+npm test         # vitest run
+npm run typecheck  # tsc --noEmit
+npm run build     # next build — attrape des classes de bugs que vitest/tsc ratent (route handlers, frontières Server/Client Component)
+```
+
+## Déploiement (Docker)
+
+```bash
+docker build -t portarr .
+docker run -d \
+  --name portarr \
+  --env-file .env \
+  -e HOSTNAME=0.0.0.0 \
+  -v $(pwd)/data:/app/data \
+  -p 3000:3000 \
+  portarr
+```
+
+`HOSTNAME=0.0.0.0` est obligatoire — sans ça, le serveur Next.js standalone bind sur l'IP interne du conteneur et casse ses propres self-fetches internes vers ses routes API (utilisées par certaines routes).
+
+Placez un reverse proxy (Traefik, Caddy, nginx...) devant pour le TLS ; l'app elle-même ne parle qu'en HTTP simple sur le port 3000.
+
+### Monter un dossier pour l'explorateur de fichiers (optionnel)
+
+Si vous définissez `FILES_ROOT_PATH`, montez le dossier correspondant en lecture seule dans le conteneur à ce même chemin, ex :
+
+```bash
+-v /chemin/sur/l-hote:/mnt/shared-storage:ro
+```
+
+### Proxy de téléchargement (optionnel)
+
+Par défaut, quand `FILES_ROOT_PATH` est défini et `DOWNLOAD_PROXY_URL` ne l'est pas, l'app sert les téléchargements elle-même (avec support HTTP Range pour la reprise). Si votre déploiement place l'app derrière un chemin réseau lent ou tunnelé vers le stockage, vous pouvez faire tourner [portarr-dl-proxy](https://github.com/titi69lpb/portarr-dl-proxy) sur une machine ayant un accès direct au stockage et pointer `DOWNLOAD_PROXY_URL` vers lui — l'app signe alors une URL de courte durée (HMAC-SHA256, `DOWNLOAD_SIGNING_SECRET` partagé entre les deux services) et redirige plutôt que de streamer le fichier elle-même.
+
+### Tâches cron (optionnel)
+
+Newsletter (ajustez la fréquence selon vos besoins) :
+
+```cron
+0 14 * * 5 curl -s -X POST -H "x-newsletter-secret: $NEWSLETTER_CRON_SECRET" https://votre-domaine.example.com/api/admin/newsletter/send
+```
+
+Notifications de disponibilité (vérifie les demandes Overseerr approuvées mais pas encore disponibles) :
+
+```cron
+*/15 * * * * curl -s -X POST -H "x-cron-secret: $NEWSLETTER_CRON_SECRET" https://votre-domaine.example.com/api/cron/request-availability
+```
+
+Les deux réutilisent `NEWSLETTER_CRON_SECRET` plutôt que d'avoir besoin d'un secret dédié.
+
+## Licence
+
+MIT — voir [LICENSE](LICENSE).
+
+---
+
+# English
+
+<a id="english"></a>
+
+<p align="right"><a href="#français">🇫🇷 Lire en français</a></p>
 
 ## Why Portarr
 
@@ -27,8 +213,6 @@ What that gets you, concretely:
 It's not trying to be a full media-management suite — for that, keep using \*arr's own UIs. Portarr is the page your users see.
 
 ## Screenshots
-
-<a id="screenshots"></a>
 
 ### Dashboard
 
@@ -76,17 +260,15 @@ Reusable mail templates, a send history, and the automated newsletter, all in on
 
 ## Features
 
-<a id="features"></a>
-
 - **Plex SSO login** — OAuth PIN flow, no separate account system. Access is restricted to accounts your Plex server actually shares with.
-- **Dashboard** — recently-added carousel, release calendar, now-playing, pending requests, server-wide and personal Tautulli stats, personal watch history, optional storage widget. *(see [Screenshots](#screenshots))*
-- **Global search** — searches your Plex library, links straight into Plex Web. *(see [Screenshots](#screenshots))*
-- **File browser** *(optional)* — read-only directory browsing with signed, resumable downloads; serves files directly or redirects to a separate proxy service. *(see [Screenshots](#screenshots))*
+- **Dashboard** — recently-added carousel, release calendar, now-playing, pending requests, server-wide and personal Tautulli stats, personal watch history, optional storage widget.
+- **Global search** — searches your Plex library, links straight into Plex Web.
+- **File browser** *(optional)* — read-only directory browsing with signed, resumable downloads; serves files directly or redirects to a separate proxy service.
 - **Announcements** — an admin-managed banner on the dashboard, no redeploy needed.
-- **Mailing** — broadcast to your user base (by activity group or hand-picked), reusable Markdown templates, a required test-send before any mass send. *(see [Screenshots](#screenshots))*
+- **Mailing** — broadcast to your user base (by activity group or hand-picked), reusable Markdown templates, a required test-send before any mass send.
 - **Newsletter** — automated "what's new" recap, opt-in/opt-out per user, a public web archive, cron-triggered or manual.
 - **Availability notifications** — emails a user automatically when their approved Overseerr request becomes available.
-- **Admin panel** — announcements, mail templates + history, members view, manual Plex sync, storage usage. *(see [Screenshots](#screenshots))*
+- **Admin panel** — announcements, mail templates + history, members view, manual Plex sync, storage usage.
 
 ## Stack
 
@@ -102,8 +284,6 @@ Next.js 14 (App Router, TypeScript) · SQLite (`better-sqlite3`) · Docker
 - Node.js 20+ (for local dev) or Docker (for deployment).
 
 ## Configuration
-
-<a id="configuration"></a>
 
 Copy `.env.example` to `.env.local` (dev) or `.env` (Docker) and fill it in. Every variable below marked **required** must be set or the app refuses to start with a clear error listing exactly what's missing; everything marked **optional** can be left unset and the app runs fine — the feature it powers just doesn't appear.
 
@@ -146,8 +326,6 @@ npm run build     # next build — catches classes of bug vitest/tsc miss (route
 ```
 
 ## Deploy (Docker)
-
-<a id="deploy-docker"></a>
 
 ```bash
 docker build -t portarr .
