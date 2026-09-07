@@ -37,7 +37,7 @@ Recently-added movies and shows in an animated poster carousel — each card lin
 <img src="docs/screenshots/dashboard-hero.png" alt="Dashboard header and Now Playing" width="800">
 <img src="docs/screenshots/recently-added.png" alt="Recently added carousels" width="800">
 
-An upcoming-releases calendar sourced from Sonarr/Radarr:
+
 
 <img src="docs/screenshots/calendar.png" alt="Coming Soon calendar" width="800">
 
@@ -45,7 +45,7 @@ Server-wide stats from Tautulli, and each user's own pending Overseerr requests:
 
 <img src="docs/screenshots/stats.png" alt="Box Office stats" width="800">
 <img src="docs/screenshots/requests.png" alt="Pending requests" width="800">
-
+An upcoming-releases calendar sourced from Sonarr/Radarr:
 ### Global search
 
 Search your Plex library from anywhere in the app; results link into Plex Web.
