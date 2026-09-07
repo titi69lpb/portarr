@@ -1,24 +1,92 @@
-# Portarr
+<div align="center">
+  <img src="docs/screenshots/logo-full.jpg" alt="Portarr" width="360">
 
-A self-hosted user portal for your Plex server. Dashboard with recently-added carousels, now-playing, upcoming releases (Sonarr/Radarr), Overseerr request tracking, Tautulli stats (server-wide and per-user), a searchable watch history, global search with deep links into Plex Web, an optional read-only file browser with download support, admin-managed announcements, and an admin mailing system (broadcast + templates + an automated "what's new" newsletter).
+  <h3>A lightweight, modern portal for your Plex community — the friendly Organizr replacement.</h3>
 
-Built for a small/medium Plex community that wants something friendlier than raw Plex/Tautulli/Overseerr links, without standing up a full media-management dashboard.
+  <p>
+    <a href="#screenshots">Screenshots</a> ·
+    <a href="#features">Features</a> ·
+    <a href="#configuration">Configuration</a> ·
+    <a href="#deploy-docker">Deploy</a>
+  </p>
+</div>
 
-## Status
+---
 
-Extracted from a private, actively-run instance and published as a standalone open-source project. Every hardcoded, deployment-specific value (server URLs, sidebar shortcuts, storage paths, a WireGuard-bypass download proxy) has been made configurable via environment variables — see [Configuration](#configuration) below. Optional features (the file browser, storage widget, download proxy, sidebar shortcuts) simply don't render when their variables are unset, so a minimal deploy only needs the required set.
+## Why Portarr
+
+If you're running Plex for family or friends, you've probably reached for [Organizr](https://organizr.app) to give them one nice landing page instead of five bookmarks. Portarr is what that page can look like when it's built specifically for a Plex community instead of being a generic dashboard: it knows about your library, your requests, and your users — because it talks to Plex, Sonarr, Radarr, Overseerr and Tautulli directly, not through iframes.
+
+What that gets you, concretely:
+
+- **Real Plex login**, not a shared portal password — every user signs in with their own Plex account, and access follows whoever your server actually shares with.
+- **Content that reacts to who's looking** — personal watch history, personal stats, only your own pending requests.
+- **No iframes to fight with** — no X-Frame-Options headaches, no CSS fighting five different apps' themes. One consistent UI, server-rendered, fast.
+- **An admin who doesn't need to touch the server** to post an announcement, send a broadcast email, or check who's actually using the thing.
+
+It's not trying to be a full media-management suite — for that, keep using \*arr's own UIs. Portarr is the page your users see.
+
+## Screenshots
+
+<a id="screenshots"></a>
+
+### Dashboard
+
+Recently-added movies and shows in an animated poster carousel — each card links straight to its Plex Web detail page — plus what's currently playing on the server.
+
+<img src="docs/screenshots/dashboard-hero.png" alt="Dashboard header and Now Playing" width="800">
+<img src="docs/screenshots/recently-added.png" alt="Recently added carousels" width="800">
+
+An upcoming-releases calendar sourced from Sonarr/Radarr:
+
+<img src="docs/screenshots/calendar.png" alt="Coming Soon calendar" width="800">
+
+Server-wide stats from Tautulli, and each user's own pending Overseerr requests:
+
+<img src="docs/screenshots/stats.png" alt="Box Office stats" width="800">
+<img src="docs/screenshots/requests.png" alt="Pending requests" width="800">
+
+### Global search
+
+Search your Plex library from anywhere in the app; results link into Plex Web.
+
+<img src="docs/screenshots/search.png" alt="Global search" width="800">
+
+### File browser *(optional)*
+
+Read-only browsing of a mounted directory, with signed-URL downloads (Range/resume supported). Only appears when `FILES_ROOT_PATH` is configured.
+
+<img src="docs/screenshots/files.png" alt="File browser" width="800">
+
+### Admin panel
+
+Manage members, mailings, storage, and dashboard announcements without a redeploy.
+
+<img src="docs/screenshots/admin.png" alt="Admin hub" width="800">
+
+A members view cross-referenced with Plex/Tautulli activity and newsletter opt-in status:
+
+<img src="docs/screenshots/members.png" alt="Members admin" width="800">
+
+Reusable mail templates, a send history, and the automated newsletter, all in one place:
+
+<img src="docs/screenshots/mailings.png" alt="Mailings admin" width="800">
+
+*(All screenshots above are from a real running instance, with usernames and emails replaced by placeholders.)*
 
 ## Features
 
+<a id="features"></a>
+
 - **Plex SSO login** — OAuth PIN flow, no separate account system. Access is restricted to accounts your Plex server actually shares with.
-- **Dashboard** — recently-added movies/shows in an animated poster carousel (each card links to its Plex Web detail page), a release calendar sourced from Sonarr/Radarr, "Now Playing" from Tautulli, pending Overseerr requests, server-wide and personal Tautulli stats, personal watch history, and an optional storage-usage widget.
-- **Global search** — searches your Plex library and links straight into Plex Web.
-- **File browser** *(optional)* — read-only navigation of a mounted directory, with signed-URL downloads. Works standalone (serves files directly, with HTTP Range/resume support) or can redirect to a separate proxy service for networks where the app server shouldn't be in the download path.
-- **Announcements** — an admin-managed banner on the dashboard, no redeploy needed to change it.
-- **Mailing** — broadcast emails to your user base (by activity group or hand-picked), reusable Markdown templates, a required test-send before any mass send.
-- **Newsletter** — an automated "what's new" recap of recently-added content, opt-in/opt-out per user, a public web archive, cron-triggered or manual.
+- **Dashboard** — recently-added carousel, release calendar, now-playing, pending requests, server-wide and personal Tautulli stats, personal watch history, optional storage widget. *(see [Screenshots](#screenshots))*
+- **Global search** — searches your Plex library, links straight into Plex Web. *(see [Screenshots](#screenshots))*
+- **File browser** *(optional)* — read-only directory browsing with signed, resumable downloads; serves files directly or redirects to a separate proxy service. *(see [Screenshots](#screenshots))*
+- **Announcements** — an admin-managed banner on the dashboard, no redeploy needed.
+- **Mailing** — broadcast to your user base (by activity group or hand-picked), reusable Markdown templates, a required test-send before any mass send. *(see [Screenshots](#screenshots))*
+- **Newsletter** — automated "what's new" recap, opt-in/opt-out per user, a public web archive, cron-triggered or manual.
 - **Availability notifications** — emails a user automatically when their approved Overseerr request becomes available.
-- **Admin panel** — announcements, mail templates + send history, a members view cross-referenced with Tautulli activity and newsletter opt-in status, manual Plex user sync, storage usage.
+- **Admin panel** — announcements, mail templates + history, members view, manual Plex sync, storage usage. *(see [Screenshots](#screenshots))*
 
 ## Stack
 
@@ -34,6 +102,8 @@ Next.js 14 (App Router, TypeScript) · SQLite (`better-sqlite3`) · Docker
 - Node.js 20+ (for local dev) or Docker (for deployment).
 
 ## Configuration
+
+<a id="configuration"></a>
 
 Copy `.env.example` to `.env.local` (dev) or `.env` (Docker) and fill it in. Every variable below marked **required** must be set or the app refuses to start with a clear error listing exactly what's missing; everything marked **optional** can be left unset and the app runs fine — the feature it powers just doesn't appear.
 
@@ -77,6 +147,8 @@ npm run build     # next build — catches classes of bug vitest/tsc miss (route
 
 ## Deploy (Docker)
 
+<a id="deploy-docker"></a>
+
 ```bash
 docker build -t portarr .
 docker run -d \
@@ -102,7 +174,7 @@ If you set `FILES_ROOT_PATH`, mount the directory it points to read-only into th
 
 ### Download proxy (optional)
 
-By default, when `FILES_ROOT_PATH` is set and `DOWNLOAD_PROXY_URL` is not, the app serves file downloads itself (with HTTP Range support for resumable downloads). If your deployment puts the app behind a slow or tunneled network path to the storage mount, you can run a separate lightweight proxy service on a machine with direct access to the storage and point `DOWNLOAD_PROXY_URL` at it — the app then signs a short-lived URL (HMAC-SHA256, `DOWNLOAD_SIGNING_SECRET` shared between both services) and redirects there instead of streaming the file itself.
+By default, when `FILES_ROOT_PATH` is set and `DOWNLOAD_PROXY_URL` is not, the app serves file downloads itself (with HTTP Range support for resumable downloads). If your deployment puts the app behind a slow or tunneled network path to the storage mount, you can run [portarr-dl-proxy](https://github.com/titi69lpb/portarr-dl-proxy) on a machine with direct access to the storage and point `DOWNLOAD_PROXY_URL` at it — the app then signs a short-lived URL (HMAC-SHA256, `DOWNLOAD_SIGNING_SECRET` shared between both services) and redirects there instead of streaming the file itself.
 
 ### Cron jobs (optional)
 
