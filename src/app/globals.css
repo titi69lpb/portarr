@@ -1,0 +1,153 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  ::selection {
+    background-color: #e2a33b;
+    color: #14110f;
+  }
+
+  /* Keyboard focus is always visible, in warm amber against the dark ground. */
+  :focus-visible {
+    outline: 2px solid #e2a33b;
+    outline-offset: 2px;
+  }
+
+  /*
+   * Ambient wash behind the whole app: two soft, fixed glows (teal upper-left,
+   * amber lower-right) instead of a flat black ground. This is what the
+   * .pc-glass-surface cards are actually revealing when they blur their
+   * backdrop — on flat black, backdrop-blur is invisible.
+   */
+  body {
+    background-color: #14110f;
+    background-image:
+      radial-gradient(circle at 12% 8%, rgba(47, 110, 99, 0.24), transparent 45%),
+      radial-gradient(circle at 88% 92%, rgba(226, 163, 59, 0.16), transparent 48%),
+      radial-gradient(circle at 85% 15%, rgba(47, 110, 99, 0.1), transparent 40%);
+    background-attachment: fixed;
+    background-repeat: no-repeat;
+  }
+}
+
+@layer components {
+  /*
+   * Shared glass material for cards/forms/tables: a translucent charcoal
+   * surface over a blurred backdrop, so the ambient wash behind the page
+   * (see body, below) reads through instead of sitting on flat black.
+   * Composes with each caller's own radius/border/ring/padding classes —
+   * this only supplies the background + blur, deliberately not layout.
+   */
+  .pc-glass-surface {
+    @apply bg-plexcrew-charcoal/40 backdrop-blur-lg;
+    box-shadow: inset 0 1px 0 0 rgba(239, 233, 223, 0.06);
+  }
+
+  /* Slightly more opaque variant for persistent chrome (sidebar, sticky header) — legible over any scrolled content, not just the page's own wash. */
+  .pc-glass-surface-strong {
+    @apply bg-plexcrew-charcoal/70 backdrop-blur-lg;
+    box-shadow: inset 0 1px 0 0 rgba(239, 233, 223, 0.05);
+  }
+
+  /*
+   * Section eyebrow: small condensed display lettering over a hairline rule.
+   * Bebas Neue is all-caps by design; the wide tracking keeps it legible small.
+   */
+  .pc-eyebrow {
+    @apply font-display text-xl leading-none tracking-[0.18em] text-plexcrew-amber;
+  }
+
+  .pc-rule {
+    @apply mt-2 h-px w-full bg-plexcrew-teal/40;
+  }
+
+  /*
+   * Marquee bulb: a lit lamp on the sign's top edge. The glow is two soft
+   * shadows (tight core + wide bloom) — too many layers for arbitrary values.
+   */
+  .pc-bulb {
+    @apply h-1.5 w-1.5 flex-none rounded-full bg-plexcrew-amber;
+    box-shadow:
+      0 0 4px 0 rgba(226, 163, 59, 0.9),
+      0 0 10px 2px rgba(226, 163, 59, 0.35);
+  }
+
+  /* Dimmer variant for the admin list — the workspace, not the show. */
+  .pc-bulb-sm {
+    @apply h-2 w-2 flex-none rounded-full bg-plexcrew-amber;
+    box-shadow: 0 0 6px 1px rgba(226, 163, 59, 0.5);
+  }
+
+  /*
+   * Themed scrollbar for horizontally/vertically scrolling widgets
+   * (poster carousel, stat card lists) — replaces the browser default.
+   */
+  .pc-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(47, 110, 99, 0.6) transparent;
+  }
+
+  .pc-scrollbar::-webkit-scrollbar {
+    height: 6px;
+    width: 6px;
+  }
+
+  .pc-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .pc-scrollbar::-webkit-scrollbar-thumb {
+    background-color: rgba(47, 110, 99, 0.6);
+    border-radius: 4px;
+  }
+
+  .pc-scrollbar::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(226, 163, 59, 0.6);
+  }
+
+  /*
+   * Announcement body. Retunes @tailwindcss/typography's inverted palette onto
+   * the plexcrew tokens rather than overriding each element selector.
+   */
+  .pc-prose {
+    --tw-prose-invert-body: #efe9df;
+    --tw-prose-invert-headings: #efe9df;
+    --tw-prose-invert-lead: #efe9df;
+    --tw-prose-invert-links: #e2a33b;
+    --tw-prose-invert-bold: #efe9df;
+    --tw-prose-invert-counters: #8c8378;
+    --tw-prose-invert-bullets: #2f6e63;
+    --tw-prose-invert-hr: rgba(47, 110, 99, 0.4);
+    --tw-prose-invert-quotes: #efe9df;
+    --tw-prose-invert-quote-borders: #2f6e63;
+    --tw-prose-invert-captions: #8c8378;
+    --tw-prose-invert-code: #e2a33b;
+    --tw-prose-invert-pre-code: #efe9df;
+    --tw-prose-invert-pre-bg: #14110f;
+    --tw-prose-invert-th-borders: rgba(47, 110, 99, 0.5);
+    --tw-prose-invert-td-borders: rgba(140, 131, 120, 0.25);
+  }
+
+  .pc-prose a {
+    @apply underline decoration-plexcrew-amber/40 underline-offset-4;
+  }
+
+  .pc-prose a:hover {
+    @apply decoration-plexcrew-amber;
+  }
+
+  .pc-prose code {
+    @apply font-mono;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
