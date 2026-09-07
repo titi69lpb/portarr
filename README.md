@@ -144,6 +144,20 @@ npm run build     # next build — attrape des classes de bugs que vitest/tsc ra
 
 ## Déploiement (Docker)
 
+Une image pré-construite est publiée sur GHCR à chaque release :
+
+```bash
+docker run -d \
+  --name portarr \
+  --env-file .env \
+  -e HOSTNAME=0.0.0.0 \
+  -v $(pwd)/data:/app/data \
+  -p 3000:3000 \
+  ghcr.io/titi69lpb/portarr:latest
+```
+
+Ou construisez l'image vous-même depuis les sources :
+
 ```bash
 docker build -t portarr .
 docker run -d \
@@ -326,6 +340,20 @@ npm run build     # next build — catches classes of bug vitest/tsc miss (route
 ```
 
 ## Deploy (Docker)
+
+A pre-built image is published to GHCR on every release:
+
+```bash
+docker run -d \
+  --name portarr \
+  --env-file .env \
+  -e HOSTNAME=0.0.0.0 \
+  -v $(pwd)/data:/app/data \
+  -p 3000:3000 \
+  ghcr.io/titi69lpb/portarr:latest
+```
+
+Or build it yourself from source:
 
 ```bash
 docker build -t portarr .
