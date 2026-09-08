@@ -429,30 +429,36 @@ describe('getUserIdByEmail', () => {
 });
 
 describe('getRecentWatchHistory', () => {
+  // Builds a fetchMock that dispatches on the `media_type` query param, the
+  // way the real implementation issues two separate filtered requests.
+  function mockByMediaType(rowsByType: { movie?: unknown[]; episode?: unknown[] }) {
+    return vi.fn().mockImplementation(async (url: string) => {
+      const mediaType = new URL(url).searchParams.get('media_type') as 'movie' | 'episode';
+      return jsonResponse({ response: { data: { data: rowsByType[mediaType] ?? [] } } });
+    });
+  }
+
   it('maps movie and episode rows, using full_title for episodes', async () => {
-    const history = {
-      response: {
-        data: {
-          data: [
-            {
-              media_type: 'episode',
-              title: 'Refoulements',
-              full_title: 'The White Lotus - Refoulements',
-              grandparent_title: 'The White Lotus',
-              thumb: '/library/metadata/27317/thumb/1786975000',
-              date: 1788039585,
-            },
-            {
-              media_type: 'movie',
-              title: 'Fight Club',
-              thumb: '/library/metadata/40425/thumb/1',
-              date: 1788035871,
-            },
-          ],
+    const fetchMock = mockByMediaType({
+      episode: [
+        {
+          media_type: 'episode',
+          title: 'Refoulements',
+          full_title: 'The White Lotus - Refoulements',
+          grandparent_title: 'The White Lotus',
+          thumb: '/library/metadata/27317/thumb/1786975000',
+          date: 1788039585,
         },
-      },
-    };
-    const fetchMock = vi.fn().mockResolvedValue(jsonResponse(history));
+      ],
+      movie: [
+        {
+          media_type: 'movie',
+          title: 'Fight Club',
+          thumb: '/library/metadata/40425/thumb/1',
+          date: 1788035871,
+        },
+      ],
+    });
     const result = await getRecentWatchHistory(
       'https://tautulli.example.com',
       'apikey',
@@ -476,18 +482,10 @@ describe('getRecentWatchHistory', () => {
     ]);
   });
 
-  it('skips rows without a thumb and rows of other media types', async () => {
-    const history = {
-      response: {
-        data: {
-          data: [
-            { media_type: 'movie', title: 'No Thumb', date: 1 },
-            { media_type: 'track', title: 'A Song', thumb: '/library/metadata/1/thumb/1', date: 1 },
-          ],
-        },
-      },
-    };
-    const fetchMock = vi.fn().mockResolvedValue(jsonResponse(history));
+  it('skips rows without a thumb', async () => {
+    const fetchMock = mockByMediaType({
+      movie: [{ media_type: 'movie', title: 'No Thumb', date: 1 }],
+    });
     const result = await getRecentWatchHistory(
       'https://tautulli.example.com',
       'apikey',
@@ -522,34 +520,38 @@ describe('getRecentWatchHistory', () => {
     expect(result).toEqual([]);
   });
 
-  it('over-fetches and requests a length larger than the display limit', async () => {
-    const fetchMock = vi.fn().mockResolvedValue(jsonResponse({ response: { data: { data: [] } } }));
+  it('queries movies and episodes as two separate media_type-filtered requests', async () => {
+    const fetchMock = mockByMediaType({});
     await getRecentWatchHistory('https://tautulli.example.com', 'apikey', 42, 8, fetchMock);
-    const url = fetchMock.mock.calls[0][0] as string;
-    const requestedLength = Number(new URL(url).searchParams.get('length'));
-    expect(requestedLength).toBeGreaterThan(8);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    const mediaTypes = fetchMock.mock.calls
+      .map((call) => new URL(call[0] as string).searchParams.get('media_type'))
+      .sort();
+    expect(mediaTypes).toEqual(['episode', 'movie']);
+    for (const call of fetchMock.mock.calls) {
+      expect(new URL(call[0] as string).searchParams.get('length')).toBe('8');
+    }
   });
 
   it('still surfaces movies even when the most recent plays are all episodes (binge-watching a series)', async () => {
-    // 10 episodes played back-to-back after a movie watched slightly earlier —
-    // a naive top-8-by-date would show 8 episodes and drop the movie entirely,
-    // even though the movie is well within the fetched window (see PR reverting
-    // this: "Vu récemment" reported as showing only series).
-    const episodeRows = Array.from({ length: 10 }, (_, i) => ({
+    // Real prod case: dozens of episodes played back to back across several
+    // shows, with no movie recent enough to land in a single combined
+    // recency window — querying movies with their own media_type filter is
+    // what guarantees a recent movie is found regardless of how deep the
+    // episode binge goes (see comment on getRecentWatchHistory for the
+    // full history: a first fix that only over-fetched a combined window
+    // still failed here because zero movies existed in that window at all).
+    const episodeRows = Array.from({ length: 8 }, (_, i) => ({
       media_type: 'episode',
       title: `Ep ${i}`,
       full_title: `Show - Ep ${i}`,
       thumb: `/thumb/ep${i}`,
-      date: 1000 - i, // most recent first
+      date: 1000 - i,
     }));
-    const movieRow = {
-      media_type: 'movie',
-      title: 'Fight Club',
-      thumb: '/thumb/movie',
-      date: 500, // older than every episode above, but still in the fetch window
-    };
-    const history = { response: { data: { data: [...episodeRows, movieRow] } } };
-    const fetchMock = vi.fn().mockResolvedValue(jsonResponse(history));
+    const fetchMock = mockByMediaType({
+      episode: episodeRows,
+      movie: [{ media_type: 'movie', title: 'Fight Club', thumb: '/thumb/movie', date: 500 }],
+    });
     const result = await getRecentWatchHistory(
       'https://tautulli.example.com',
       'apikey',

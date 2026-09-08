@@ -319,25 +319,31 @@ export async function getRecentWatchHistory(
       `recent-history:${tautulliUrl}:${userId}:${limit}`,
       DEFAULT_CACHE_TTL_MS,
       async () => {
-        // Tautulli's `length` truncates strictly by recency across ALL media
-        // types before we ever see the data — a user binge-watching a series
-        // pushes every movie out of the window even if one was watched just
-        // a day ago (reported live: "Vu récemment" showing only episodes).
-        // Over-fetch and rebalance client-side so both types get a fair shot
-        // at the fixed-size dashboard strip.
-        const overfetch = Math.max(limit * 5, 40);
-        const res = await fetchFn(
-          `${tautulliUrl}/api/v2?apikey=${apiKey}&cmd=get_history&user_id=${userId}&length=${overfetch}&order_column=date&order_dir=desc`,
-          { signal: timeoutSignal(), cache: 'no-store' }
-        );
-        if (!res.ok) {
-          throw new Error(`Tautulli API request failed: ${res.status} ${res.statusText}`);
-        }
-        const data = (await res.json()) as { response: { data: { data: RecentHistoryRow[] } } };
-        const items = data.response.data.data
-          .filter((row) => (row.media_type === 'movie' || row.media_type === 'episode') && row.thumb)
-          .map(rowToHistoryItem);
-        return balanceRecentHistory(items, limit);
+        // A single request with `length` truncates strictly by recency across
+        // ALL media types before we ever see the data — a real prod case
+        // showed a user's last several dozen plays ALL episodes (bingeing
+        // several shows back to back), which meant even a generous over-fetch
+        // window (previously length=40 combined) still contained zero movies,
+        // so no amount of client-side rebalancing could surface one — the
+        // movies simply weren't in the fetched set at all. Fixed by querying
+        // each media type separately (Tautulli's `media_type` filter, already
+        // used by fetchMediaTypeStats above) so up to `limit` of the user's
+        // most recent movies are ALWAYS in hand regardless of how many
+        // episodes they watched since, then balanceRecentHistory picks the
+        // fair mix from that guaranteed-complete pool.
+        const fetchType = async (mediaType: 'movie' | 'episode') => {
+          const res = await fetchFn(
+            `${tautulliUrl}/api/v2?apikey=${apiKey}&cmd=get_history&user_id=${userId}&media_type=${mediaType}&length=${limit}&order_column=date&order_dir=desc`,
+            { signal: timeoutSignal(), cache: 'no-store' }
+          );
+          if (!res.ok) {
+            throw new Error(`Tautulli API request failed: ${res.status} ${res.statusText}`);
+          }
+          const data = (await res.json()) as { response: { data: { data: RecentHistoryRow[] } } };
+          return data.response.data.data.filter((row) => row.thumb).map(rowToHistoryItem);
+        };
+        const [movies, episodes] = await Promise.all([fetchType('movie'), fetchType('episode')]);
+        return balanceRecentHistory([...movies, ...episodes], limit);
       }
     );
   } catch {
