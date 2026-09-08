@@ -58,9 +58,13 @@ function SessionCard({ session }: { session: ActiveSession }) {
           </div>
         </div>
       </div>
-      <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-plexcrew-ink/50">
+      <div className="absolute bottom-0 left-0 right-0 h-[3px] overflow-visible bg-plexcrew-ink/50">
         <div
-          className={`h-full transition-all ${isPaused ? 'bg-plexcrew-amber' : 'bg-plexcrew-teal'}`}
+          className={`h-full rounded-r-full transition-all ${
+            isPaused
+              ? 'bg-plexcrew-amber shadow-[0_0_8px_1px_var(--tw-shadow-color)] shadow-plexcrew-amber/70'
+              : 'bg-plexcrew-teal shadow-[0_0_8px_1px_var(--tw-shadow-color)] shadow-plexcrew-teal/70'
+          }`}
           style={{ width: `${progress}%` }}
         />
       </div>

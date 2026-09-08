@@ -6,6 +6,7 @@ import {
   getPersonalStatsByType,
   getUserIdByEmail,
   getRecentWatchHistory,
+  balanceRecentHistory,
   getWatchHistoryPage,
 } from '../../src/lib/tautulli';
 import { resetTtlCacheForTests } from '../../src/lib/ttl-cache';
@@ -519,6 +520,74 @@ describe('getRecentWatchHistory', () => {
       fetchMock
     );
     expect(result).toEqual([]);
+  });
+
+  it('over-fetches and requests a length larger than the display limit', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(jsonResponse({ response: { data: { data: [] } } }));
+    await getRecentWatchHistory('https://tautulli.example.com', 'apikey', 42, 8, fetchMock);
+    const url = fetchMock.mock.calls[0][0] as string;
+    const requestedLength = Number(new URL(url).searchParams.get('length'));
+    expect(requestedLength).toBeGreaterThan(8);
+  });
+
+  it('still surfaces movies even when the most recent plays are all episodes (binge-watching a series)', async () => {
+    // 10 episodes played back-to-back after a movie watched slightly earlier —
+    // a naive top-8-by-date would show 8 episodes and drop the movie entirely,
+    // even though the movie is well within the fetched window (see PR reverting
+    // this: "Vu récemment" reported as showing only series).
+    const episodeRows = Array.from({ length: 10 }, (_, i) => ({
+      media_type: 'episode',
+      title: `Ep ${i}`,
+      full_title: `Show - Ep ${i}`,
+      thumb: `/thumb/ep${i}`,
+      date: 1000 - i, // most recent first
+    }));
+    const movieRow = {
+      media_type: 'movie',
+      title: 'Fight Club',
+      thumb: '/thumb/movie',
+      date: 500, // older than every episode above, but still in the fetch window
+    };
+    const history = { response: { data: { data: [...episodeRows, movieRow] } } };
+    const fetchMock = vi.fn().mockResolvedValue(jsonResponse(history));
+    const result = await getRecentWatchHistory(
+      'https://tautulli.example.com',
+      'apikey',
+      42,
+      8,
+      fetchMock
+    );
+    expect(result.some((item) => item.type === 'movie')).toBe(true);
+    expect(result.find((item) => item.type === 'movie')?.title).toBe('Fight Club');
+  });
+});
+
+describe('balanceRecentHistory', () => {
+  function item(type: 'movie' | 'episode', title: string, watchedAt: string) {
+    return { title, type, thumbPath: `/thumb/${title}`, watchedAt };
+  }
+
+  it('splits the limit evenly between movies and episodes when both are abundant', () => {
+    const movies = Array.from({ length: 5 }, (_, i) => item('movie', `M${i}`, `2026-01-${20 - i}`));
+    const episodes = Array.from({ length: 5 }, (_, i) => item('episode', `E${i}`, `2026-01-${20 - i}`));
+    const result = balanceRecentHistory([...episodes, ...movies], 8);
+    expect(result.filter((i) => i.type === 'movie')).toHaveLength(4);
+    expect(result.filter((i) => i.type === 'episode')).toHaveLength(4);
+  });
+
+  it('backfills with the other type when one type has fewer items than its half', () => {
+    const movies = [item('movie', 'M0', '2026-01-10')];
+    const episodes = Array.from({ length: 10 }, (_, i) => item('episode', `E${i}`, `2026-01-${9 - i}`));
+    const result = balanceRecentHistory([movies[0], ...episodes], 8);
+    expect(result).toHaveLength(8);
+    expect(result.filter((i) => i.type === 'movie')).toHaveLength(1);
+    expect(result.filter((i) => i.type === 'episode')).toHaveLength(7);
+  });
+
+  it('returns everything sorted by recency when there are fewer items than the limit', () => {
+    const items = [item('movie', 'M0', '2026-01-01'), item('episode', 'E0', '2026-01-02')];
+    const result = balanceRecentHistory(items, 8);
+    expect(result).toEqual([items[1], items[0]]);
   });
 });
 

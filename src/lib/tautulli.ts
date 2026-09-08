@@ -280,6 +280,32 @@ function rowToHistoryItem(row: RecentHistoryRow): RecentHistoryItem {
   };
 }
 
+// Given items already sorted most-recent-first, returns up to `limit` with
+// movies and episodes represented as evenly as availability allows — each
+// type's own recency order is preserved, they're just interleaved fairly
+// instead of one type's binge-watching monopolizing every slot. Exported for
+// tests.
+export function balanceRecentHistory(
+  items: RecentHistoryItem[],
+  limit: number
+): RecentHistoryItem[] {
+  const movies = items.filter((item) => item.type === 'movie');
+  const episodes = items.filter((item) => item.type === 'episode');
+  const half = Math.ceil(limit / 2);
+  const takenMovies = movies.slice(0, half);
+  const takenEpisodes = episodes.slice(0, limit - takenMovies.length);
+  const remaining = limit - takenMovies.length - takenEpisodes.length;
+  const backfill =
+    remaining > 0
+      ? [...movies.slice(takenMovies.length), ...episodes.slice(takenEpisodes.length)]
+          .sort((a, b) => (a.watchedAt < b.watchedAt ? 1 : -1))
+          .slice(0, remaining)
+      : [];
+  return [...takenMovies, ...takenEpisodes, ...backfill].sort((a, b) =>
+    a.watchedAt < b.watchedAt ? 1 : -1
+  );
+}
+
 export async function getRecentWatchHistory(
   tautulliUrl: string,
   apiKey: string,
@@ -293,17 +319,25 @@ export async function getRecentWatchHistory(
       `recent-history:${tautulliUrl}:${userId}:${limit}`,
       DEFAULT_CACHE_TTL_MS,
       async () => {
+        // Tautulli's `length` truncates strictly by recency across ALL media
+        // types before we ever see the data — a user binge-watching a series
+        // pushes every movie out of the window even if one was watched just
+        // a day ago (reported live: "Vu récemment" showing only episodes).
+        // Over-fetch and rebalance client-side so both types get a fair shot
+        // at the fixed-size dashboard strip.
+        const overfetch = Math.max(limit * 5, 40);
         const res = await fetchFn(
-          `${tautulliUrl}/api/v2?apikey=${apiKey}&cmd=get_history&user_id=${userId}&length=${limit}&order_column=date&order_dir=desc`,
+          `${tautulliUrl}/api/v2?apikey=${apiKey}&cmd=get_history&user_id=${userId}&length=${overfetch}&order_column=date&order_dir=desc`,
           { signal: timeoutSignal(), cache: 'no-store' }
         );
         if (!res.ok) {
           throw new Error(`Tautulli API request failed: ${res.status} ${res.statusText}`);
         }
         const data = (await res.json()) as { response: { data: { data: RecentHistoryRow[] } } };
-        return data.response.data.data
+        const items = data.response.data.data
           .filter((row) => (row.media_type === 'movie' || row.media_type === 'episode') && row.thumb)
           .map(rowToHistoryItem);
+        return balanceRecentHistory(items, limit);
       }
     );
   } catch {
