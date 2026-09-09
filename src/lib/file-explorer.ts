@@ -149,17 +149,3 @@ export function buildBreadcrumb(relativePath: string): BreadcrumbItem[] {
   }
   return items;
 }
-
-const SIZE_UNITS = ['Ko', 'Mo', 'Go', 'To'];
-
-export function formatFileSize(bytes: number): string {
-  if (bytes < 1024) return `${bytes} o`;
-
-  let value = bytes / 1024;
-  let unitIndex = 0;
-  while (value >= 1024 && unitIndex < SIZE_UNITS.length - 1) {
-    value /= 1024;
-    unitIndex++;
-  }
-  return `${value.toFixed(2)} ${SIZE_UNITS[unitIndex]}`;
-}

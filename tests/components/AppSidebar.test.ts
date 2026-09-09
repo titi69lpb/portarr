@@ -71,4 +71,22 @@ describe('AppSidebar', () => {
     const tree = AppSidebar({ shortcuts: [], filesEnabled: false });
     expect(collectText(tree)).not.toContain('Fichiers');
   });
+
+  it('renders the Speed Test link after Fichiers, even when filesEnabled is false', () => {
+    const enabledTree = AppSidebar({ shortcuts: [], filesEnabled: true });
+    const enabledLinks = findAll(
+      enabledTree,
+      (el) => typeof el.props === 'object' && el.props !== null && 'href' in el.props
+    ) as unknown as { props: { href: string } }[];
+    const hrefs = enabledLinks.map((l) => l.props.href);
+    expect(hrefs.indexOf('/files')).toBeGreaterThanOrEqual(0);
+    expect(hrefs.indexOf('/files')).toBeLessThan(hrefs.indexOf('/speedtest'));
+
+    const disabledTree = AppSidebar({ shortcuts: [], filesEnabled: false });
+    const disabledLinks = findAll(
+      disabledTree,
+      (el) => typeof el.props === 'object' && el.props !== null && 'href' in el.props
+    ) as unknown as { props: { href: string } }[];
+    expect(disabledLinks.map((l) => l.props.href)).toContain('/speedtest');
+  });
 });

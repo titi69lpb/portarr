@@ -7,11 +7,11 @@ import { AppSidebarServer } from '@/components/AppSidebarServer';
 import {
   listDirectory,
   buildBreadcrumb,
-  formatFileSize,
   UnsafePathError,
   UpstreamUnavailableError,
   type FileEntry,
 } from '@/lib/file-explorer';
+import { formatFileSize } from '@/lib/file-size-formatter';
 
 export const dynamic = 'force-dynamic';
 

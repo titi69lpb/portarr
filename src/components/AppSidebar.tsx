@@ -70,6 +70,17 @@ export function AppSidebar({
             <span className="hidden truncate text-xs font-medium sm:inline">Fichiers</span>
           </Link>
         )}
+        <Link
+          href="/speedtest"
+          className="flex items-center gap-2 rounded-lg px-2 py-2 text-plexcrew-screen transition hover:bg-plexcrew-teal/10 hover:text-plexcrew-amber"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="h-5 w-5 flex-none">
+            <path d="M12 4a8 8 0 1 0 8 8" />
+            <path d="M12 12 16 8" />
+            <circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none" />
+          </svg>
+          <span className="hidden truncate text-xs font-medium sm:inline">Vitesse</span>
+        </Link>
       </div>
     </aside>
   );
