@@ -33,7 +33,7 @@ Ce n'est pas une suite de gestion média complète — pour ça, gardez les inte
 
 ### Dashboard
 
-Les derniers ajouts (films et séries) dans un carrousel de posters animé — chaque carte renvoie vers la fiche du média sur Plex Web — et ce qui est en cours de lecture sur le serveur.
+Les derniers ajouts (films et séries) dans un carrousel de posters animé — chaque carte renvoie vers la fiche du média sur Plex Web — et ce qui est en cours de lecture sur le serveur, avec une barre de progression lumineuse (teal en lecture, ambre en pause).
 
 <img src="docs/screenshots/dashboard-hero.png" alt="En-tête du dashboard et lecture en cours" width="800">
 <br>
@@ -43,7 +43,7 @@ Un calendrier des sorties à venir, alimenté par Sonarr/Radarr :
 
 <img src="docs/screenshots/calendar.png" alt="Calendrier des sorties" width="800">
 
-Les statistiques globales issues de Tautulli, et les demandes Overseerr en attente propres à chaque utilisateur :
+Les statistiques globales issues de Tautulli — le n°1 de chaque catégorie reçoit un traitement "podium" (trophée, halo ambre) — et les demandes Overseerr en attente, dans une grille dense qui s'agrandit au survol pour afficher les détails :
 
 <img src="docs/screenshots/stats.png" alt="Statistiques" width="800">
 <br>
@@ -232,7 +232,7 @@ It's not trying to be a full media-management suite — for that, keep using \*a
 
 ### Dashboard
 
-Recently-added movies and shows in an animated poster carousel — each card links straight to its Plex Web detail page — plus what's currently playing on the server.
+Recently-added movies and shows in an animated poster carousel — each card links straight to its Plex Web detail page — plus what's currently playing on the server, with a glowing progress bar (teal while playing, amber while paused).
 
 <img src="docs/screenshots/dashboard-hero.png" alt="Dashboard header and Now Playing" width="800">
 <br>
@@ -242,7 +242,7 @@ An upcoming-releases calendar sourced from Sonarr/Radarr:
 
 <img src="docs/screenshots/calendar.png" alt="Coming Soon calendar" width="800">
 
-Server-wide stats from Tautulli, and each user's own pending Overseerr requests:
+Server-wide stats from Tautulli — the #1 spot in each category gets a podium treatment (trophy, amber glow) — and each user's own pending Overseerr requests, in a dense grid that expands on hover for details:
 
 <img src="docs/screenshots/stats.png" alt="Box Office stats" width="800">
 <br>
