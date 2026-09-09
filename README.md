@@ -61,6 +61,12 @@ Navigation en lecture seule dans un dossier monté, avec téléchargement via UR
 
 <img src="docs/screenshots/files.png" alt="Explorateur de fichiers" width="800">
 
+### Test de vitesse
+
+Mesurez le débit (paliers adaptatifs, jauge animée à échelle logarithmique) et la latence (médiane de 5 pings) entre l'appareil de l'utilisateur et ce serveur — utile pour diagnostiquer "ma connexion vers le serveur est lente" sans dépendre d'un speedtest internet générique.
+
+<img src="docs/screenshots/speedtest.png" alt="Test de vitesse" width="800">
+
 ### Panneau d'administration
 
 Gérez les membres, les mailings, le stockage et les annonces du dashboard sans redéploiement.
@@ -83,6 +89,7 @@ Des modèles de mail réutilisables, un historique d'envoi, et la newsletter aut
 - **Dashboard** — carrousel des derniers ajouts, calendrier des sorties, lecture en cours, demandes en attente, stats Tautulli globales et personnelles, historique de visionnage perso, widget stockage optionnel.
 - **Recherche globale** — recherche dans votre bibliothèque Plex, liens directs vers Plex Web.
 - **Explorateur de fichiers** *(optionnel)* — navigation en lecture seule dans un dossier, téléchargements signés et reprenables ; sert les fichiers directement ou redirige vers un service proxy séparé.
+- **Test de vitesse** — débit et latence entre l'utilisateur et ce serveur, paliers adaptatifs jusqu'à 100 Mo, jauge animée.
 - **Annonces** — une bannière gérée par l'admin sur le dashboard, sans redéploiement.
 - **Mailing** — diffusion vers vos utilisateurs (par groupe d'activité ou sélection manuelle), modèles Markdown réutilisables, envoi de test obligatoire avant tout envoi de masse.
 - **Newsletter** — récap automatique des nouveautés, opt-in/opt-out par utilisateur, archive web publique, déclenchement cron ou manuel.
@@ -260,6 +267,12 @@ Read-only browsing of a mounted directory, with signed-URL downloads (Range/resu
 
 <img src="docs/screenshots/files.png" alt="File browser" width="800">
 
+### Speed test
+
+Measures throughput (adaptive multi-stage sizing, animated log-scale gauge) and latency (median of 5 pings) between the user's device and this server — useful for diagnosing "my connection to the server is slow" without relying on a generic internet speedtest.
+
+<img src="docs/screenshots/speedtest.png" alt="Speed test" width="800">
+
 ### Admin panel
 
 Manage members, mailings, storage, and dashboard announcements without a redeploy.
@@ -282,6 +295,7 @@ Reusable mail templates, a send history, and the automated newsletter, all in on
 - **Dashboard** — recently-added carousel, release calendar, now-playing, pending requests, server-wide and personal Tautulli stats, personal watch history, optional storage widget.
 - **Global search** — searches your Plex library, links straight into Plex Web.
 - **File browser** *(optional)* — read-only directory browsing with signed, resumable downloads; serves files directly or redirects to a separate proxy service.
+- **Speed test** — throughput and latency between the user and this server, adaptive staging up to 100 MB, animated gauge.
 - **Announcements** — an admin-managed banner on the dashboard, no redeploy needed.
 - **Mailing** — broadcast to your user base (by activity group or hand-picked), reusable Markdown templates, a required test-send before any mass send.
 - **Newsletter** — automated "what's new" recap, opt-in/opt-out per user, a public web archive, cron-triggered or manual.
