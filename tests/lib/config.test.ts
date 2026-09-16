@@ -152,7 +152,7 @@ describe('getConfigSources', () => {
   it('reports "env" for a key set via env, "db" for a key only in settings, "unset" for neither', () => {
     const db = getDb(':memory:');
     setSetting(db, 'TAUTULLI_URL', 'https://tautulli.fromdb.example.com');
-    const sources = getConfigSources({ PLEX_URL: 'https://plex.example.com' }, db);
+    const sources = getConfigSources({ NODE_ENV: 'test' as const, PLEX_URL: 'https://plex.example.com' }, db);
     expect(sources.PLEX_URL).toBe('env');
     expect(sources.TAUTULLI_URL).toBe('db');
     expect(sources.SONARR_URL).toBe('unset');
