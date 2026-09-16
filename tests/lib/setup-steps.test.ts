@@ -14,7 +14,7 @@ describe('applyServiceSettings', () => {
 
   it('rejects when a required field is missing', async () => {
     const db = getDb(':memory:');
-    const result = await applyServiceSettings(db, 'plex', { PLEX_URL: 'https://plex.example.com' }, {}, vi.fn());
+    const result = await applyServiceSettings(db, 'plex', { PLEX_URL: 'https://plex.example.com' }, { NODE_ENV: 'test' as const }, vi.fn());
     expect(result.ok).toBe(false);
     expect(getSetting(db, 'PLEX_URL')).toBeNull();
   });
@@ -26,7 +26,7 @@ describe('applyServiceSettings', () => {
       db,
       'plex',
       { PLEX_URL: 'https://plex.example.com', PLEX_SERVER_TOKEN: 'bad', PLEX_SERVER_NAME: 'Srv' },
-      {},
+      { NODE_ENV: 'test' as const },
       fetchMock
     );
     expect(result.ok).toBe(false);
@@ -40,7 +40,7 @@ describe('applyServiceSettings', () => {
       db,
       'plex',
       { PLEX_URL: 'https://plex.example.com', PLEX_SERVER_TOKEN: 'good', PLEX_SERVER_NAME: 'Srv' },
-      {},
+      { NODE_ENV: 'test' as const },
       fetchMock
     );
     expect(result).toEqual({ ok: true, error: null });
@@ -52,7 +52,7 @@ describe('applyServiceSettings', () => {
   it('publicBaseUrl skips the connection test entirely', async () => {
     const db = getDb(':memory:');
     const fetchMock = vi.fn();
-    const result = await applyServiceSettings(db, 'publicBaseUrl', { PUBLIC_BASE_URL: 'https://portarr.example.com' }, {}, fetchMock);
+    const result = await applyServiceSettings(db, 'publicBaseUrl', { PUBLIC_BASE_URL: 'https://portarr.example.com' }, { NODE_ENV: 'test' as const }, fetchMock);
     expect(result).toEqual({ ok: true, error: null });
     expect(fetchMock).not.toHaveBeenCalled();
     expect(getSetting(db, 'PUBLIC_BASE_URL')).toBe('https://portarr.example.com');
@@ -65,7 +65,7 @@ describe('applyServiceSettings', () => {
       db,
       'plex',
       { PLEX_URL: 'https://plex.example.com', PLEX_SERVER_TOKEN: 'good', PLEX_SERVER_NAME: 'Srv' },
-      {},
+      { NODE_ENV: 'test' as const },
       fetchMock
     );
 
@@ -73,7 +73,7 @@ describe('applyServiceSettings', () => {
       db,
       'plex',
       { PLEX_URL: 'https://plex-updated.example.com', PLEX_SERVER_TOKEN: '', PLEX_SERVER_NAME: '' },
-      {},
+      { NODE_ENV: 'test' as const },
       fetchMock
     );
 
@@ -90,7 +90,7 @@ describe('applyServiceSettings', () => {
       db,
       'plex',
       { PLEX_URL: 'https://attempted-override.example.com', PLEX_SERVER_TOKEN: 'good', PLEX_SERVER_NAME: 'Srv' },
-      { PLEX_URL: 'https://from-env.example.com' },
+      { NODE_ENV: 'test' as const, PLEX_URL: 'https://from-env.example.com' },
       fetchMock
     );
     expect(result.ok).toBe(true);

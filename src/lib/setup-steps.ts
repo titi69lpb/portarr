@@ -1,6 +1,7 @@
 import type Database from 'better-sqlite3';
 import { getSetting, setSetting } from './settings';
 import { SERVICE_FIELDS, type ServiceKey } from './settings-schema';
+import { resolveConfigValue } from './config';
 import {
   testPlexConnection,
   testTautulliConnection,
@@ -61,7 +62,7 @@ export async function applyServiceSettings(
   db: Database.Database,
   service: ServiceKey,
   values: Record<string, string>,
-  env: Record<string, string | undefined> = process.env,
+  env: NodeJS.ProcessEnv = process.env,
   fetchFn: typeof fetch = fetch
 ): Promise<StepResult> {
   const fields = SERVICE_FIELDS[service];
@@ -73,7 +74,7 @@ export async function applyServiceSettings(
       resolved[field.envKey] = submitted;
       continue;
     }
-    const existing = env[field.envKey] || getSetting(db, field.envKey);
+    const existing = resolveConfigValue(field.envKey, env, db);
     if (!existing) {
       return { ok: false, error: `${field.label} est requis` };
     }
