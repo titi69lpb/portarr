@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { testPlexConnection, testTautulliConnection } from '../../src/lib/connection-test';
+import { testPlexConnection, testTautulliConnection, testSonarrConnection, testRadarrConnection } from '../../src/lib/connection-test';
 
 function jsonResponse(body: unknown, ok = true, status = 200): Response {
   return {
@@ -68,6 +68,43 @@ describe('testTautulliConnection', () => {
   it('fails with the network error message when fetch throws', async () => {
     const fetchMock = vi.fn().mockRejectedValue(new Error('ETIMEDOUT'));
     const result = await testTautulliConnection('https://tautulli.example.com', 'tkey', fetchMock);
+    expect(result).toEqual({ ok: false, error: 'ETIMEDOUT' });
+  });
+});
+
+describe('testSonarrConnection', () => {
+  it('succeeds on a 200 from /api/v3/system/status with the api key header', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(jsonResponse({}));
+    const result = await testSonarrConnection('https://sonarr.example.com', 'skey', fetchMock);
+    expect(result).toEqual({ ok: true, error: null });
+    expect(fetchMock).toHaveBeenCalledWith(
+      'https://sonarr.example.com/api/v3/system/status',
+      expect.objectContaining({ headers: { 'X-Api-Key': 'skey' } })
+    );
+  });
+
+  it('fails with the status code on a non-ok response', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(jsonResponse({}, false, 401));
+    const result = await testSonarrConnection('https://sonarr.example.com', 'bad-key', fetchMock);
+    expect(result.ok).toBe(false);
+    expect(result.error).toContain('401');
+  });
+});
+
+describe('testRadarrConnection', () => {
+  it('succeeds on a 200 from /api/v3/system/status with the api key header', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(jsonResponse({}));
+    const result = await testRadarrConnection('https://radarr.example.com', 'rkey', fetchMock);
+    expect(result).toEqual({ ok: true, error: null });
+    expect(fetchMock).toHaveBeenCalledWith(
+      'https://radarr.example.com/api/v3/system/status',
+      expect.objectContaining({ headers: { 'X-Api-Key': 'rkey' } })
+    );
+  });
+
+  it('fails with the network error message when fetch throws', async () => {
+    const fetchMock = vi.fn().mockRejectedValue(new Error('ETIMEDOUT'));
+    const result = await testRadarrConnection('https://radarr.example.com', 'rkey', fetchMock);
     expect(result).toEqual({ ok: false, error: 'ETIMEDOUT' });
   });
 });

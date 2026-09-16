@@ -51,3 +51,38 @@ export async function testTautulliConnection(
     return { ok: false, error: messageFromError(err) };
   }
 }
+
+async function testArrConnection(
+  serviceName: string,
+  url: string,
+  apiKey: string,
+  fetchFn: typeof fetch
+): Promise<ConnectionTestResult> {
+  try {
+    const res = await fetchFn(`${url}/api/v3/system/status`, {
+      headers: { 'X-Api-Key': apiKey },
+      signal: timeoutSignal(),
+      cache: 'no-store',
+    });
+    if (!res.ok) return { ok: false, error: `${serviceName} a répondu ${res.status} ${res.statusText}` };
+    return { ok: true, error: null };
+  } catch (err) {
+    return { ok: false, error: messageFromError(err) };
+  }
+}
+
+export async function testSonarrConnection(
+  url: string,
+  apiKey: string,
+  fetchFn: typeof fetch = fetch
+): Promise<ConnectionTestResult> {
+  return testArrConnection('Sonarr', url, apiKey, fetchFn);
+}
+
+export async function testRadarrConnection(
+  url: string,
+  apiKey: string,
+  fetchFn: typeof fetch = fetch
+): Promise<ConnectionTestResult> {
+  return testArrConnection('Radarr', url, apiKey, fetchFn);
+}
