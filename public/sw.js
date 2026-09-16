@@ -21,5 +21,10 @@ self.addEventListener('fetch', (event) => {
   // this thread first would add local overhead to a tool whose entire job is
   // measuring network performance accurately.
   if (url.pathname.startsWith('/api/speedtest/')) return;
-  event.respondWith(fetch(event.request));
+  // .catch() below only silences the "Uncaught (in promise)" console noise
+  // from a rejected fetch (e.g. a momentary network blip or a deploy
+  // restart) — Response.error() reproduces the same network-error result
+  // the page would see without a service worker, so failure handling
+  // upstream (fetch()/navigation error pages) is unaffected.
+  event.respondWith(fetch(event.request).catch(() => Response.error()));
 });

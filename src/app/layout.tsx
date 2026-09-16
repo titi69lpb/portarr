@@ -10,6 +10,10 @@ const bebasNeue = Bebas_Neue({
   weight: '400',
   display: 'swap',
   variable: '--font-display',
+  // Only page.tsx's hero heading uses this face — most routes (admin, files,
+  // profile) never render it above the fold, so eagerly preloading it there
+  // trips Chrome's "preloaded but not used within a few seconds" warning.
+  preload: false,
 });
 
 /** Body face — everything readable: paragraphs, buttons, labels, nav. */
@@ -18,6 +22,9 @@ const manrope = Manrope({
   weight: ['400', '500', '600', '700'],
   display: 'swap',
   variable: '--font-body',
+  // 4 weight files declared but most routes only render a subset within the
+  // first few seconds — same over-eager-preload issue as bebasNeue below.
+  preload: false,
 });
 
 /** Utility face — numeric stats, dates, admin content preview. */
@@ -26,6 +33,9 @@ const ibmPlexMono = IBM_Plex_Mono({
   weight: ['400', '500'],
   display: 'swap',
   variable: '--font-mono',
+  // Only used by specific widgets (stats, file sizes, release dates) — not
+  // guaranteed to render on every route, so don't force-preload it either.
+  preload: false,
 });
 
 export const metadata: Metadata = {
