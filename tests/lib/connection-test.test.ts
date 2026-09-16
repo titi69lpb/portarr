@@ -64,4 +64,10 @@ describe('testTautulliConnection', () => {
     expect(result.ok).toBe(false);
     expect(result.error).toContain('500');
   });
+
+  it('fails with the network error message when fetch throws', async () => {
+    const fetchMock = vi.fn().mockRejectedValue(new Error('ETIMEDOUT'));
+    const result = await testTautulliConnection('https://tautulli.example.com', 'tkey', fetchMock);
+    expect(result).toEqual({ ok: false, error: 'ETIMEDOUT' });
+  });
 });

@@ -15,7 +15,7 @@ export async function testPlexConnection(
   fetchFn: typeof fetch = fetch
 ): Promise<ConnectionTestResult> {
   try {
-    const res = await fetchFn(`${url}/identity?X-Plex-Token=${serverToken}`, {
+    const res = await fetchFn(`${url}/identity?X-Plex-Token=${encodeURIComponent(serverToken)}`, {
       headers: { Accept: 'application/json' },
       signal: timeoutSignal(),
       cache: 'no-store',
@@ -37,7 +37,7 @@ export async function testTautulliConnection(
   fetchFn: typeof fetch = fetch
 ): Promise<ConnectionTestResult> {
   try {
-    const res = await fetchFn(`${url}/api/v2?apikey=${apiKey}&cmd=get_server_info`, {
+    const res = await fetchFn(`${url}/api/v2?apikey=${encodeURIComponent(apiKey)}&cmd=get_server_info`, {
       signal: timeoutSignal(),
       cache: 'no-store',
     });
