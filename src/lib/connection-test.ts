@@ -86,3 +86,21 @@ export async function testRadarrConnection(
 ): Promise<ConnectionTestResult> {
   return testArrConnection('Radarr', url, apiKey, fetchFn);
 }
+
+export async function testOverseerrConnection(
+  url: string,
+  apiKey: string,
+  fetchFn: typeof fetch = fetch
+): Promise<ConnectionTestResult> {
+  try {
+    const res = await fetchFn(`${url}/api/v1/status`, {
+      headers: { 'X-Api-Key': apiKey },
+      signal: timeoutSignal(),
+      cache: 'no-store',
+    });
+    if (!res.ok) return { ok: false, error: `Overseerr a répondu ${res.status} ${res.statusText}` };
+    return { ok: true, error: null };
+  } catch (err) {
+    return { ok: false, error: messageFromError(err) };
+  }
+}

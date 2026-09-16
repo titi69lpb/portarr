@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { testPlexConnection, testTautulliConnection, testSonarrConnection, testRadarrConnection } from '../../src/lib/connection-test';
+import { testPlexConnection, testTautulliConnection, testSonarrConnection, testRadarrConnection, testOverseerrConnection } from '../../src/lib/connection-test';
 
 function jsonResponse(body: unknown, ok = true, status = 200): Response {
   return {
@@ -106,5 +106,24 @@ describe('testRadarrConnection', () => {
     const fetchMock = vi.fn().mockRejectedValue(new Error('ETIMEDOUT'));
     const result = await testRadarrConnection('https://radarr.example.com', 'rkey', fetchMock);
     expect(result).toEqual({ ok: false, error: 'ETIMEDOUT' });
+  });
+});
+
+describe('testOverseerrConnection', () => {
+  it('succeeds on a 200 from /api/v1/status with the api key header', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(jsonResponse({}));
+    const result = await testOverseerrConnection('https://overseerr.example.com', 'okey', fetchMock);
+    expect(result).toEqual({ ok: true, error: null });
+    expect(fetchMock).toHaveBeenCalledWith(
+      'https://overseerr.example.com/api/v1/status',
+      expect.objectContaining({ headers: { 'X-Api-Key': 'okey' } })
+    );
+  });
+
+  it('fails with the status code on a non-ok response', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(jsonResponse({}, false, 403));
+    const result = await testOverseerrConnection('https://overseerr.example.com', 'bad-key', fetchMock);
+    expect(result.ok).toBe(false);
+    expect(result.error).toContain('403');
   });
 });
