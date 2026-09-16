@@ -39,6 +39,14 @@ export const metadata: Metadata = {
     statusBarStyle: 'black-translucent',
     title: 'Portarr',
   },
+  // Chrome deprecated bare reliance on apple-mobile-web-app-capable and now
+  // warns unless the standard (non-prefixed) tag is present too — Next's
+  // Metadata.appleWebApp only emits the apple-* tags, so this one needs
+  // adding by hand via `other`. Keep both: iOS Safari still only reads the
+  // apple-prefixed ones.
+  other: {
+    'mobile-web-app-capable': 'yes',
+  },
 };
 
 export const viewport: Viewport = {
