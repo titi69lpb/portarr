@@ -1,4 +1,6 @@
 import { timeoutSignal } from './fetch-timeout';
+import { createTransport } from './mailer';
+import type { MailTransport } from './mailer';
 
 export interface ConnectionTestResult {
   ok: boolean;
@@ -99,6 +101,24 @@ export async function testOverseerrConnection(
       cache: 'no-store',
     });
     if (!res.ok) return { ok: false, error: `Overseerr a répondu ${res.status} ${res.statusText}` };
+    return { ok: true, error: null };
+  } catch (err) {
+    return { ok: false, error: messageFromError(err) };
+  }
+}
+
+export async function testSmtpConnection(
+  config: { host: string; port: string; user: string; pass: string; fromAddress: string; fromName: string },
+  createTransportFn: typeof createTransport = createTransport
+): Promise<ConnectionTestResult> {
+  try {
+    const transport = createTransportFn({ host: config.host, port: config.port, user: config.user, pass: config.pass });
+    await transport.sendMail({
+      from: `${config.fromName} <${config.fromAddress}>`,
+      to: config.fromAddress,
+      subject: 'Portarr — test de configuration SMTP',
+      html: '<p>Ce message confirme que la configuration SMTP de Portarr fonctionne.</p>',
+    });
     return { ok: true, error: null };
   } catch (err) {
     return { ok: false, error: messageFromError(err) };

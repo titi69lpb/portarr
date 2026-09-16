@@ -1,5 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
-import { testPlexConnection, testTautulliConnection, testSonarrConnection, testRadarrConnection, testOverseerrConnection } from '../../src/lib/connection-test';
+import { testPlexConnection, testTautulliConnection, testSonarrConnection, testRadarrConnection, testOverseerrConnection, testSmtpConnection } from '../../src/lib/connection-test';
+import type { MailTransport } from '../../src/lib/mailer';
 
 function jsonResponse(body: unknown, ok = true, status = 200): Response {
   return {
@@ -125,5 +126,44 @@ describe('testOverseerrConnection', () => {
     const result = await testOverseerrConnection('https://overseerr.example.com', 'bad-key', fetchMock);
     expect(result.ok).toBe(false);
     expect(result.error).toContain('403');
+  });
+});
+
+describe('testSmtpConnection', () => {
+  const SMTP_CONFIG = {
+    host: 'mail.example.com',
+    port: '465',
+    user: 'smtpuser',
+    pass: 'smtppass',
+    fromAddress: 'admin@example.com',
+    fromName: 'Portarr',
+  };
+
+  it('succeeds and sends a test email to the from-address', async () => {
+    const sendMail = vi.fn().mockResolvedValue({ messageId: 'abc' });
+    const fakeTransport: MailTransport = { sendMail };
+    const createTransportFn = vi.fn().mockReturnValue(fakeTransport);
+
+    const result = await testSmtpConnection(SMTP_CONFIG, createTransportFn);
+
+    expect(result).toEqual({ ok: true, error: null });
+    expect(createTransportFn).toHaveBeenCalledWith({
+      host: 'mail.example.com',
+      port: '465',
+      user: 'smtpuser',
+      pass: 'smtppass',
+    });
+    expect(sendMail).toHaveBeenCalledWith(
+      expect.objectContaining({ to: 'admin@example.com', from: 'Portarr <admin@example.com>' })
+    );
+  });
+
+  it('fails with the SMTP error message when sendMail rejects', async () => {
+    const sendMail = vi.fn().mockRejectedValue(new Error('535 Authentication failed'));
+    const createTransportFn = vi.fn().mockReturnValue({ sendMail } as MailTransport);
+
+    const result = await testSmtpConnection(SMTP_CONFIG, createTransportFn);
+
+    expect(result).toEqual({ ok: false, error: '535 Authentication failed' });
   });
 });
