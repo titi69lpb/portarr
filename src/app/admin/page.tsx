@@ -38,7 +38,7 @@ export default async function AdminPage() {
 
   const db = getDb();
   const announcements = listAnnouncements(db);
-  const volumeStats = getVolumeStats(config.storageVolumes);
+  const volumeStats = await getVolumeStats(config.storageVolumes, config.fsTimeoutMs);
   const combinedStorage = combineVolumeStats(volumeStats);
 
   return (

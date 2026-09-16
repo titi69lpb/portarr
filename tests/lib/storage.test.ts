@@ -7,60 +7,85 @@ function fakeStatsFs(blocks: number, bavail: number, bsize: number = 4096): Stat
 }
 
 describe('getVolumeStats', () => {
-  it('computes total and free bytes from block counts', () => {
+  it('computes total and free bytes from block counts', async () => {
     const volumes: VolumeConfig[] = [{ name: 'Cube-SYNO', path: '/mnt/cube-syno' }];
-    const statFn = vi.fn().mockReturnValue(fakeStatsFs(1_000_000, 400_000, 4096));
+    const statFn = vi.fn().mockResolvedValue(fakeStatsFs(1_000_000, 400_000, 4096));
 
-    const result = getVolumeStats(volumes, statFn);
+    const result = await getVolumeStats(volumes, 5000, statFn);
 
     expect(result).toEqual([
       { name: 'Cube-SYNO', totalBytes: 1_000_000 * 4096, freeBytes: 400_000 * 4096 },
     ]);
   });
 
-  it('reports one entry per configured volume', () => {
+  it('reports one entry per configured volume', async () => {
     const volumes: VolumeConfig[] = [
       { name: 'Cube-SYNO', path: '/mnt/cube-syno' },
       { name: 'TFS-SYNO', path: '/mnt/tfs-syno' },
     ];
     const statFn = vi
       .fn()
-      .mockReturnValueOnce(fakeStatsFs(1_000, 400))
-      .mockReturnValueOnce(fakeStatsFs(2_000, 500));
+      .mockResolvedValueOnce(fakeStatsFs(1_000, 400))
+      .mockResolvedValueOnce(fakeStatsFs(2_000, 500));
 
-    const result = getVolumeStats(volumes, statFn);
+    const result = await getVolumeStats(volumes, 5000, statFn);
 
     expect(result.map((v) => v.name)).toEqual(['Cube-SYNO', 'TFS-SYNO']);
     expect(statFn).toHaveBeenCalledWith('/mnt/cube-syno');
     expect(statFn).toHaveBeenCalledWith('/mnt/tfs-syno');
   });
 
-  it('returns zeroed stats for a volume that fails to stat, instead of throwing', () => {
+  it('returns zeroed stats for a volume that fails to stat, instead of throwing', async () => {
     const volumes: VolumeConfig[] = [{ name: 'Cube-SYNO', path: '/mnt/cube-syno' }];
-    const statFn = vi.fn().mockImplementation(() => {
-      throw new Error('ENOENT: mount not present');
-    });
+    const statFn = vi.fn().mockRejectedValue(new Error('ENOENT: mount not present'));
 
-    const result = getVolumeStats(volumes, statFn);
+    const result = await getVolumeStats(volumes, 5000, statFn);
 
     expect(result).toEqual([{ name: 'Cube-SYNO', totalBytes: 0, freeBytes: 0 }]);
   });
 
-  it('isolates a single failing volume — one bad mount does not blank out the others', () => {
+  it('isolates a single failing volume — one bad mount does not blank out the others', async () => {
     const volumes: VolumeConfig[] = [
       { name: 'Cube-SYNO', path: '/mnt/cube-syno' },
       { name: 'TFS-SYNO', path: '/mnt/tfs-syno' },
     ];
     const statFn = vi
       .fn()
-      .mockImplementationOnce(() => {
-        throw new Error('ENOENT');
-      })
-      .mockReturnValueOnce(fakeStatsFs(2_000, 500));
+      .mockRejectedValueOnce(new Error('ENOENT'))
+      .mockResolvedValueOnce(fakeStatsFs(2_000, 500));
 
-    const result = getVolumeStats(volumes, statFn);
+    const result = await getVolumeStats(volumes, 5000, statFn);
 
     expect(result[0]).toEqual({ name: 'Cube-SYNO', totalBytes: 0, freeBytes: 0 });
+    expect(result[1].totalBytes).toBeGreaterThan(0);
+  });
+
+  it('returns zeroed stats instead of hanging when a mount is dead (timeout)', async () => {
+    const volumes: VolumeConfig[] = [{ name: 'Cube-SYNO', path: '/mnt/cube-syno' }];
+    const neverSettles = new Promise<StatsFs>(() => {});
+    const statFn = vi.fn().mockReturnValue(neverSettles);
+
+    const result = await getVolumeStats(volumes, 50, statFn);
+
+    expect(result).toEqual([{ name: 'Cube-SYNO', totalBytes: 0, freeBytes: 0 }]);
+  });
+
+  it('does not let one dead mount delay the others (concurrent, not sequential)', async () => {
+    const volumes: VolumeConfig[] = [
+      { name: 'Dead', path: '/mnt/dead' },
+      { name: 'Alive', path: '/mnt/alive' },
+    ];
+    const statFn = vi
+      .fn()
+      .mockImplementationOnce(() => new Promise<StatsFs>(() => {}))
+      .mockResolvedValueOnce(fakeStatsFs(2_000, 500));
+
+    const start = Date.now();
+    const result = await getVolumeStats(volumes, 50, statFn);
+    const elapsed = Date.now() - start;
+
+    expect(elapsed).toBeLessThan(200);
+    expect(result[0]).toEqual({ name: 'Dead', totalBytes: 0, freeBytes: 0 });
     expect(result[1].totalBytes).toBeGreaterThan(0);
   });
 });
