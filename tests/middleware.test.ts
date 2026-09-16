@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { NextRequest } from 'next/server';
-import { shouldAllow } from '../src/middleware';
+import { shouldAllow, isSetupPath } from '../src/middleware';
 import { createSession, SESSION_COOKIE_NAME } from '../src/lib/session';
 import { resetTtlCacheForTests } from '../src/lib/ttl-cache';
 
@@ -186,5 +186,22 @@ describe('middleware — session revalidation', () => {
     const response = await middleware(request);
 
     expect(response.status).toBe(200);
+  });
+});
+
+describe('isSetupPath', () => {
+  it('matches /setup itself', () => {
+    expect(isSetupPath('/setup')).toBe(true);
+  });
+
+  it('matches setup API routes', () => {
+    expect(isSetupPath('/api/setup/step')).toBe(true);
+    expect(isSetupPath('/api/setup/complete')).toBe(true);
+  });
+
+  it('does not match unrelated paths', () => {
+    expect(isSetupPath('/')).toBe(false);
+    expect(isSetupPath('/admin/settings')).toBe(false);
+    expect(isSetupPath('/api/setupsomethingelse')).toBe(false);
   });
 });

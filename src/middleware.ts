@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifySession, SESSION_COOKIE_NAME, type SessionUser } from '@/lib/session';
-import { loadConfig } from '@/lib/config';
+import { loadConfig, isSetupComplete, assertConfigured } from '@/lib/config';
+import { getDb } from '@/lib/db';
 import { isStillSharedUser } from '@/lib/plex';
 
 const PUBLIC_PATHS = ['/login', '/logo.png', '/login-background.jpg', '/icon.png', '/manifest.webmanifest', '/sw.js', '/api/newsletter/poster', '/api/newsletter/unsubscribe', '/api/admin/newsletter/send', '/api/cron/request-availability'];
@@ -9,6 +10,10 @@ const PUBLIC_PREFIXES = ['/api/auth/', '/api/newsletter/archive/', '/newsletter/
 function isPublicPath(pathname: string): boolean {
   if (PUBLIC_PATHS.includes(pathname)) return true;
   return PUBLIC_PREFIXES.some((prefix) => pathname.startsWith(prefix));
+}
+
+export function isSetupPath(pathname: string): boolean {
+  return pathname === '/setup' || pathname.startsWith('/setup/') || pathname.startsWith('/api/setup/');
 }
 
 export function shouldAllow(pathname: string, sessionUser: SessionUser | null): boolean {
@@ -26,8 +31,23 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
+  const config = loadConfig(process.env, getDb());
+
+  if (isSetupPath(pathname)) {
+    // Once setup is done, /setup falls through to ordinary session-based
+    // access control below (its own page component then redirects an
+    // authenticated owner to /admin/settings — see Task 17).
+    if (!isSetupComplete(config)) {
+      return NextResponse.next();
+    }
+  } else if (!isSetupComplete(config)) {
+    if (pathname.startsWith('/api/')) {
+      return NextResponse.json({ error: 'setup_incomplete' }, { status: 503 });
+    }
+    return NextResponse.redirect(new URL('/setup', request.url));
+  }
+
   const token = request.cookies.get(SESSION_COOKIE_NAME)?.value;
-  const config = loadConfig();
   let sessionUser = token ? await verifySession(token, config.session.secret) : null;
 
   // Session cookies last 30 days and, until now, were never re-checked against
@@ -36,10 +56,11 @@ export async function middleware(request: NextRequest) {
   // isStillSharedUser fails open on a Plex/network error, so an upstream
   // hiccup never locks everyone out at once.
   if (sessionUser && !sessionUser.isOwner) {
+    const configured = assertConfigured(config);
     const stillShared = await isStillSharedUser(
       sessionUser.plexId,
-      config.plex.serverToken,
-      config.plex.serverName
+      configured.plex.serverToken,
+      configured.plex.serverName
     );
     if (!stillShared) {
       sessionUser = null;
