@@ -4,9 +4,12 @@ import {
   medianMs,
   bytesToMbps,
   mbpsToArcFraction,
+  mbpsQualityTier,
   MAX_DOWNLOAD_BYTES,
   STAGE_FAST_THRESHOLD_MS,
   GAUGE_MAX_MBPS,
+  EXCELLENT_MBPS,
+  OK_MBPS,
 } from '../../src/lib/speedtest';
 
 describe('pickNextStageSize', () => {
@@ -72,5 +75,28 @@ describe('mbpsToArcFraction', () => {
     const high = mbpsToArcFraction(500, GAUGE_MAX_MBPS);
     expect(low).toBeLessThan(mid);
     expect(mid).toBeLessThan(high);
+  });
+});
+
+describe('mbpsQualityTier', () => {
+  it('returns "low" below the ok threshold, including 0 and negative values', () => {
+    expect(mbpsQualityTier(0)).toBe('low');
+    expect(mbpsQualityTier(-5)).toBe('low');
+    expect(mbpsQualityTier(OK_MBPS - 0.1)).toBe('low');
+  });
+
+  it('returns "ok" at and above the ok threshold, below excellent', () => {
+    expect(mbpsQualityTier(OK_MBPS)).toBe('ok');
+    expect(mbpsQualityTier(EXCELLENT_MBPS - 0.1)).toBe('ok');
+  });
+
+  it('returns "excellent" at and above the excellent threshold', () => {
+    expect(mbpsQualityTier(EXCELLENT_MBPS)).toBe('excellent');
+    expect(mbpsQualityTier(EXCELLENT_MBPS * 10)).toBe('excellent');
+  });
+
+  it('respects custom thresholds', () => {
+    expect(mbpsQualityTier(10, 20, 5)).toBe('ok');
+    expect(mbpsQualityTier(4, 20, 5)).toBe('low');
   });
 });

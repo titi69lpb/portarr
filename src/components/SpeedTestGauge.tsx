@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import gsap from 'gsap';
-import { mbpsToArcFraction, GAUGE_MAX_MBPS, GOOD_LATENCY_MS } from '@/lib/speedtest';
+import { mbpsToArcFraction, mbpsQualityTier, GAUGE_MAX_MBPS, GOOD_LATENCY_MS } from '@/lib/speedtest';
 
 const RADIUS = 100;
 const CENTER_X = 120;
@@ -40,6 +40,14 @@ export function SpeedTestGauge({ mbps, latencyMs }: SpeedTestGaugeProps) {
   const fraction = mbpsToArcFraction(displayMbps, GAUGE_MAX_MBPS);
   const dashOffset = ARC_LENGTH * (1 - fraction);
   const latencyGood = latencyMs !== null && latencyMs < GOOD_LATENCY_MS;
+
+  // Only shown once a real reading exists — before the first stage
+  // completes, displayMbps is still 0 and a "Low" verdict would be
+  // misleading noise rather than a result.
+  const tier = displayMbps > 0 ? mbpsQualityTier(displayMbps) : null;
+  const tierLabel = tier === 'excellent' ? 'Excellent' : tier === 'ok' ? 'Correct' : tier === 'low' ? 'Faible' : null;
+  const tierColorClass =
+    tier === 'excellent' ? 'text-plexcrew-teal' : tier === 'low' ? 'text-plexcrew-amber' : 'text-plexcrew-ash';
 
   return (
     <div className="flex flex-col items-center gap-4">
@@ -89,6 +97,9 @@ export function SpeedTestGauge({ mbps, latencyMs }: SpeedTestGaugeProps) {
           Mbps
         </text>
       </svg>
+      {tierLabel && (
+        <p className={`text-xs font-semibold uppercase tracking-[0.14em] ${tierColorClass}`}>{tierLabel}</p>
+      )}
       <div className="flex items-center gap-2 rounded-full bg-plexcrew-charcoal/60 px-4 py-1.5 ring-1 ring-plexcrew-teal/20">
         <span
           className={`h-2 w-2 flex-none rounded-full ${latencyGood ? 'bg-plexcrew-teal' : 'bg-plexcrew-amber'}`}

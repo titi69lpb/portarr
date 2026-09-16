@@ -57,3 +57,24 @@ export function mbpsToArcFraction(mbps: number, maxMbps: number = GAUGE_MAX_MBPS
   const fraction = Math.log10(mbps + 1) / Math.log10(maxMbps + 1);
   return Math.min(1, Math.max(0, fraction));
 }
+
+// A bare number is hard to read at a glance — pairing it with a qualitative
+// verdict (as most real speed-test UIs do) makes the result legible without
+// requiring the viewer to know what a "good" Mbps figure even is. Thresholds
+// are tuned for this app's actual audience (mostly LAN/home-server access,
+// GAUGE_MAX_MBPS=1000 already assumes gigabit is a realistic ceiling) rather
+// than generic ISP marketing numbers.
+export const EXCELLENT_MBPS = 300;
+export const OK_MBPS = 50;
+
+export type SpeedTier = 'excellent' | 'ok' | 'low';
+
+export function mbpsQualityTier(
+  mbps: number,
+  excellentThreshold: number = EXCELLENT_MBPS,
+  okThreshold: number = OK_MBPS
+): SpeedTier {
+  if (mbps >= excellentThreshold) return 'excellent';
+  if (mbps >= okThreshold) return 'ok';
+  return 'low';
+}
