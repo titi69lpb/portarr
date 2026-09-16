@@ -551,7 +551,7 @@ describe('searchLibrary', () => {
     const fetchMock = mockFetchWith(hubs);
     await searchLibrary('https://plex.example.com', 'server-token', 'a', fetchMock);
     await searchLibrary('https://plex.example.com', 'server-token', 'b', fetchMock);
-    const identityCalls = fetchMock.mock.calls.filter(([url]: [string]) => url.includes('/identity'));
+    const identityCalls = fetchMock.mock.calls.filter((call: any[]) => (call[0] as string).includes('/identity'));
     expect(identityCalls).toHaveLength(1);
   });
 });

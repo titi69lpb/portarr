@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { loadConfig } from '../../src/lib/config';
 
 const VALID_ENV = {
+  NODE_ENV: 'test' as const,
   DATABASE_PATH: './data/portal.db',
   SESSION_SECRET: 'a'.repeat(32),
   PLEX_URL: 'https://plex.example.com',
@@ -55,7 +56,7 @@ describe('loadConfig', () => {
   });
 
   it('throws listing every missing variable at once', () => {
-    const partial = { DATABASE_PATH: './data/portal.db' };
+    const partial = { NODE_ENV: 'test' as const, DATABASE_PATH: './data/portal.db' };
     expect(() => loadConfig(partial)).toThrowError(/SESSION_SECRET/);
     expect(() => loadConfig(partial)).toThrowError(/PLEX_URL/);
     expect(() => loadConfig(partial)).toThrowError(/NEWSLETTER_CRON_SECRET/);
