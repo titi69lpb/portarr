@@ -154,7 +154,12 @@ describe('testSmtpConnection', () => {
       pass: 'smtppass',
     });
     expect(sendMail).toHaveBeenCalledWith(
-      expect.objectContaining({ to: 'admin@example.com', from: 'Portarr <admin@example.com>' })
+      expect.objectContaining({
+        to: 'admin@example.com',
+        from: 'Portarr <admin@example.com>',
+        subject: 'Portarr — test de configuration SMTP',
+        html: expect.stringContaining('configuration SMTP'),
+      })
     );
   });
 

@@ -1,6 +1,5 @@
 import { timeoutSignal } from './fetch-timeout';
 import { createTransport } from './mailer';
-import type { MailTransport } from './mailer';
 
 export interface ConnectionTestResult {
   ok: boolean;
