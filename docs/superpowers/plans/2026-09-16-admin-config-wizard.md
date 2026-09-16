@@ -2004,7 +2004,7 @@ describe('POST /api/setup/complete', () => {
 
 ```typescript
 // tests/api/admin-settings-step.test.ts
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { NextRequest } from 'next/server';
 import { getDb, resetDbForTests } from '../../src/lib/db';
 import { getSetting } from '../../src/lib/settings';
@@ -2357,7 +2357,7 @@ export function SetupWizard({ token }: { token: string }) {
 import { redirect } from 'next/navigation';
 import { getDb } from '@/lib/db';
 import { loadConfig, isSetupComplete } from '@/lib/config';
-import { getOrCreateSetupToken, verifySetupToken } from '@/lib/setup';
+import { verifySetupToken } from '@/lib/setup';
 import { SetupWizard } from '@/components/SetupWizard';
 
 export const dynamic = 'force-dynamic';
