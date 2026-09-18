@@ -60,6 +60,7 @@ export default async function AdminPage() {
       <section className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <AdminNavCard href="/admin/members" title="Membres" description="Synchronisation Plex, activité, opt-in newsletter" />
         <AdminNavCard href="/admin/mailings" title="Mailings" description="Modèles, envoi, historique, newsletter" />
+        <AdminNavCard href="/admin/settings" title="Réglages" description="Plex, Tautulli, Sonarr, Radarr, Overseerr, SMTP" />
       </section>
       {config.storageVolumes.length > 0 && (
         <section className="space-y-5">
