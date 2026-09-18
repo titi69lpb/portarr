@@ -14,10 +14,22 @@
 
 - Env vars always win over DB-stored settings (backwards compatibility with every existing install — verbatim from spec's "Storage & precedence" section).
 - Secrets (API keys, SMTP password, Plex server token) are stored in plaintext in the `settings` table — same trust boundary as the current `.env` file, no new encryption subsystem.
-- `SESSION_SECRET`, `PLEX_CLIENT_IDENTIFIER`, `NEWSLETTER_CRON_SECRET`, `DOWNLOAD_SIGNING_SECRET` are auto-generated on first boot if absent from env, persisted, and never shown in any wizard/settings UI.
+- `PLEX_CLIENT_IDENTIFIER`, `NEWSLETTER_CRON_SECRET`, `DOWNLOAD_SIGNING_SECRET` are auto-generated into the `settings` table on first boot if absent from env, persisted, and never shown in any wizard/settings UI. **`SESSION_SECRET` is NOT part of this group** — see the 2026-09-18 revision below.
 - `DATABASE_PATH` stays a pure env/infra concern, never a setting.
 - Every "Tester" action must succeed before its fields are persisted — never silently save an untested/broken config.
 - `Jellyfin` support is explicitly out of scope for this plan.
+- **Middleware (`src/middleware.ts`) must never import anything from `src/lib/config.ts` or `src/lib/db.ts`.** Next.js 14 middleware runs on the Edge runtime, which cannot bundle `better-sqlite3` or touch the filesystem — confirmed by a failing `next build` during Task 11's review. See "Revision (2026-09-18)" below.
+
+## Revision (2026-09-18): middleware/Edge runtime conflict
+
+Task 11's review found that middleware transitively importing `config.ts` (which imports `db.ts`/`better-sqlite3`) breaks `next build` — Edge middleware cannot bundle a native SQLite addon. Full root-cause and resolution: see the spec's "Revision (2026-09-18): middleware cannot touch the DB" section (`docs/superpowers/specs/2026-09-16-admin-config-wizard-design.md`).
+
+Summary of what changed relative to the original tasks below (Tasks 4, 11, 12 as originally written are superseded by this revision; original text is left in place further down for the historical record of what was actually built first, with amendment notes):
+
+- **Task 4 (already implemented) gets an amendment**: `loadConfig`'s `db` parameter loses its `getDb()` default (becomes required), and `SESSION_SECRET` stops going through `ensureAutoSecret` — it becomes a plain required env read, since the entrypoint script (new task below) now guarantees it's always set before Next.js starts.
+- **Task 11 (already implemented, mid-review) is superseded**: middleware is rewritten to never import from `config.ts`/`db.ts`. Session-secret and Plex-revalidation reads go directly through `process.env`; the Plex-revalidation check skips gracefully (fail-open) when Plex is DB-only configured. `/setup` and `/api/setup/*` join the existing `PUBLIC_PATHS`/`PUBLIC_PREFIXES` list instead of a bespoke `isSetupPath` gate.
+- **Task 12 is expanded**: in addition to wrapping `loadConfig()` calls with `assertConfigured()`, every touched page also gets `if (!isSetupComplete(config)) redirect('/setup')`, and `/api/auth/login`+`/api/auth/poll` get the equivalent 503-JSON check (the two "public" routes that assume Plex is already configured).
+- **New task added** (numbered 11b, runs right after the middleware amendment): a Docker entrypoint script that generates `SESSION_SECRET` once on first boot if not set via env, persists it to the `data` volume, and exports it before starting the server.
 
 ---
 
