@@ -47,4 +47,44 @@ describe('POST /api/setup/step', () => {
     const response = await POST(request);
     expect(response.status).toBe(422);
   });
+
+  it('rejects with missing Authorization header entirely', async () => {
+    const request = postRequest({ service: 'publicBaseUrl', values: { PUBLIC_BASE_URL: 'https://portarr.example.com' } }, undefined);
+    const response = await POST(request);
+    expect(response.status).toBe(403);
+  });
+
+  it('rejects missing service/values in request body with valid token', async () => {
+    const db = getDb(':memory:');
+    const token = getOrCreateSetupToken(db);
+    const request = postRequest({ /* no service or values */ }, token);
+    const response = await POST(request);
+    expect(response.status).toBe(400);
+  });
+
+  it('rejects unrecognized service key with 400', async () => {
+    const db = getDb(':memory:');
+    const token = getOrCreateSetupToken(db);
+    const request = postRequest(
+      { service: 'not-a-real-service', values: { SOME_FIELD: 'value' } },
+      token
+    );
+    const response = await POST(request);
+    expect(response.status).toBe(400);
+  });
+
+  it('rejects malformed JSON body with 400', async () => {
+    const db = getDb(':memory:');
+    const token = getOrCreateSetupToken(db);
+    const request = new NextRequest('http://localhost/api/setup/step', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: '{invalid json',
+    });
+    const response = await POST(request);
+    expect(response.status).toBe(400);
+  });
 });
