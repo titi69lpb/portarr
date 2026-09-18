@@ -2,7 +2,7 @@ import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { verifySession, SESSION_COOKIE_NAME } from '@/lib/session';
-import { loadConfig } from '@/lib/config';
+import { loadConfig, isSetupComplete } from '@/lib/config';
 import { getDb } from '@/lib/db';
 import { listAnnouncements } from '@/lib/announcements';
 import { getVolumeStats, combineVolumeStats } from '@/lib/storage';
@@ -26,7 +26,7 @@ function AdminNavCard({ href, title, description }: { href: string; title: strin
 
 export default async function AdminPage() {
   const token = cookies().get(SESSION_COOKIE_NAME)?.value;
-  const config = loadConfig();
+  const config = loadConfig(process.env, getDb());
   const sessionUser = token ? await verifySession(token, config.session.secret) : null;
 
   if (!sessionUser) {
@@ -34,6 +34,9 @@ export default async function AdminPage() {
   }
   if (!sessionUser.isOwner) {
     redirect('/');
+  }
+  if (!isSetupComplete(config)) {
+    redirect('/setup');
   }
 
   const db = getDb();
@@ -57,6 +60,7 @@ export default async function AdminPage() {
       <section className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <AdminNavCard href="/admin/members" title="Membres" description="Synchronisation Plex, activité, opt-in newsletter" />
         <AdminNavCard href="/admin/mailings" title="Mailings" description="Modèles, envoi, historique, newsletter" />
+        <AdminNavCard href="/admin/settings" title="Réglages" description="Plex, Tautulli, Sonarr, Radarr, Overseerr, SMTP" />
       </section>
       {config.storageVolumes.length > 0 && (
         <section className="space-y-5">

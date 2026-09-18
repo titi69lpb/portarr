@@ -94,7 +94,8 @@ Des modèles de mail réutilisables, un historique d'envoi, et la newsletter aut
 - **Mailing** — diffusion vers vos utilisateurs (par groupe d'activité ou sélection manuelle), modèles Markdown réutilisables, envoi de test obligatoire avant tout envoi de masse.
 - **Newsletter** — récap automatique des nouveautés, opt-in/opt-out par utilisateur, archive web publique, déclenchement cron ou manuel.
 - **Notifications de disponibilité** — email automatique quand une demande Overseerr approuvée devient disponible.
-- **Panneau d'administration** — annonces, modèles de mail + historique, vue des membres, synchronisation Plex manuelle, usage du stockage.
+- **Assistant de configuration** — premier lancement guidé (`/setup`) : configurez Plex/Tautulli/Sonarr/Radarr/Overseerr/SMTP/URL publique depuis le navigateur, sans éditer `.env`. Chaque étape teste la vraie connexion avant d'enregistrer. Modifiable ensuite depuis `/admin/settings` (accès propriétaire).
+- **Panneau d'administration** — annonces, modèles de mail + historique, vue des membres, synchronisation Plex manuelle, usage du stockage, réglages des services.
 
 ## Stack technique
 
@@ -111,20 +112,25 @@ Next.js 14 (App Router, TypeScript) · SQLite (`better-sqlite3`) · Docker
 
 ## Configuration
 
-Copiez `.env.example` vers `.env.local` (dev) ou `.env` (Docker) et remplissez-le. Chaque variable marquée **obligatoire** doit être définie, sinon l'app refuse de démarrer avec une erreur claire listant exactement ce qui manque ; tout ce qui est marqué **optionnel** peut rester non défini et l'app fonctionne quand même — la fonctionnalité correspondante n'apparaît simplement pas.
+Deux façons de configurer Portarr, au choix :
 
-| Variable | Obligatoire | Débloque |
+1. **Assistant de configuration (recommandé)** — lancez le conteneur sans rien définir de plus que `DATABASE_PATH`. Au premier démarrage, Portarr génère un lien de configuration à usage unique et l'affiche dans les logs (`docker logs portarr`) : `http://votre-serveur:3000/setup?token=...`. Ouvrez ce lien et renseignez Plex/Tautulli/Sonarr/Radarr/Overseerr/SMTP/URL publique depuis le navigateur — chaque étape teste la vraie connexion avant d'enregistrer. Une fois terminé, ces réglages restent modifiables depuis `/admin/settings` (connectez-vous avec le compte propriétaire du serveur Plex).
+2. **Variables d'environnement (comme avant)** — copiez `.env.example` vers `.env.local` (dev) ou `.env` (Docker) et remplissez-le. Une variable d'env définie prend toujours le pas sur l'assistant/la base — pratique pour un déploiement scripté ou pour figer certains réglages. Si vous définissez toutes les variables ci-dessous marquées **assistant**, `/setup` ne s'affiche jamais.
+
+`SESSION_SECRET` est différent des autres : il n'est jamais configurable via l'assistant, mais vous n'avez rien à faire non plus — l'entrée Docker (`entrypoint.sh`) le génère automatiquement au premier démarrage et le persiste dans le volume `data/`. Ne le définissez vous-même que pour du développement local hors Docker, ou si vous devez fixer sa valeur (ex. redémarrages sans volume persistant).
+
+| Variable | Requise par | Débloque |
 |---|---|---|
-| `DATABASE_PATH` | ✅ | Emplacement du fichier SQLite |
-| `SESSION_SECRET` | ✅ | Signature du cookie de session (32+ caractères aléatoires) |
-| `PLEX_URL`, `PLEX_SERVER_TOKEN`, `PLEX_SERVER_NAME`, `PLEX_CLIENT_IDENTIFIER` | ✅ | Accès API Plex + connexion |
-| `TAUTULLI_URL`, `TAUTULLI_API_KEY` | ✅ | Lecture en cours, statistiques |
-| `SONARR_URL`, `SONARR_API_KEY` | ✅ | Calendrier des sorties (séries) |
-| `RADARR_URL`, `RADARR_API_KEY` | ✅ | Calendrier des sorties (films) |
-| `OVERSEERR_URL`, `OVERSEERR_API_KEY` | ✅ | Demandes en attente, notifications de disponibilité |
-| `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `MAIL_FROM_ADDRESS`, `MAIL_FROM_NAME` | ✅ | Mailing, newsletter, notifications de disponibilité |
-| `NEWSLETTER_CRON_SECRET` | ✅ | Authentification des endpoints cron newsletter/notifications |
-| `PUBLIC_BASE_URL` | ✅ | Liens absolus dans les emails sortants |
+| `DATABASE_PATH` | infra (toujours obligatoire) | Emplacement du fichier SQLite |
+| `SESSION_SECRET` | infra (auto-générée en Docker, voir ci-dessus) | Signature du cookie de session |
+| `PLEX_URL`, `PLEX_SERVER_TOKEN`, `PLEX_SERVER_NAME` | assistant ou env | Accès API Plex + connexion |
+| `TAUTULLI_URL`, `TAUTULLI_API_KEY` | assistant ou env | Lecture en cours, statistiques |
+| `SONARR_URL`, `SONARR_API_KEY` | assistant ou env | Calendrier des sorties (séries) |
+| `RADARR_URL`, `RADARR_API_KEY` | assistant ou env | Calendrier des sorties (films) |
+| `OVERSEERR_URL`, `OVERSEERR_API_KEY` | assistant ou env | Demandes en attente, notifications de disponibilité |
+| `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `MAIL_FROM_ADDRESS`, `MAIL_FROM_NAME` | assistant ou env | Mailing, newsletter, notifications de disponibilité |
+| `PUBLIC_BASE_URL` | assistant ou env | Liens absolus dans les emails sortants + URL affichée dans le lien de configuration |
+| `PLEX_CLIENT_IDENTIFIER`, `NEWSLETTER_CRON_SECRET`, `DOWNLOAD_SIGNING_SECRET` | auto-générées (base de données), jamais dans l'assistant | Identifiant client Plex, auth cron, signature des liens de téléchargement |
 | `SHORTCUT_<NOM>_URL` / `SHORTCUT_<NOM>_ICON_URL` (×6 : `PLEX`, `OVERSEERR`, `TAUTULLI`, `WIZARR`, `POSTERR`, `PLEX_REWIND`) | optionnel | Un raccourci dans la sidebar, un par paire définie. Les deux variables doivent être définies pour afficher une icône ; un raccourci avec seulement `_URL` s'affiche en lien texte seul. Totalement absent = ce raccourci n'apparaît pas. |
 | `FILES_ROOT_PATH` | optionnel | La page `/files`, le lien sidebar "Fichiers", et la route de téléchargement |
 | `FS_TIMEOUT_MS` | optionnel | Timeout (ms) pour les appels filesystem sur le montage — défaut `5000` |
@@ -300,7 +306,8 @@ Reusable mail templates, a send history, and the automated newsletter, all in on
 - **Mailing** — broadcast to your user base (by activity group or hand-picked), reusable Markdown templates, a required test-send before any mass send.
 - **Newsletter** — automated "what's new" recap, opt-in/opt-out per user, a public web archive, cron-triggered or manual.
 - **Availability notifications** — emails a user automatically when their approved Overseerr request becomes available.
-- **Admin panel** — announcements, mail templates + history, members view, manual Plex sync, storage usage.
+- **Setup wizard** — a guided first-run flow (`/setup`): configure Plex/Tautulli/Sonarr/Radarr/Overseerr/SMTP/public URL from the browser, no `.env` editing required. Each step tests the real connection before saving. Editable afterward from `/admin/settings` (owner access).
+- **Admin panel** — announcements, mail templates + history, members view, manual Plex sync, storage usage, service settings.
 
 ## Stack
 
@@ -317,20 +324,25 @@ Next.js 14 (App Router, TypeScript) · SQLite (`better-sqlite3`) · Docker
 
 ## Configuration
 
-Copy `.env.example` to `.env.local` (dev) or `.env` (Docker) and fill it in. Every variable below marked **required** must be set or the app refuses to start with a clear error listing exactly what's missing; everything marked **optional** can be left unset and the app runs fine — the feature it powers just doesn't appear.
+Two ways to configure Portarr, your choice:
 
-| Variable | Required | Unlocks |
+1. **Setup wizard (recommended)** — start the container with nothing set beyond `DATABASE_PATH`. On first boot, Portarr generates a one-time setup link and prints it to the logs (`docker logs portarr`): `http://your-server:3000/setup?token=...`. Open that link and fill in Plex/Tautulli/Sonarr/Radarr/Overseerr/SMTP/public URL from the browser — each step tests the real connection before saving. Once done, those settings stay editable from `/admin/settings` (sign in with the Plex account that owns the server).
+2. **Environment variables (as before)** — copy `.env.example` to `.env.local` (dev) or `.env` (Docker) and fill it in. A set env var always wins over the wizard/database — useful for scripted deployments or to pin specific settings. If you set every variable below marked **wizard**, `/setup` never shows.
+
+`SESSION_SECRET` is different from the rest: it's never configurable through the wizard, but you don't need to do anything either — the Docker entrypoint (`entrypoint.sh`) generates it automatically on first boot and persists it in the `data/` volume. Only set it yourself for local development outside Docker, or if you need to pin its value (e.g. restarts without a persistent volume).
+
+| Variable | Required by | Unlocks |
 |---|---|---|
-| `DATABASE_PATH` | ✅ | SQLite file location |
-| `SESSION_SECRET` | ✅ | Session cookie signing (32+ random chars) |
-| `PLEX_URL`, `PLEX_SERVER_TOKEN`, `PLEX_SERVER_NAME`, `PLEX_CLIENT_IDENTIFIER` | ✅ | Plex API access + login |
-| `TAUTULLI_URL`, `TAUTULLI_API_KEY` | ✅ | Now-playing, stats |
-| `SONARR_URL`, `SONARR_API_KEY` | ✅ | Release calendar (TV) |
-| `RADARR_URL`, `RADARR_API_KEY` | ✅ | Release calendar (movies) |
-| `OVERSEERR_URL`, `OVERSEERR_API_KEY` | ✅ | Pending requests, availability notifications |
-| `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `MAIL_FROM_ADDRESS`, `MAIL_FROM_NAME` | ✅ | Mailing, newsletter, availability notifications |
-| `NEWSLETTER_CRON_SECRET` | ✅ | Auth for the newsletter/notification cron endpoints |
-| `PUBLIC_BASE_URL` | ✅ | Absolute links in outgoing emails |
+| `DATABASE_PATH` | infra (always required) | SQLite file location |
+| `SESSION_SECRET` | infra (auto-generated in Docker, see above) | Session cookie signing |
+| `PLEX_URL`, `PLEX_SERVER_TOKEN`, `PLEX_SERVER_NAME` | wizard or env | Plex API access + login |
+| `TAUTULLI_URL`, `TAUTULLI_API_KEY` | wizard or env | Now-playing, stats |
+| `SONARR_URL`, `SONARR_API_KEY` | wizard or env | Release calendar (TV) |
+| `RADARR_URL`, `RADARR_API_KEY` | wizard or env | Release calendar (movies) |
+| `OVERSEERR_URL`, `OVERSEERR_API_KEY` | wizard or env | Pending requests, availability notifications |
+| `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `MAIL_FROM_ADDRESS`, `MAIL_FROM_NAME` | wizard or env | Mailing, newsletter, availability notifications |
+| `PUBLIC_BASE_URL` | wizard or env | Absolute links in outgoing emails + the URL shown in the setup link |
+| `PLEX_CLIENT_IDENTIFIER`, `NEWSLETTER_CRON_SECRET`, `DOWNLOAD_SIGNING_SECRET` | auto-generated (database), never in the wizard | Plex client identifier, cron auth, download link signing |
 | `SHORTCUT_<NAME>_URL` / `SHORTCUT_<NAME>_ICON_URL` (×6: `PLEX`, `OVERSEERR`, `TAUTULLI`, `WIZARR`, `POSTERR`, `PLEX_REWIND`) | optional | A sidebar shortcut link, one per pair set. Both vars must be set for an icon to show; a shortcut with only `_URL` renders as a text-only link. Absent entirely = that shortcut just isn't in the sidebar. |
 | `FILES_ROOT_PATH` | optional | The `/files` page, the sidebar "Files" link, and the download route |
 | `FS_TIMEOUT_MS` | optional | Timeout (ms) for filesystem calls against the mount — defaults to `5000` |

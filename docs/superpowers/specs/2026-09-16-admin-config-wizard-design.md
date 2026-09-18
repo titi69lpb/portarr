@@ -1,7 +1,7 @@
 # Admin config wizard — design spec
 
 **Date:** 2026-09-16
-**Status:** Approved by user, ready for implementation planning
+**Status:** Approved by user, ready for implementation planning. Revised 2026-09-18 — see "Revision: middleware cannot touch the DB" below, discovered during Task 11's review.
 **Scope:** Portarr only (public repo). Not applied to the private plexcrew-portal repo, which stays env-managed.
 
 ## Problem
@@ -79,3 +79,21 @@ None required. An install with all env vars already set has `isSetupComplete()` 
 ## Documentation updates needed
 
 `.env.example` and the GitHub wiki's "Installation"/"Configuration Reference" pages currently present these 21 vars as required. They need a pass explaining the new wizard path and clarifying that setting them via env is now optional (still supported, still takes precedence) rather than mandatory. Tracked as a task in the implementation plan, not detailed further here.
+
+## Revision (2026-09-18): middleware cannot touch the DB
+
+Discovered while implementing the middleware setup-gate: Next.js 14.2's middleware runs on the **Edge runtime**, which cannot bundle or execute `better-sqlite3` (a native Node addon) or touch the filesystem. Verified directly — `npx next build` fails with `UnhandledSchemeError` on `node:crypto`/`node:fs`/`node:path` as soon as anything reachable from `middleware.ts` imports `src/lib/config.ts` (which imports `src/lib/db.ts`). This is a hard platform constraint, not a bug to fix by restructuring imports.
+
+This affects two things the original design assumed middleware could do:
+1. **The `isSetupComplete()` redirect** — middleware can't read DB-backed settings to know if setup is done.
+2. **Reading `config.session.secret` for JWT verification, and `config.plex.serverToken`/`serverName` for the existing Plex-share-revocation re-check** — both already happened in middleware before this plan, and both would need to go through the same DB-touching `loadConfig()`.
+
+**Resolution, chosen to keep the "page-level checks, not a network round-trip" philosophy consistent everywhere:**
+
+- **`SESSION_SECRET` stops being DB-backed entirely.** It's the one auto-generated secret middleware genuinely cannot do without (every request needs it to verify the session JWT), so it moves to a **Docker entrypoint script** (`entrypoint.sh`): on container start, if `SESSION_SECRET` isn't already set via env, generate one once, persist it to `/app/data/.session_secret` (survives restarts via the existing `data` volume), and `export SESSION_SECRET` before `exec`-ing `node server.js`. From the Next.js app's point of view this is now always a plain, required env var — `config.ts` reads it directly, no `ensureAutoSecret`/DB call, and middleware never needs `loadConfig()` for it. `PLEX_CLIENT_IDENTIFIER`, `NEWSLETTER_CRON_SECRET`, and `DOWNLOAD_SIGNING_SECRET` are unaffected — nothing in middleware reads them, so they stay DB-backed via `ensureAutoSecret` exactly as originally designed.
+- **`loadConfig()`'s `db` parameter becomes required, no default.** The previous `db: Database.Database = getDb()` default is what made `config.ts` unconditionally import `db.ts` (and therefore `better-sqlite3`) at module scope — removing the default means every Node-runtime caller (pages, API routes) passes `getDb()` explicitly, and `config.ts` itself no longer forces that import on anything that merely imports a type or a DB-independent field from it. (In practice `config.ts` still imports `db.ts` for the type, but middleware is rewritten to never import from `config.ts` at all — see below — so the chain is broken where it matters.)
+- **Middleware is rewritten to never import anything from `config.ts` or `db.ts`.** It reads `process.env.SESSION_SECRET` directly for JWT verification. For the Plex-share-revocation check, it reads `process.env.PLEX_SERVER_TOKEN`/`PLEX_SERVER_NAME` directly and **skips the check entirely if either is unset** (i.e. Plex is configured via the DB/wizard rather than env) — this is a real, accepted feature degradation: an install with DB-only Plex config loses the "revoked share detected within ~5 minutes" behavior and falls back to the plain 30-day JWT expiry, same as this app's behavior before that feature existed. Documented here rather than silently degraded.
+- **The `isSetupComplete()` redirect moves to page level**, per the user's explicit choice between the two options presented (page-level checks vs. an internal fetch-based check from middleware). Every protected `page.tsx`/API route that already calls `loadConfig()` gets one added line: `if (!isSetupComplete(config)) redirect('/setup')` (pages) or a 503 JSON response (the two Plex-login API routes, `/api/auth/login` and `/api/auth/poll`, which are the only "public" routes that assume Plex is already configured — everything else is already behind a session check that can't succeed pre-setup anyway, since logging in requires Plex to be configured). This folds into the plan's existing mechanical `assertConfigured`-wrapping task rather than being a separate sweep, since it touches the same call sites at the same moment.
+- **`/setup` and `/api/setup/*` move into middleware's existing `PUBLIC_PATHS`/`PUBLIC_PREFIXES` list** (the mechanism already used for `/login`, `/api/newsletter/poster`, etc.) instead of a bespoke `isSetupPath` gate — this reuses an already-Edge-safe, already-tested mechanism instead of adding a new one.
+
+Net effect: middleware goes back to being exactly as simple as it was before this plan (env/session-only, zero new imports), and the "is the app configured" question is answered entirely in Node-runtime code that was always going to run there anyway.

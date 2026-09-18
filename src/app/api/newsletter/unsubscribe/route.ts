@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
       return errorPage('Lien invalide.', 400);
     }
 
-    const config = loadConfig();
+    const config = loadConfig(process.env, getDb());
     const plexId = await verifyUnsubscribeToken(token, config.session.secret);
     if (!plexId) {
       return errorPage('Lien invalide ou expiré.', 400);
@@ -64,7 +64,7 @@ export async function POST(request: NextRequest) {
       return errorPage('Lien invalide.', 400);
     }
 
-    const config = loadConfig();
+    const config = loadConfig(process.env, getDb());
     const plexId = await verifyUnsubscribeToken(token, config.session.secret);
     if (!plexId) {
       return errorPage('Lien invalide ou expiré.', 400);

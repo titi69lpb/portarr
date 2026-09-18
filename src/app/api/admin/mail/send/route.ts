@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { loadConfig } from '@/lib/config';
+import { loadConfig, isSetupComplete, assertConfigured } from '@/lib/config';
 import { getDb } from '@/lib/db';
 import { getMailTemplate } from '@/lib/mail-templates';
 import { hashContent } from '@/lib/mail-guard';
@@ -17,7 +17,11 @@ export async function POST(request: NextRequest) {
     const denied = await requireOwner(request);
     if (denied) return denied;
 
-    const config = loadConfig();
+    const rawConfig = loadConfig(process.env, getDb());
+    if (!isSetupComplete(rawConfig)) {
+      return NextResponse.json({ error: 'setup_incomplete' }, { status: 503 });
+    }
+    const config = assertConfigured(rawConfig);
     const body = await request.json();
     const db = getDb();
     const template = getMailTemplate(db, Number(body.templateId));

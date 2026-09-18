@@ -2,7 +2,7 @@ import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { verifySession, SESSION_COOKIE_NAME } from '@/lib/session';
-import { loadConfig } from '@/lib/config';
+import { loadConfig, isSetupComplete, assertConfigured } from '@/lib/config';
 import { getDb } from '@/lib/db';
 import { getMemberOverview } from '@/lib/members';
 import { AdminMembersList } from '@/components/AdminMembersList';
@@ -12,8 +12,8 @@ export const dynamic = 'force-dynamic';
 
 export default async function AdminMembersPage() {
   const token = cookies().get(SESSION_COOKIE_NAME)?.value;
-  const config = loadConfig();
-  const sessionUser = token ? await verifySession(token, config.session.secret) : null;
+  const rawConfig = loadConfig(process.env, getDb());
+  const sessionUser = token ? await verifySession(token, rawConfig.session.secret) : null;
 
   if (!sessionUser) {
     redirect('/login');
@@ -21,6 +21,10 @@ export default async function AdminMembersPage() {
   if (!sessionUser.isOwner) {
     redirect('/');
   }
+  if (!isSetupComplete(rawConfig)) {
+    redirect('/setup');
+  }
+  const config = assertConfigured(rawConfig);
 
   const db = getDb();
   const members = await getMemberOverview(db, config.tautulli.url, config.tautulli.apiKey);

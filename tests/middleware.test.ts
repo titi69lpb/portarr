@@ -63,6 +63,18 @@ describe('shouldAllow', () => {
   it('allows the service worker script with no session — a redirect to /login would break registration', () => {
     expect(shouldAllow('/sw.js', null)).toBe(true);
   });
+
+  it('allows /setup itself with no session', () => {
+    expect(shouldAllow('/setup', null)).toBe(true);
+  });
+
+  it('allows /setup/* sub-paths with no session', () => {
+    expect(shouldAllow('/setup/anything', null)).toBe(true);
+  });
+
+  it('allows /api/setup/* routes with no session', () => {
+    expect(shouldAllow('/api/setup/step', null)).toBe(true);
+  });
 });
 
 const REQUIRED_ENV: Record<string, string> = {
@@ -186,5 +198,40 @@ describe('middleware — session revalidation', () => {
     const response = await middleware(request);
 
     expect(response.status).toBe(200);
+  });
+
+  it('skips Plex revalidation gracefully when PLEX_SERVER_TOKEN/PLEX_SERVER_NAME are unset (DB-only Plex config) — non-owner session still allowed through, fetch never called', async () => {
+    delete process.env.PLEX_SERVER_TOKEN;
+    delete process.env.PLEX_SERVER_NAME;
+    const fetchSpy = vi.spyOn(global, 'fetch');
+    const { middleware } = await import('../src/middleware');
+    const request = await requestWithSession('/', {
+      plexId: '1',
+      email: 'a@b.com',
+      username: 'alice',
+      isOwner: false,
+    });
+
+    const response = await middleware(request);
+
+    expect(response.status).toBe(200);
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  it('fails closed — redirects to /login when SESSION_SECRET is unset, even with a valid session cookie', async () => {
+    delete process.env.SESSION_SECRET;
+    const { middleware } = await import('../src/middleware');
+    const request = await requestWithSession('/', {
+      plexId: '1',
+      email: 'a@b.com',
+      username: 'alice',
+      isOwner: false,
+    });
+
+    const response = await middleware(request);
+
+    expect(response.status).toBe(307);
+    expect(response.headers.get('location')).toContain('/login');
+    expect(response.cookies.get(SESSION_COOKIE_NAME)?.value).toBe('');
   });
 });

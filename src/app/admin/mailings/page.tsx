@@ -2,7 +2,7 @@ import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { verifySession, SESSION_COOKIE_NAME } from '@/lib/session';
-import { loadConfig } from '@/lib/config';
+import { loadConfig, isSetupComplete } from '@/lib/config';
 import { getDb } from '@/lib/db';
 import { listMailTemplates } from '@/lib/mail-templates';
 import { listMailLog } from '@/lib/mail-log';
@@ -16,7 +16,7 @@ export const dynamic = 'force-dynamic';
 
 export default async function AdminMailingsPage() {
   const token = cookies().get(SESSION_COOKIE_NAME)?.value;
-  const config = loadConfig();
+  const config = loadConfig(process.env, getDb());
   const sessionUser = token ? await verifySession(token, config.session.secret) : null;
 
   if (!sessionUser) {
@@ -24,6 +24,9 @@ export default async function AdminMailingsPage() {
   }
   if (!sessionUser.isOwner) {
     redirect('/');
+  }
+  if (!isSetupComplete(config)) {
+    redirect('/setup');
   }
 
   const db = getDb();

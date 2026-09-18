@@ -1,42 +1,64 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { NextRequest } from 'next/server';
 import { resolvePinToSession } from '../../src/app/api/auth/poll/resolvePinToSession';
 import { GET as pollGET } from '../../src/app/api/auth/poll/route';
 import { POST as loginPOST } from '../../src/app/api/auth/login/route';
 import { POST as logoutPOST } from '../../src/app/api/auth/logout/route';
 import { SESSION_COOKIE_NAME } from '../../src/lib/session';
+import { resetRateLimitsForTests } from '../../src/lib/rate-limit';
 
-const REQUIRED_ENV_VARS = [
-  'DATABASE_PATH',
-  'SESSION_SECRET',
-  'PLEX_URL',
-  'PLEX_SERVER_TOKEN',
-  'PLEX_SERVER_NAME',
-  'PLEX_CLIENT_IDENTIFIER',
-  'TAUTULLI_URL',
-  'TAUTULLI_API_KEY',
-  'SONARR_URL',
-  'SONARR_API_KEY',
-  'RADARR_URL',
-  'RADARR_API_KEY',
-  'SMTP_HOST',
-  'SMTP_PORT',
-  'SMTP_USER',
-  'SMTP_PASS',
-  'MAIL_FROM_ADDRESS',
-  'MAIL_FROM_NAME',
-  'NEWSLETTER_CRON_SECRET',
-  'PUBLIC_BASE_URL',
-  'OVERSEERR_URL',
-  'OVERSEERR_API_KEY',
-  'FILES_ROOT_PATH',
-  'DOWNLOAD_SIGNING_SECRET',
-] as const;
+const REQUIRED_ENV = {
+  DATABASE_PATH: ':memory:',
+  SESSION_SECRET: 'test-secret-at-least-32-characters-long',
+  PLEX_URL: 'https://plex.local',
+  PLEX_SERVER_TOKEN: 'server-token',
+  PLEX_SERVER_NAME: 'My Plex Server',
+  PLEX_CLIENT_IDENTIFIER: 'cid',
+  TAUTULLI_URL: 'http://tautulli.local',
+  TAUTULLI_API_KEY: 'tautulli-key',
+  SONARR_URL: 'http://sonarr.local',
+  SONARR_API_KEY: 'sonarr-key',
+  RADARR_URL: 'http://radarr.local',
+  RADARR_API_KEY: 'radarr-key',
+  SMTP_HOST: 'mail.local',
+  SMTP_PORT: '465',
+  SMTP_USER: 'smtpuser',
+  SMTP_PASS: 'smtppass',
+  MAIL_FROM_ADDRESS: 'admin@local',
+  MAIL_FROM_NAME: 'My Plex Server',
+  NEWSLETTER_CRON_SECRET: 'cron-secret',
+  PUBLIC_BASE_URL: 'https://portal.example.com',
+  OVERSEERR_URL: 'https://overseerr.example.com',
+  OVERSEERR_API_KEY: 'overseerr-key',
+  FILES_ROOT_PATH: '/mnt/qnap-software',
+  DOWNLOAD_SIGNING_SECRET: 'a-long-random-signing-secret',
+};
+
+const REQUIRED_ENV_VARS = Object.keys(REQUIRED_ENV) as (keyof typeof REQUIRED_ENV)[];
+
+let savedEnv: Record<string, string | undefined> = {};
+
+beforeEach(() => {
+  savedEnv = {};
+  for (const [key, value] of Object.entries(REQUIRED_ENV)) {
+    savedEnv[key] = process.env[key];
+    process.env[key] = value;
+  }
+  resetRateLimitsForTests();
+});
+
+afterEach(() => {
+  for (const [key, value] of Object.entries(savedEnv)) {
+    if (value === undefined) delete process.env[key];
+    else process.env[key] = value;
+  }
+  vi.restoreAllMocks();
+});
 
 /** Clears the vars loadConfig() requires so it throws, without touching anything else. */
 function clearRequiredEnv(): Record<string, string | undefined> {
   const saved: Record<string, string | undefined> = {};
-  for (const key of REQUIRED_ENV_VARS) {
+  for (const key of REQUIRED_ENV_VARS as unknown as string[]) {
     saved[key] = process.env[key];
     delete process.env[key];
   }
@@ -156,6 +178,43 @@ describe('GET /api/auth/poll error handling', () => {
     const request = new NextRequest('http://localhost/api/auth/poll');
     const response = await pollGET(request);
     expect(response.status).toBe(400);
+  });
+
+  it('returns 503 with error setup_incomplete when setup is not yet complete', async () => {
+    // Save only the setup-related env vars (keep SESSION_SECRET which is required)
+    const saved: Record<string, string | undefined> = {};
+    const setupVars = ['PLEX_URL', 'PLEX_SERVER_TOKEN', 'PLEX_SERVER_NAME',
+                       'TAUTULLI_URL', 'TAUTULLI_API_KEY',
+                       'SONARR_URL', 'SONARR_API_KEY',
+                       'RADARR_URL', 'RADARR_API_KEY',
+                       'OVERSEERR_URL', 'OVERSEERR_API_KEY',
+                       'SMTP_HOST', 'SMTP_PORT', 'SMTP_USER', 'SMTP_PASS',
+                       'MAIL_FROM_ADDRESS', 'MAIL_FROM_NAME',
+                       'PUBLIC_BASE_URL'];
+
+    for (const key of setupVars) {
+      saved[key] = process.env[key];
+      delete process.env[key];
+    }
+
+    try {
+      // Use dynamic import to ensure the route is loaded with modified env vars
+      const { GET: pollGETDynamic } = await import('../../src/app/api/auth/poll/route');
+      const request = new NextRequest('http://localhost/api/auth/poll?pinId=123');
+      const response = await pollGETDynamic(request);
+      expect(response.status).toBe(503);
+      const body = await response.json();
+      expect(body).toEqual({ error: 'setup_incomplete' });
+    } finally {
+      // Restore env
+      for (const [key, value] of Object.entries(saved)) {
+        if (value === undefined) {
+          delete process.env[key];
+        } else {
+          process.env[key] = value;
+        }
+      }
+    }
   });
 });
 

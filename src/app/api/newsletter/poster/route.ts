@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { loadConfig } from '@/lib/config';
+import { loadConfig, assertConfigured } from '@/lib/config';
+import { getDb } from '@/lib/db';
 
 export const dynamic = 'force-dynamic';
 
@@ -41,7 +42,10 @@ export async function GET(request: NextRequest) {
       return placeholderPosterResponse();
     }
 
-    const config = loadConfig();
+    // Pre-setup (or Plex not configured), assertConfigured throws — caught
+    // below and degraded to the same placeholder as any other upstream
+    // failure, which is exactly the right behavior for this route.
+    const config = assertConfigured(loadConfig(process.env, getDb()));
     // Request a resized copy from Plex's own photo transcoder instead of the
     // raw thumb — the raw file is the full source poster (seen in practice:
     // 2000x3000, ~1.5MB) while every consumer here renders it at a few

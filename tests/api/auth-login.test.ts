@@ -88,4 +88,39 @@ describe('POST /api/auth/login', () => {
     }
     expect((await POST(loginRequest('198.51.100.11'))).status).toBe(200);
   });
+
+  it('returns 503 with error setup_incomplete when setup is not yet complete', async () => {
+    // Save only the setup-related env vars (keep SESSION_SECRET which is required)
+    const saved: Record<string, string | undefined> = {};
+    const setupVars = ['PLEX_URL', 'PLEX_SERVER_TOKEN', 'PLEX_SERVER_NAME',
+                       'TAUTULLI_URL', 'TAUTULLI_API_KEY',
+                       'SONARR_URL', 'SONARR_API_KEY',
+                       'RADARR_URL', 'RADARR_API_KEY',
+                       'OVERSEERR_URL', 'OVERSEERR_API_KEY',
+                       'SMTP_HOST', 'SMTP_PORT', 'SMTP_USER', 'SMTP_PASS',
+                       'MAIL_FROM_ADDRESS', 'MAIL_FROM_NAME',
+                       'PUBLIC_BASE_URL'];
+
+    for (const key of setupVars) {
+      saved[key] = process.env[key];
+      delete process.env[key];
+    }
+
+    try {
+      const { POST } = await import('../../src/app/api/auth/login/route');
+      const response = await POST(loginRequest());
+      expect(response.status).toBe(503);
+      const body = await response.json();
+      expect(body).toEqual({ error: 'setup_incomplete' });
+    } finally {
+      // Restore env
+      for (const [key, value] of Object.entries(saved)) {
+        if (value === undefined) {
+          delete process.env[key];
+        } else {
+          process.env[key] = value;
+        }
+      }
+    }
+  });
 });

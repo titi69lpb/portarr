@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { loadConfig } from '@/lib/config';
+import { loadConfig, isSetupComplete, assertConfigured } from '@/lib/config';
 import { getDb } from '@/lib/db';
 import { getAvailableRequests } from '@/lib/overseerr';
 import { hasBeenNotified, markNotified } from '@/lib/request-notifications';
@@ -28,11 +28,17 @@ const MAX_NOTIFICATIONS_PER_RUN = 5;
 // this job wasn't worth the extra deploy step.
 export async function POST(request: NextRequest) {
   try {
-    const config = loadConfig();
+    const rawConfig = loadConfig(process.env, getDb());
     const secretHeader = request.headers.get('x-cron-secret');
-    if (!secretHeader || !secureCompare(secretHeader, config.newsletterCronSecret)) {
+    if (!secretHeader || !secureCompare(secretHeader, rawConfig.newsletterCronSecret)) {
       return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
     }
+    // Public route, secret-gated only — reachable pre-setup, unlike routes
+    // that sit behind a session (which can't exist pre-setup).
+    if (!isSetupComplete(rawConfig)) {
+      return NextResponse.json({ error: 'setup_incomplete' }, { status: 503 });
+    }
+    const config = assertConfigured(rawConfig);
 
     const db = getDb();
     const available = await getAvailableRequests(config.overseerr.url, config.overseerr.apiKey);

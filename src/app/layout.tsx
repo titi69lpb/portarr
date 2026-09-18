@@ -1,8 +1,36 @@
 import './globals.css';
 import type { Metadata, Viewport } from 'next';
 import type { ReactNode } from 'react';
+import type Database from 'better-sqlite3';
 import { Bebas_Neue, Manrope, IBM_Plex_Mono } from 'next/font/google';
 import { ServiceWorkerRegister } from '@/components/ServiceWorkerRegister';
+import { getDb } from '@/lib/db';
+import { loadConfig, isSetupComplete, type AppConfig } from '@/lib/config';
+import { getOrCreateSetupToken } from '@/lib/setup';
+
+// The root layout is the one place guaranteed to run on every request to
+// every page (unlike middleware.ts, which explicitly cannot touch the DB —
+// see the comment there — and unlike individual page.tsx files, most but
+// not all of which opt into per-request rendering on their own). Forcing
+// it dynamic here is what lets the boot-log below actually fire; the only
+// route this changes from static to dynamic is /login, which was already
+// gated behind session/DB checks in practice.
+export const dynamic = 'force-dynamic';
+
+// Logs the one-time setup URL to stdout so a self-hoster running
+// `docker logs` can find it — src/app/setup/page.tsx's own fallback UI
+// tells visitors to look here. Guarded at module scope so it prints at
+// most once per process (not once per request), and only while setup is
+// genuinely incomplete.
+let setupTokenLogged = false;
+
+function logSetupTokenOnce(config: AppConfig, db: Database.Database): void {
+  if (setupTokenLogged || isSetupComplete(config)) return;
+  setupTokenLogged = true;
+  const token = getOrCreateSetupToken(db);
+  const url = `${config.publicBaseUrl ?? 'http://localhost:3000'}/setup?token=${token}`;
+  console.log(`\n=== Portarr — configuration initiale requise ===\nOuvrez : ${url}\n`);
+}
 
 /** Display face — poster/marquee lettering. Eyebrows, wordmark, big numbers only. */
 const bebasNeue = Bebas_Neue({
@@ -64,6 +92,9 @@ export const viewport: Viewport = {
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
+  const db = getDb();
+  logSetupTokenOnce(loadConfig(process.env, db), db);
+
   return (
     <html
       lang="fr"

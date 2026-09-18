@@ -58,6 +58,11 @@ CREATE TABLE IF NOT EXISTS notified_availability (
   request_id INTEGER PRIMARY KEY,
   notified_at TEXT NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS settings (
+  key TEXT PRIMARY KEY,
+  value TEXT NOT NULL
+);
 `;
 
 export function getDb(dbPath?: string): Database.Database {

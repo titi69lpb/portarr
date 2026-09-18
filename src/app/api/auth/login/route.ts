@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createPin } from '@/lib/plex';
-import { loadConfig } from '@/lib/config';
+import { loadConfig, isSetupComplete, assertConfigured } from '@/lib/config';
+import { getDb } from '@/lib/db';
 import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
 
 // Creates a new Plex PIN against plex.tv on every call and is reachable
@@ -14,7 +15,11 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const config = loadConfig();
+    const rawConfig = loadConfig(process.env, getDb());
+    if (!isSetupComplete(rawConfig)) {
+      return NextResponse.json({ error: 'setup_incomplete' }, { status: 503 });
+    }
+    const config = assertConfigured(rawConfig);
     const { pinId, authUrl } = await createPin(config.plex.clientIdentifier);
     return NextResponse.json({ pinId, authUrl });
   } catch (err) {
