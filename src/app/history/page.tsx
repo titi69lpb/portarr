@@ -1,7 +1,8 @@
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { verifySession, SESSION_COOKIE_NAME } from '@/lib/session';
-import { loadConfig } from '@/lib/config';
+import { loadConfig, isSetupComplete, assertConfigured } from '@/lib/config';
+import { getDb } from '@/lib/db';
 import { getUserIdByEmail, getWatchHistoryPage } from '@/lib/tautulli';
 import { AppSidebarServer } from '@/components/AppSidebarServer';
 import { HistoryLoadMore } from '@/components/HistoryLoadMore';
@@ -11,13 +12,17 @@ export const dynamic = 'force-dynamic';
 const PAGE_SIZE = 30;
 
 export default async function HistoryPage() {
-  const config = loadConfig();
+  const rawConfig = loadConfig(process.env, getDb());
   const token = cookies().get(SESSION_COOKIE_NAME)?.value;
-  const sessionUser = token ? await verifySession(token, config.session.secret) : null;
+  const sessionUser = token ? await verifySession(token, rawConfig.session.secret) : null;
 
   if (!sessionUser) {
     redirect('/login');
   }
+  if (!isSetupComplete(rawConfig)) {
+    redirect('/setup');
+  }
+  const config = assertConfigured(rawConfig);
 
   let items: Awaited<ReturnType<typeof getWatchHistoryPage>>['items'] = [];
   let total = 0;

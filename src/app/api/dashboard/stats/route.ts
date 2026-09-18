@@ -8,12 +8,17 @@ import {
   type PersonalStatsByType,
 } from '@/lib/tautulli';
 import { verifySession, SESSION_COOKIE_NAME } from '@/lib/session';
-import { loadConfig } from '@/lib/config';
+import { loadConfig, isSetupComplete, assertConfigured } from '@/lib/config';
+import { getDb } from '@/lib/db';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest) {
-  const config = loadConfig();
+  const rawConfig = loadConfig(process.env, getDb());
+  if (!isSetupComplete(rawConfig)) {
+    return NextResponse.json({ error: 'setup_incomplete' }, { status: 503 });
+  }
+  const config = assertConfigured(rawConfig);
   const token = request.cookies.get(SESSION_COOKIE_NAME)?.value;
   const sessionUser = token ? await verifySession(token, config.session.secret) : null;
 

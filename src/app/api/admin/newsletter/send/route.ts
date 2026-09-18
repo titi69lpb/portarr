@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifySession, SESSION_COOKIE_NAME } from '@/lib/session';
 import { secureCompare } from '@/lib/secure-compare';
-import { loadConfig } from '@/lib/config';
+import { loadConfig, isSetupComplete, assertConfigured } from '@/lib/config';
 import { getDb } from '@/lib/db';
 import { getNewsletterItems } from '@/lib/newsletter';
 import { renderNewsletterHtml } from '@/lib/newsletter-template';
@@ -23,14 +23,14 @@ interface UserRow {
 
 export async function POST(request: NextRequest) {
   try {
-    const config = loadConfig();
+    const rawConfig = loadConfig(process.env, getDb());
 
     const secretHeader = request.headers.get('x-newsletter-secret');
-    const hasValidSecret = !!secretHeader && secureCompare(secretHeader, config.newsletterCronSecret);
+    const hasValidSecret = !!secretHeader && secureCompare(secretHeader, rawConfig.newsletterCronSecret);
 
     if (!hasValidSecret) {
       const token = request.cookies.get(SESSION_COOKIE_NAME)?.value;
-      const sessionUser = token ? await verifySession(token, config.session.secret) : null;
+      const sessionUser = token ? await verifySession(token, rawConfig.session.secret) : null;
       if (!sessionUser) {
         return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
       }
@@ -38,6 +38,13 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'forbidden' }, { status: 403 });
       }
     }
+
+    // Reachable pre-setup: the secret-header path doesn't depend on Plex/SMTP
+    // being configured at all, unlike the session path above.
+    if (!isSetupComplete(rawConfig)) {
+      return NextResponse.json({ error: 'setup_incomplete' }, { status: 503 });
+    }
+    const config = assertConfigured(rawConfig);
 
     const items = await getNewsletterItems(config.plex.url, config.plex.serverToken, WINDOW_DAYS);
     if (items.movies.length === 0 && items.episodes.length === 0) {

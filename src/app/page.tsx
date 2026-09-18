@@ -11,8 +11,9 @@ import { LogoutButton } from '@/components/LogoutButton';
 import { NewsletterSubscriptionToggle } from '@/components/NewsletterSubscriptionToggle';
 import { AnnouncementBanner } from '@/components/AnnouncementBanner';
 import { DashboardSections } from '@/components/DashboardSections';
+import { redirect } from 'next/navigation';
 import { verifySession, SESSION_COOKIE_NAME, type SessionUser } from '@/lib/session';
-import { loadConfig } from '@/lib/config';
+import { loadConfig, isSetupComplete, assertConfigured, type ConfiguredAppConfig } from '@/lib/config';
 import { getActiveSessions, type ActiveSession } from '@/lib/activity';
 import { getRecentlyAddedSplit, type RecentlyAddedSplit } from '@/lib/plex';
 import { getUpcomingReleases, type CalendarItem } from '@/lib/calendar';
@@ -70,7 +71,7 @@ const EMPTY_EXTENDED_STATS: Record<StatCategory, GlobalStat[]> = {
   mostConcurrent: [],
 };
 
-async function loadStats(sessionUser: SessionUser | null, config: ReturnType<typeof loadConfig>) {
+async function loadStats(sessionUser: SessionUser | null, config: ConfiguredAppConfig) {
   const extended = await getExtendedStats(config.tautulli.url, config.tautulli.apiKey);
   const personal = sessionUser
     ? await getPersonalStats(config.tautulli.url, config.tautulli.apiKey, sessionUser.email)
@@ -92,10 +93,15 @@ async function loadStats(sessionUser: SessionUser | null, config: ReturnType<typ
 }
 
 export default async function DashboardPage() {
-  const config = loadConfig();
+  const rawConfig = loadConfig(process.env, getDb());
   const token = cookies().get(SESSION_COOKIE_NAME)?.value;
-  const sessionUser = token ? await verifySession(token, config.session.secret) : null;
+  const sessionUser = token ? await verifySession(token, rawConfig.session.secret) : null;
   const isOwner = sessionUser?.isOwner ?? false;
+
+  if (!isSetupComplete(rawConfig)) {
+    redirect('/setup');
+  }
+  const config = assertConfigured(rawConfig);
 
   const calendarStart = new Date();
   const calendarEnd = new Date();

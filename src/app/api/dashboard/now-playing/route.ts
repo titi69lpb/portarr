@@ -1,11 +1,16 @@
 import { NextResponse } from 'next/server';
 import { getActiveSessions } from '@/lib/activity';
-import { loadConfig } from '@/lib/config';
+import { loadConfig, isSetupComplete, assertConfigured } from '@/lib/config';
+import { getDb } from '@/lib/db';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
-  const config = loadConfig();
+  const rawConfig = loadConfig(process.env, getDb());
+  if (!isSetupComplete(rawConfig)) {
+    return NextResponse.json({ error: 'setup_incomplete' }, { status: 503 });
+  }
+  const config = assertConfigured(rawConfig);
   try {
     const sessions = await getActiveSessions(config.tautulli.url, config.tautulli.apiKey);
     return NextResponse.json(sessions);

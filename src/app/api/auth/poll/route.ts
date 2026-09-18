@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createSession, SESSION_COOKIE_NAME } from '@/lib/session';
-import { loadConfig } from '@/lib/config';
+import { loadConfig, isSetupComplete, assertConfigured } from '@/lib/config';
 import { getDb } from '@/lib/db';
 import { resolvePinToSession, defaultDeps } from './resolvePinToSession';
 
@@ -11,7 +11,11 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const config = loadConfig();
+    const rawConfig = loadConfig(process.env, getDb());
+    if (!isSetupComplete(rawConfig)) {
+      return NextResponse.json({ error: 'setup_incomplete' }, { status: 503 });
+    }
+    const config = assertConfigured(rawConfig);
     const result = await resolvePinToSession(pinId, defaultDeps, {
       clientIdentifier: config.plex.clientIdentifier,
       serverToken: config.plex.serverToken,

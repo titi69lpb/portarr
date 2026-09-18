@@ -1,19 +1,23 @@
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { verifySession, SESSION_COOKIE_NAME } from '@/lib/session';
-import { loadConfig } from '@/lib/config';
+import { loadConfig, isSetupComplete } from '@/lib/config';
+import { getDb } from '@/lib/db';
 import { AppSidebarServer } from '@/components/AppSidebarServer';
 import { SpeedTestRunner } from '@/components/SpeedTestRunner';
 
 export const dynamic = 'force-dynamic';
 
 export default async function SpeedTestPage() {
-  const config = loadConfig();
+  const config = loadConfig(process.env, getDb());
   const token = cookies().get(SESSION_COOKIE_NAME)?.value;
   const sessionUser = token ? await verifySession(token, config.session.secret) : null;
 
   if (!sessionUser) {
     redirect('/login');
+  }
+  if (!isSetupComplete(config)) {
+    redirect('/setup');
   }
 
   return (

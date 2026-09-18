@@ -3,6 +3,7 @@ import { stat as statAsync } from 'fs/promises';
 import { createReadStream } from 'fs';
 import { Readable } from 'stream';
 import { loadConfig } from '@/lib/config';
+import { getDb } from '@/lib/db';
 import {
   resolveSafePath,
   withTimeout,
@@ -15,7 +16,7 @@ import { parseRange, isUnsatisfiableRange, buildContentDispositionHeader } from 
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest) {
-  const config = loadConfig();
+  const config = loadConfig(process.env, getDb());
 
   if (!config.filesRootPath) {
     return NextResponse.json({ error: 'not found' }, { status: 404 });

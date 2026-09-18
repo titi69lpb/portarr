@@ -9,7 +9,7 @@ export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest) {
   try {
-    const config = loadConfig();
+    const config = loadConfig(process.env, getDb());
     const token = request.cookies.get(SESSION_COOKIE_NAME)?.value;
     const sessionUser = token ? await verifySession(token, config.session.secret) : null;
     if (!sessionUser) {

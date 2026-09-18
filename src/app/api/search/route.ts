@@ -1,18 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifySession, SESSION_COOKIE_NAME } from '@/lib/session';
-import { loadConfig } from '@/lib/config';
+import { loadConfig, isSetupComplete, assertConfigured } from '@/lib/config';
+import { getDb } from '@/lib/db';
 import { searchLibrary } from '@/lib/plex';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest) {
   try {
-    const config = loadConfig();
+    const rawConfig = loadConfig(process.env, getDb());
     const token = request.cookies.get(SESSION_COOKIE_NAME)?.value;
-    const sessionUser = token ? await verifySession(token, config.session.secret) : null;
+    const sessionUser = token ? await verifySession(token, rawConfig.session.secret) : null;
     if (!sessionUser) {
       return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
     }
+    if (!isSetupComplete(rawConfig)) {
+      return NextResponse.json({ error: 'setup_incomplete' }, { status: 503 });
+    }
+    const config = assertConfigured(rawConfig);
 
     const query = request.nextUrl.searchParams.get('q') ?? '';
     if (!query.trim()) {
