@@ -39,9 +39,14 @@ export function ServiceSettingsForm({
     e.preventDefault();
     setSubmitting(true);
     setError(null);
-    const result = await onSubmit(values);
-    setSubmitting(false);
-    if (!result.ok) setError(result.error);
+    try {
+      const result = await onSubmit(values);
+      if (!result.ok) setError(result.error);
+    } catch (err) {
+      setError('Erreur réseau inconnue');
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   return (
