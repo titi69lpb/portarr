@@ -200,14 +200,15 @@ export interface ConfiguredAppConfig extends AppConfig {
 }
 
 // Called once per request, right after loadConfig(), by every route/page
-// that isn't part of the setup flow itself — the middleware setup-gate
-// (Task 12) guarantees isSetupComplete() is already true by the time any of
-// those call sites run, so this narrows the type instead of re-deriving
-// the check. Throwing here means a bug in the middleware gate fails loudly
-// instead of silently reading undefined fields.
+// that isn't part of the setup flow itself — page-level isSetupComplete()
+// checks (Task 12's expanded scope, see the plan's 2026-09-18 revision away
+// from middleware-based gating) guarantee isSetupComplete() is already true
+// by the time any of those call sites run, so this narrows the type instead
+// of re-deriving the check. Throwing here means a bug in one of those
+// page-level gates fails loudly instead of silently reading undefined fields.
 export function assertConfigured(config: AppConfig): ConfiguredAppConfig {
   if (!isSetupComplete(config)) {
-    throw new Error('assertConfigured called before setup was complete — this should be unreachable past the setup middleware gate');
+    throw new Error('assertConfigured called before setup was complete — this should be unreachable past the page-level setup-completion checks');
   }
   return config as ConfiguredAppConfig;
 }
