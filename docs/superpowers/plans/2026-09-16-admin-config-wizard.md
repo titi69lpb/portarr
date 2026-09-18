@@ -1759,9 +1759,82 @@ git commit -m "feat: redirect to /setup while configuration is incomplete"
 
 ---
 
-### Task 12: Compiler-driven migration — `assertConfigured` at every broken call site
+### Task 11b: Docker entrypoint generates `SESSION_SECRET`
+
+Added by the 2026-09-18 revision (see spec). `SESSION_SECRET` is no longer DB-backed (middleware needs it and can't reach the DB — see Task 4+11 amendment) — it must always be a real env var by the time `next start`/`server.js` runs. This task makes that automatic for self-hosters who don't set it themselves.
+
+**Files:**
+- Create: `entrypoint.sh`
+- Modify: `Dockerfile`
+
+- [ ] **Step 1: Write `entrypoint.sh`**
+
+```sh
+#!/bin/sh
+set -e
+
+SECRET_FILE="/app/data/.session_secret"
+
+if [ -z "$SESSION_SECRET" ]; then
+  mkdir -p /app/data
+  if [ ! -f "$SECRET_FILE" ]; then
+    node -e "console.log(require('crypto').randomBytes(32).toString('hex'))" > "$SECRET_FILE"
+    chmod 600 "$SECRET_FILE"
+  fi
+  export SESSION_SECRET="$(cat "$SECRET_FILE")"
+fi
+
+exec node server.js
+```
+
+- [ ] **Step 2: Wire it into the Dockerfile's runner stage**
+
+In `Dockerfile`, in the `FROM node:20-alpine AS runner` stage, add before `EXPOSE 3000`:
+
+```dockerfile
+COPY entrypoint.sh ./entrypoint.sh
+RUN chmod +x ./entrypoint.sh
+```
+
+Replace `CMD ["node", "server.js"]` with:
+
+```dockerfile
+ENTRYPOINT ["./entrypoint.sh"]
+```
+
+- [ ] **Step 3: Verify locally without Docker**
+
+Run (from the repo root, simulating what the entrypoint does):
+```bash
+rm -f /tmp/portarr-entrypoint-test/.session_secret
+mkdir -p /tmp/portarr-entrypoint-test
+SECRET_FILE=/tmp/portarr-entrypoint-test/.session_secret sh -c '
+  if [ ! -f "$SECRET_FILE" ]; then
+    node -e "console.log(require(\"crypto\").randomBytes(32).toString(\"hex\"))" > "$SECRET_FILE"
+  fi
+  cat "$SECRET_FILE"
+'
+```
+Expected: prints a 64-character hex string. Run it a second time — expected: prints the SAME string (idempotent, reads the persisted file instead of regenerating).
+
+- [ ] **Step 4: Build the Docker image and confirm boot**
+
+Run: `docker build -t portarr-test-entrypoint .` then `docker run --rm -e DATABASE_PATH=/app/data/portal.db portarr-test-entrypoint sh -c 'echo boot-check'` (or equivalent — the goal is confirming the image builds and `entrypoint.sh` doesn't error before handing off to `node server.js`). If a full Docker build isn't available in this environment, at minimum confirm `entrypoint.sh` has correct shell syntax: `sh -n entrypoint.sh`.
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add entrypoint.sh Dockerfile
+git commit -m "feat: generate SESSION_SECRET via Docker entrypoint on first boot"
+```
+
+---
+
+### Task 12: Compiler-driven migration — `assertConfigured` + setup-redirect at every broken call site
 
 Task 4 made `AppConfig.plex/tautulli/sonarr/radarr/overseerr/smtp/publicBaseUrl` nullable. Any file that dereferences one of those fields without narrowing now fails to compile. This task finds and fixes every one of them, using the compiler itself as the checklist — don't try to pre-enumerate files by reading code; let `tsc` tell you.
+
+**Expanded scope per the 2026-09-18 revision:** since middleware no longer redirects to `/setup` when configuration is incomplete (it can't reach the DB — see Task 4+11 amendment), every page this task touches also needs `if (!isSetupComplete(config)) redirect('/setup');` added right after `loadConfig()`, before the `assertConfigured()` narrowing. `/api/auth/login/route.ts` and `/api/auth/poll/route.ts` specifically (the two "public", session-less routes that assume Plex is already configured, and would otherwise throw/500 pre-setup) get the equivalent JSON check: `if (!isSetupComplete(config)) return NextResponse.json({ error: 'setup_incomplete' }, { status: 503 });` instead of a redirect. Every OTHER route this task touches is already behind a session check that cannot succeed pre-setup anyway (logging in requires Plex to be configured), so a redirect isn't strictly required there for safety — but add it anyway wherever it's a one-line addition alongside the `assertConfigured` fix, for a better error than a raw exception if one is somehow reached. Use judgement; if a file's structure makes this awkward, a page-level redirect is more important to get right than a route-level one — ask if genuinely unsure rather than skipping it.
 
 **Files:** whichever files `tsc --noEmit` flags after Task 4 + Task 11 (expect roughly 5-10 — most of the 33 existing `loadConfig()` call sites only touch `session.secret`, `newsletterCronSecret`, `filesRootPath`, `storageVolumes`, etc., none of which changed type, so most call sites need zero changes).
 
