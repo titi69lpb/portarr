@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { ServiceSettingsForm } from './ServiceSettingsForm';
 import { SERVICE_FIELDS, type ServiceKey } from '@/lib/settings-schema';
+import type { ConfigSource } from '@/lib/config';
 
 const STEPS: ServiceKey[] = ['publicBaseUrl', 'plex', 'tautulli', 'sonarr', 'radarr', 'overseerr', 'smtp'];
 
@@ -16,12 +17,20 @@ const STEP_TITLES: Record<ServiceKey, string> = {
   smtp: 'SMTP',
 };
 
-export function SetupWizard({ token }: { token: string }) {
+export function SetupWizard({ token, sources }: { token: string; sources: Record<string, ConfigSource> }) {
   const [stepIndex, setStepIndex] = useState(0);
   const [done, setDone] = useState(false);
   const [completing, setCompleting] = useState(false);
   const [completeError, setCompleteError] = useState<string | null>(null);
   const step = STEPS[stepIndex];
+  const stepFields = SERVICE_FIELDS[step];
+  // Same computation as AdminSettingsPanel: an env-sourced field is locked
+  // (editing it here would be a silent no-op, see applyServiceSettings), and
+  // any already-configured field gets the "already configured" hint instead
+  // of an empty box — e.g. when .env already sets SMTP_* during an upgrade
+  // but Plex/Tautulli/etc are still unset.
+  const disabledKeys = new Set(stepFields.filter((f) => sources[f.envKey] === 'env').map((f) => f.envKey));
+  const configuredKeys = new Set(stepFields.filter((f) => sources[f.envKey] !== 'unset').map((f) => f.envKey));
 
   async function handleStepSubmit(values: Record<string, string>): Promise<{ ok: boolean; error: string | null }> {
     const res = await fetch('/api/setup/step', {
@@ -80,7 +89,14 @@ export function SetupWizard({ token }: { token: string }) {
           seeds its `values` state via useState's lazy initializer, which only runs
           once per mount. Without a fresh instance per step, stale values from the
           previous step's fields would leak into (or be missing for) the new step. */}
-      <ServiceSettingsForm key={step} fields={SERVICE_FIELDS[step]} testable={step !== 'publicBaseUrl'} onSubmit={handleStepSubmit} />
+      <ServiceSettingsForm
+        key={step}
+        fields={stepFields}
+        testable={step !== 'publicBaseUrl'}
+        disabledKeys={disabledKeys}
+        configuredKeys={configuredKeys}
+        onSubmit={handleStepSubmit}
+      />
       {completing && <p className="text-sm text-plexcrew-ash">Finalisation…</p>}
       {completeError && <p className="text-sm text-plexcrew-amber">{completeError}</p>}
     </main>

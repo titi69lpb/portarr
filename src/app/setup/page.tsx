@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation';
 import { getDb } from '@/lib/db';
-import { loadConfig, isSetupComplete } from '@/lib/config';
+import { loadConfig, isSetupComplete, getConfigSources } from '@/lib/config';
 import { verifySetupToken } from '@/lib/setup';
 import { SetupWizard } from '@/components/SetupWizard';
 
@@ -16,7 +16,8 @@ export default function SetupPage({ searchParams }: { searchParams: { token?: st
 
   const queryToken = searchParams.token;
   if (queryToken && verifySetupToken(db, queryToken)) {
-    return <SetupWizard token={queryToken} />;
+    const sources = getConfigSources(process.env, db);
+    return <SetupWizard token={queryToken} sources={sources} />;
   }
 
   return (
