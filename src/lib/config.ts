@@ -1,5 +1,4 @@
 import type Database from 'better-sqlite3';
-import { getDb } from './db';
 import { getSetting } from './settings';
 import { ensureAutoSecret } from './secrets';
 import type { VolumeConfig } from './storage';
@@ -102,7 +101,7 @@ export interface AppConfig {
   storageVolumes: VolumeConfig[];
 }
 
-export function loadConfig(env: NodeJS.ProcessEnv = process.env, db: Database.Database = getDb()): AppConfig {
+export function loadConfig(env: NodeJS.ProcessEnv = process.env, db: Database.Database): AppConfig {
   const v = (key: string) => resolveConfigValue(key, env, db);
 
   const plexUrl = v('PLEX_URL');
@@ -145,9 +144,21 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env, db: Database.Da
 
   const publicBaseUrl = v('PUBLIC_BASE_URL');
 
+  // Unlike the other three auto-secrets below, SESSION_SECRET is never
+  // DB-backed: middleware needs it on the Edge runtime, which cannot touch
+  // better-sqlite3/the DB at all (see the plan's 2026-09-18 revision). In
+  // Docker, entrypoint.sh generates and exports it once before the app
+  // starts, so it's always a plain env var by the time this runs.
+  if (!env.SESSION_SECRET) {
+    throw new Error(
+      'SESSION_SECRET must be set. In Docker this is handled automatically by entrypoint.sh; ' +
+        'for local development, set it explicitly (e.g. in .env.local).'
+    );
+  }
+
   return {
     databasePath: env.DATABASE_PATH ?? './data/portal.db',
-    session: { secret: ensureAutoSecret(db, 'SESSION_SECRET', env.SESSION_SECRET) },
+    session: { secret: env.SESSION_SECRET },
     plex,
     tautulli,
     sonarr,

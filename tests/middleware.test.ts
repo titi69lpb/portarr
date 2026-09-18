@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { NextRequest } from 'next/server';
-import { shouldAllow, isSetupPath } from '../src/middleware';
+import { shouldAllow } from '../src/middleware';
 import { createSession, SESSION_COOKIE_NAME } from '../src/lib/session';
 import { resetTtlCacheForTests } from '../src/lib/ttl-cache';
 
@@ -62,6 +62,18 @@ describe('shouldAllow', () => {
 
   it('allows the service worker script with no session — a redirect to /login would break registration', () => {
     expect(shouldAllow('/sw.js', null)).toBe(true);
+  });
+
+  it('allows /setup itself with no session', () => {
+    expect(shouldAllow('/setup', null)).toBe(true);
+  });
+
+  it('allows /setup/* sub-paths with no session', () => {
+    expect(shouldAllow('/setup/anything', null)).toBe(true);
+  });
+
+  it('allows /api/setup/* routes with no session', () => {
+    expect(shouldAllow('/api/setup/step', null)).toBe(true);
   });
 });
 
@@ -187,21 +199,22 @@ describe('middleware — session revalidation', () => {
 
     expect(response.status).toBe(200);
   });
-});
 
-describe('isSetupPath', () => {
-  it('matches /setup itself', () => {
-    expect(isSetupPath('/setup')).toBe(true);
-  });
+  it('skips Plex revalidation gracefully when PLEX_SERVER_TOKEN/PLEX_SERVER_NAME are unset (DB-only Plex config) — non-owner session still allowed through, fetch never called', async () => {
+    delete process.env.PLEX_SERVER_TOKEN;
+    delete process.env.PLEX_SERVER_NAME;
+    const fetchSpy = vi.spyOn(global, 'fetch');
+    const { middleware } = await import('../src/middleware');
+    const request = await requestWithSession('/', {
+      plexId: '1',
+      email: 'a@b.com',
+      username: 'alice',
+      isOwner: false,
+    });
 
-  it('matches setup API routes', () => {
-    expect(isSetupPath('/api/setup/step')).toBe(true);
-    expect(isSetupPath('/api/setup/complete')).toBe(true);
-  });
+    const response = await middleware(request);
 
-  it('does not match unrelated paths', () => {
-    expect(isSetupPath('/')).toBe(false);
-    expect(isSetupPath('/admin/settings')).toBe(false);
-    expect(isSetupPath('/api/setupsomethingelse')).toBe(false);
+    expect(response.status).toBe(200);
+    expect(fetchSpy).not.toHaveBeenCalled();
   });
 });

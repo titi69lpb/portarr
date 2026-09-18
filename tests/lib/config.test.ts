@@ -11,6 +11,7 @@ import {
 const FULL_ENV = {
   NODE_ENV: 'test' as const,
   DATABASE_PATH: ':memory:',
+  SESSION_SECRET: 'test-secret-at-least-32-characters-long',
   PUBLIC_BASE_URL: 'https://portal.example.com',
   PLEX_URL: 'https://plex.example.com',
   PLEX_SERVER_TOKEN: 'token',
@@ -29,6 +30,14 @@ const FULL_ENV = {
   SMTP_PASS: 'smtppass',
   MAIL_FROM_ADDRESS: 'admin@example.com',
   MAIL_FROM_NAME: 'Portarr',
+};
+
+// Minimal env that still satisfies the required SESSION_SECRET, for tests
+// that otherwise want everything else unset/partial.
+const MINIMAL_ENV = {
+  NODE_ENV: 'test' as const,
+  DATABASE_PATH: ':memory:',
+  SESSION_SECRET: 'test-secret-at-least-32-characters-long',
 };
 
 describe('loadConfig — fully configured via env (backwards compat)', () => {
@@ -71,15 +80,25 @@ describe('loadConfig — fully configured via env (backwards compat)', () => {
     expect(config.plex.url).toBe('https://plex.example.com');
   });
 
-  it('auto-generates SESSION_SECRET/PLEX_CLIENT_IDENTIFIER/NEWSLETTER_CRON_SECRET/DOWNLOAD_SIGNING_SECRET when absent from env, and they are stable across two loadConfig calls', () => {
+  it('auto-generates PLEX_CLIENT_IDENTIFIER/NEWSLETTER_CRON_SECRET/DOWNLOAD_SIGNING_SECRET when absent from env, and they are stable across two loadConfig calls', () => {
     const db = getDb(':memory:');
     const first = loadConfig(FULL_ENV, db);
     const second = loadConfig(FULL_ENV, db);
-    expect(first.session.secret).toMatch(/^[0-9a-f]+$/);
-    expect(first.session.secret).toBe(second.session.secret);
     expect(first.plex?.clientIdentifier).toBe(second.plex?.clientIdentifier);
     expect(first.newsletterCronSecret).toBe(second.newsletterCronSecret);
     expect(first.downloadSigningSecret).toBe(second.downloadSigningSecret);
+  });
+
+  it('uses SESSION_SECRET straight from env (never auto-generated/DB-backed)', () => {
+    const db = getDb(':memory:');
+    const config = loadConfig(FULL_ENV, db);
+    expect(config.session.secret).toBe(FULL_ENV.SESSION_SECRET);
+  });
+
+  it('throws when SESSION_SECRET is absent from env', () => {
+    const db = getDb(':memory:');
+    const { SESSION_SECRET, ...envWithoutSecret } = FULL_ENV;
+    expect(() => loadConfig(envWithoutSecret, db)).toThrow(/SESSION_SECRET/);
   });
 });
 
@@ -90,7 +109,7 @@ describe('loadConfig — nothing configured', () => {
 
   it('every in-scope service is null, publicBaseUrl is null, isSetupComplete is false', () => {
     const db = getDb(':memory:');
-    const config = loadConfig({ NODE_ENV: 'test' as const, DATABASE_PATH: ':memory:' }, db);
+    const config = loadConfig(MINIMAL_ENV, db);
     expect(config.plex).toBeNull();
     expect(config.tautulli).toBeNull();
     expect(config.sonarr).toBeNull();
@@ -103,14 +122,14 @@ describe('loadConfig — nothing configured', () => {
 
   it('assertConfigured throws', () => {
     const db = getDb(':memory:');
-    const config = loadConfig({ NODE_ENV: 'test' as const, DATABASE_PATH: ':memory:' }, db);
+    const config = loadConfig(MINIMAL_ENV, db);
     expect(() => assertConfigured(config)).toThrow();
   });
 
   it('a partially-filled service (missing one required field) stays null', () => {
     const db = getDb(':memory:');
     const config = loadConfig(
-      { NODE_ENV: 'test' as const, DATABASE_PATH: ':memory:', PLEX_URL: 'https://plex.example.com', PLEX_SERVER_TOKEN: 'token' },
+      { ...MINIMAL_ENV, PLEX_URL: 'https://plex.example.com', PLEX_SERVER_TOKEN: 'token' },
       db
     );
     expect(config.plex).toBeNull();
@@ -127,7 +146,7 @@ describe('loadConfig — DB-stored settings fill in for unset env vars', () => {
     setSetting(db, 'PLEX_URL', 'https://plex.fromdb.example.com');
     setSetting(db, 'PLEX_SERVER_TOKEN', 'db-token');
     setSetting(db, 'PLEX_SERVER_NAME', 'DB Server');
-    const config = loadConfig({ NODE_ENV: 'test' as const, DATABASE_PATH: ':memory:' }, db);
+    const config = loadConfig(MINIMAL_ENV, db);
     expect(config.plex).toEqual({
       url: 'https://plex.fromdb.example.com',
       serverToken: 'db-token',
@@ -139,7 +158,7 @@ describe('loadConfig — DB-stored settings fill in for unset env vars', () => {
   it('env wins over a DB value for the same key', () => {
     const db = getDb(':memory:');
     setSetting(db, 'PLEX_URL', 'https://plex.fromdb.example.com');
-    const config = loadConfig({ NODE_ENV: 'test' as const, DATABASE_PATH: ':memory:', PLEX_URL: 'https://plex.fromenv.example.com' }, db);
+    const config = loadConfig({ ...MINIMAL_ENV, PLEX_URL: 'https://plex.fromenv.example.com' }, db);
     expect(config.plex).toBeNull(); // env alone still leaves serverToken/serverName unset
   });
 });
