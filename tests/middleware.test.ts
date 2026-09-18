@@ -217,4 +217,21 @@ describe('middleware — session revalidation', () => {
     expect(response.status).toBe(200);
     expect(fetchSpy).not.toHaveBeenCalled();
   });
+
+  it('fails closed — redirects to /login when SESSION_SECRET is unset, even with a valid session cookie', async () => {
+    delete process.env.SESSION_SECRET;
+    const { middleware } = await import('../src/middleware');
+    const request = await requestWithSession('/', {
+      plexId: '1',
+      email: 'a@b.com',
+      username: 'alice',
+      isOwner: false,
+    });
+
+    const response = await middleware(request);
+
+    expect(response.status).toBe(307);
+    expect(response.headers.get('location')).toContain('/login');
+    expect(response.cookies.get(SESSION_COOKIE_NAME)?.value).toBe('');
+  });
 });
