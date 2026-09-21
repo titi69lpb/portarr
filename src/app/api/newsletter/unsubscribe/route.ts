@@ -31,8 +31,8 @@ export async function GET(request: NextRequest) {
     }
 
     const config = loadConfig(process.env, getDb());
-    const plexId = await verifyUnsubscribeToken(token, config.session.secret);
-    if (!plexId) {
+    const ref = await verifyUnsubscribeToken(token, config.session.secret);
+    if (!ref) {
       return errorPage('Lien invalide ou expiré.', 400);
     }
 
@@ -65,13 +65,13 @@ export async function POST(request: NextRequest) {
     }
 
     const config = loadConfig(process.env, getDb());
-    const plexId = await verifyUnsubscribeToken(token, config.session.secret);
-    if (!plexId) {
+    const ref = await verifyUnsubscribeToken(token, config.session.secret);
+    if (!ref) {
       return errorPage('Lien invalide ou expiré.', 400);
     }
 
     const db = getDb();
-    setSubscribed(db, plexId, false);
+    setSubscribed(db, ref.userId, false);
 
     return htmlPage('<p>Vous avez été désabonné de la newsletter.</p>');
   } catch (err) {

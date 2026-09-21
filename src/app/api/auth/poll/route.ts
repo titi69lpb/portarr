@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
     db.prepare(
       `INSERT INTO users (plex_id, email, username, last_login) VALUES (?, ?, ?, ?)
        ON CONFLICT(plex_id) DO UPDATE SET email = excluded.email, username = excluded.username, last_login = excluded.last_login`
-    ).run(result.user.plexId, result.user.email, result.user.username, new Date().toISOString());
+    ).run(result.user.userId, result.user.email, result.user.username, new Date().toISOString());
 
     const token = await createSession(
       { ...result.user, isOwner: result.isOwner },

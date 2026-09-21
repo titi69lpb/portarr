@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
     }
 
     const db = getDb();
-    return NextResponse.json({ subscribed: isSubscribed(db, sessionUser.plexId) });
+    return NextResponse.json({ subscribed: isSubscribed(db, sessionUser.userId) });
   } catch (err) {
     console.error('Failed to read newsletter subscription:', err);
     return NextResponse.json({ error: 'Failed to read newsletter subscription' }, { status: 502 });
@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
     }
 
     const db = getDb();
-    setSubscribed(db, sessionUser.plexId, body.subscribed);
+    setSubscribed(db, sessionUser.userId, body.subscribed);
     return NextResponse.json({ subscribed: body.subscribed });
   } catch (err) {
     console.error('Failed to update newsletter subscription:', err);

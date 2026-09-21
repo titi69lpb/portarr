@@ -114,7 +114,7 @@ const RECENT_HISTORY_RESPONSE = {
 
 async function authedRequest(url: string): Promise<NextRequest> {
   const token = await createSession(
-    { plexId: '1', email: 'owner@b.com', username: 'owner', isOwner: true },
+    { provider: 'plex', userId: '1', email: 'owner@b.com', username: 'owner', isOwner: true },
     'test-secret-at-least-32-characters-long'
   );
   const request = new NextRequest(url);

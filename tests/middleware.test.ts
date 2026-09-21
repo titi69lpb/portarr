@@ -4,7 +4,7 @@ import { shouldAllow } from '../src/middleware';
 import { createSession, SESSION_COOKIE_NAME } from '../src/lib/session';
 import { resetTtlCacheForTests } from '../src/lib/ttl-cache';
 
-const USER = { plexId: '1', email: 'a@b.com', username: 'alice', isOwner: false };
+const USER = { provider: 'plex' as const, userId: '1', email: 'a@b.com', username: 'alice', isOwner: false };
 
 describe('shouldAllow', () => {
   it('always allows /login', () => {
@@ -106,7 +106,7 @@ const REQUIRED_ENV: Record<string, string> = {
 
 async function requestWithSession(
   path: string,
-  user: { plexId: string; email: string; username: string; isOwner: boolean }
+  user: { provider: 'plex'; userId: string; email: string; username: string; isOwner: boolean }
 ): Promise<NextRequest> {
   const token = await createSession(user, REQUIRED_ENV.SESSION_SECRET);
   const request = new NextRequest(`http://localhost${path}`);
@@ -140,7 +140,7 @@ describe('middleware — session revalidation', () => {
     );
     const { middleware } = await import('../src/middleware');
     const request = await requestWithSession('/', {
-      plexId: '1',
+      provider: 'plex', userId: '1',
       email: 'a@b.com',
       username: 'alice',
       isOwner: false,
@@ -158,7 +158,7 @@ describe('middleware — session revalidation', () => {
     vi.spyOn(global, 'fetch').mockResolvedValue(new Response(xml, { status: 200 }));
     const { middleware } = await import('../src/middleware');
     const request = await requestWithSession('/', {
-      plexId: '1',
+      provider: 'plex', userId: '1',
       email: 'a@b.com',
       username: 'alice',
       isOwner: false,
@@ -173,7 +173,7 @@ describe('middleware — session revalidation', () => {
     const fetchSpy = vi.spyOn(global, 'fetch');
     const { middleware } = await import('../src/middleware');
     const request = await requestWithSession('/', {
-      plexId: 'owner-1',
+      provider: 'plex', userId: 'owner-1',
       email: 'owner@b.com',
       username: 'owner',
       isOwner: true,
@@ -189,7 +189,7 @@ describe('middleware — session revalidation', () => {
     vi.spyOn(global, 'fetch').mockResolvedValue(new Response(null, { status: 503 }));
     const { middleware } = await import('../src/middleware');
     const request = await requestWithSession('/', {
-      plexId: '1',
+      provider: 'plex', userId: '1',
       email: 'a@b.com',
       username: 'alice',
       isOwner: false,
@@ -206,7 +206,7 @@ describe('middleware — session revalidation', () => {
     const fetchSpy = vi.spyOn(global, 'fetch');
     const { middleware } = await import('../src/middleware');
     const request = await requestWithSession('/', {
-      plexId: '1',
+      provider: 'plex', userId: '1',
       email: 'a@b.com',
       username: 'alice',
       isOwner: false,
@@ -222,7 +222,7 @@ describe('middleware — session revalidation', () => {
     delete process.env.SESSION_SECRET;
     const { middleware } = await import('../src/middleware');
     const request = await requestWithSession('/', {
-      plexId: '1',
+      provider: 'plex', userId: '1',
       email: 'a@b.com',
       username: 'alice',
       isOwner: false,

@@ -95,10 +95,10 @@ describe('resolvePinToSession', () => {
       pollPin: vi.fn().mockResolvedValue('user-token'),
       getPlexIdentity: vi.fn().mockImplementation(async (token: string) =>
         token === 'server-token'
-          ? { plexId: '2', email: 'owner@example.com', username: 'owner' }
-          : { plexId: '99', email: 'stranger@example.com', username: 'stranger' }
+          ? { provider: 'plex', userId: '2', email: 'owner@example.com', username: 'owner' }
+          : { provider: 'plex', userId: '99', email: 'stranger@example.com', username: 'stranger' }
       ),
-      getSharedUsers: vi.fn().mockResolvedValue([{ plexId: '1', email: 'a@b.com', username: 'a' }]),
+      getSharedUsers: vi.fn().mockResolvedValue([{ provider: 'plex', userId: '1', email: 'a@b.com', username: 'a' }]),
     };
     const result = await resolvePinToSession(123, deps as never, {
       clientIdentifier: 'cid',
@@ -109,12 +109,12 @@ describe('resolvePinToSession', () => {
   });
 
   it('returns ok with the session user when the user is shared', async () => {
-    const sharedUser = { plexId: '1', email: 'a@b.com', username: 'alice' };
+    const sharedUser = { provider: 'plex', userId: '1', email: 'a@b.com', username: 'alice' };
     const deps = {
       pollPin: vi.fn().mockResolvedValue('user-token'),
       getPlexIdentity: vi.fn().mockImplementation(async (token: string) =>
         token === 'server-token'
-          ? { plexId: '2', email: 'owner@example.com', username: 'owner' }
+          ? { provider: 'plex', userId: '2', email: 'owner@example.com', username: 'owner' }
           : sharedUser
       ),
       getSharedUsers: vi.fn().mockResolvedValue([sharedUser]),
@@ -128,7 +128,7 @@ describe('resolvePinToSession', () => {
   });
 
   it('returns ok with the owner identity when the visitor is the server owner (not a shared user)', async () => {
-    const ownerIdentity = { plexId: '1', email: 'owner@example.com', username: 'owner' };
+    const ownerIdentity = { provider: 'plex', userId: '1', email: 'owner@example.com', username: 'owner' };
     const deps = {
       pollPin: vi.fn().mockResolvedValue('owner-user-token'),
       getPlexIdentity: vi.fn().mockResolvedValue(ownerIdentity),

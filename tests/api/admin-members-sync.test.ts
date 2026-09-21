@@ -53,7 +53,7 @@ afterEach(() => {
 
 async function ownerRequest(url: string): Promise<NextRequest> {
   const token = await createSession(
-    { plexId: '1', email: 'owner@b.com', username: 'owner', isOwner: true },
+    { provider: 'plex', userId: '1', email: 'owner@b.com', username: 'owner', isOwner: true },
     REQUIRED_ENV.SESSION_SECRET
   );
   const request = new NextRequest(url, { method: 'POST' });
@@ -63,7 +63,7 @@ async function ownerRequest(url: string): Promise<NextRequest> {
 
 async function memberRequest(url: string): Promise<NextRequest> {
   const token = await createSession(
-    { plexId: '2', email: 'member@b.com', username: 'member', isOwner: false },
+    { provider: 'plex', userId: '2', email: 'member@b.com', username: 'member', isOwner: false },
     REQUIRED_ENV.SESSION_SECRET
   );
   const request = new NextRequest(url, { method: 'POST' });
@@ -92,9 +92,9 @@ describe('POST /api/admin/members/sync', () => {
   it('syncs Plex-shared users into the users table and returns the sync summary', async () => {
     const plexModule = await import('../../src/lib/media/plex');
     vi.mocked(plexModule.getSharedUsers).mockResolvedValue([
-      { plexId: '10', email: 'alice@b.com', username: 'alice' },
-      { plexId: '11', email: 'bob@b.com', username: 'bob' },
-      { plexId: '12', email: '', username: 'noemail' },
+      { provider: 'plex', userId: '10', email: 'alice@b.com', username: 'alice' },
+      { provider: 'plex', userId: '11', email: 'bob@b.com', username: 'bob' },
+      { provider: 'plex', userId: '12', email: '', username: 'noemail' },
     ]);
 
     const { POST } = await import('../../src/app/api/admin/members/sync/route');

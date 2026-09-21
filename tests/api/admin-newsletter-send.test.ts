@@ -83,7 +83,7 @@ function hubFetchMock(movies: Record<string, unknown>[] = [], tv: Record<string,
 
 async function ownerRequest(init?: ConstructorParameters<typeof NextRequest>[1]): Promise<NextRequest> {
   const token = await createSession(
-    { plexId: 'owner-1', email: 'owner@b.com', username: 'owner', isOwner: true },
+    { provider: 'plex', userId: 'owner-1', email: 'owner@b.com', username: 'owner', isOwner: true },
     SECRET
   );
   const request = new NextRequest('http://localhost/api/admin/newsletter/send', init);
@@ -109,7 +109,7 @@ describe('POST /api/admin/newsletter/send', () => {
 
   it('returns 403 for a valid but non-owner session', async () => {
     const token = await createSession(
-      { plexId: 'member-1', email: 'member@b.com', username: 'member', isOwner: false },
+      { provider: 'plex', userId: 'member-1', email: 'member@b.com', username: 'member', isOwner: false },
       SECRET
     );
     const { POST } = await import('../../src/app/api/admin/newsletter/send/route');

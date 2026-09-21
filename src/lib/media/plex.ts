@@ -1,6 +1,7 @@
 import { XMLParser } from 'fast-xml-parser';
 import { timeoutSignal } from '../fetch-timeout';
 import { withTtlCache, DEFAULT_CACHE_TTL_MS } from '../ttl-cache';
+import type { MediaMember } from './types';
 
 // How long a portal session can go without being re-checked against Plex's
 // current share list. Session cookies last 30 days and were never re-verified
@@ -9,12 +10,6 @@ import { withTtlCache, DEFAULT_CACHE_TTL_MS } from '../ttl-cache';
 // list itself is cached (see isStillSharedUser) so the actual cost is one
 // Plex API call per TTL window, not one per request.
 export const SESSION_REVALIDATION_TTL_MS = 5 * 60 * 1000;
-
-export interface PlexSharedUser {
-  plexId: string;
-  email: string;
-  username: string;
-}
 
 export interface RecentlyAddedItem {
   title: string;
@@ -76,7 +71,7 @@ export async function getPlexIdentity(
   userToken: string,
   clientId: string,
   fetchFn: typeof fetch = fetch
-): Promise<{ plexId: string; email: string; username: string }> {
+): Promise<MediaMember> {
   const res = await fetchFn('https://plex.tv/api/v2/user', {
     headers: { ...PLEX_HEADERS(clientId), 'X-Plex-Token': userToken },
     signal: timeoutSignal(),
@@ -86,7 +81,7 @@ export async function getPlexIdentity(
     throw new Error(`Plex API request failed: ${res.status} ${res.statusText}`);
   }
   const data = (await res.json()) as { id: number; email: string; username: string };
-  return { plexId: String(data.id), email: data.email, username: data.username };
+  return { provider: 'plex', userId: String(data.id), email: data.email, username: data.username };
 }
 
 const xmlParser = new XMLParser({ ignoreAttributes: false, attributeNamePrefix: '' });
@@ -95,7 +90,7 @@ export async function getSharedUsers(
   serverToken: string,
   serverName: string,
   fetchFn: typeof fetch = fetch
-): Promise<PlexSharedUser[]> {
+): Promise<MediaMember[]> {
   const res = await fetchFn(`https://plex.tv/api/users?X-Plex-Token=${serverToken}`, {
     signal: timeoutSignal(),
   cache: 'no-store',
@@ -110,7 +105,7 @@ export async function getSharedUsers(
   const rawUsers = parsed.MediaContainer?.User;
   const users = Array.isArray(rawUsers) ? rawUsers : rawUsers ? [rawUsers] : [];
 
-  const result: PlexSharedUser[] = [];
+  const result: MediaMember[] = [];
   for (const u of users as Array<Record<string, unknown>>) {
     const servers = u.Server;
     const serverList = Array.isArray(servers) ? servers : servers ? [servers] : [];
@@ -119,7 +114,8 @@ export async function getSharedUsers(
     );
     if (isShared) {
       result.push({
-        plexId: String(u.id),
+        provider: 'plex',
+        userId: String(u.id),
         email: String(u.email ?? ''),
         username: String(u.username ?? ''),
       });
@@ -135,7 +131,7 @@ async function fetchSharedUsersCached(
   serverToken: string,
   serverName: string,
   fetchFn: typeof fetch
-): Promise<PlexSharedUser[]> {
+): Promise<MediaMember[]> {
   return withTtlCache(
     `shared-users:${serverName}`,
     SESSION_REVALIDATION_TTL_MS,
@@ -153,14 +149,14 @@ async function fetchSharedUsersCached(
 // this check must not lock out every non-owner session at once, consistent
 // with the rest of this app's tolerance for upstream failures.
 export async function isStillSharedUser(
-  plexId: string,
+  userId: string,
   serverToken: string,
   serverName: string,
   fetchFn: typeof fetch = fetch
 ): Promise<boolean> {
   try {
     const shared = await fetchSharedUsersCached(serverToken, serverName, fetchFn);
-    return shared.some((u) => u.plexId === plexId);
+    return shared.some((u) => u.userId === userId);
   } catch (err) {
     console.error('Failed to re-verify Plex share, allowing session through:', err);
     return true;

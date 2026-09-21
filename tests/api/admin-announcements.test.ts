@@ -56,7 +56,7 @@ async function ownerRequest(
   init?: ConstructorParameters<typeof NextRequest>[1]
 ): Promise<NextRequest> {
   const token = await createSession(
-    { plexId: '1', email: 'owner@b.com', username: 'owner', isOwner: true },
+    { provider: 'plex', userId: '1', email: 'owner@b.com', username: 'owner', isOwner: true },
     REQUIRED_ENV.SESSION_SECRET
   );
   const request = new NextRequest(url, init);
@@ -69,7 +69,7 @@ async function memberRequest(
   init?: ConstructorParameters<typeof NextRequest>[1]
 ): Promise<NextRequest> {
   const token = await createSession(
-    { plexId: '2', email: 'member@b.com', username: 'member', isOwner: false },
+    { provider: 'plex', userId: '2', email: 'member@b.com', username: 'member', isOwner: false },
     REQUIRED_ENV.SESSION_SECRET
   );
   const request = new NextRequest(url, init);

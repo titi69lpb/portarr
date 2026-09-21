@@ -51,8 +51,8 @@ export async function middleware(request: NextRequest) {
   // documented in the plan's 2026-09-18 revision.
   const plexServerToken = process.env.PLEX_SERVER_TOKEN;
   const plexServerName = process.env.PLEX_SERVER_NAME;
-  if (sessionUser && !sessionUser.isOwner && plexServerToken && plexServerName) {
-    const stillShared = await isStillSharedUser(sessionUser.plexId, plexServerToken, plexServerName);
+  if (sessionUser && !sessionUser.isOwner && sessionUser.provider === 'plex' && plexServerToken && plexServerName) {
+    const stillShared = await isStillSharedUser(sessionUser.userId, plexServerToken, plexServerName);
     if (!stillShared) {
       sessionUser = null;
     }

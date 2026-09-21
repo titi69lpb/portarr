@@ -1,5 +1,5 @@
 import type Database from 'better-sqlite3';
-import type { PlexSharedUser } from './media/plex';
+import type { MediaMember } from './media/types';
 
 export interface SyncResult {
   added: number;
@@ -16,7 +16,7 @@ export interface SyncResult {
 // every existing consumer of last_login (AdminMembersList's formatDate,
 // getMemberOverview) already treats a falsy value as "no login yet", so
 // this needs no changes elsewhere. Sync never overwrites a real last_login.
-export function syncPlexUsers(db: Database.Database, plexUsers: PlexSharedUser[]): SyncResult {
+export function syncPlexUsers(db: Database.Database, plexUsers: MediaMember[]): SyncResult {
   const withEmail = plexUsers.filter((u) => u.email);
   const skippedNoEmail = plexUsers.length - withEmail.length;
 
@@ -32,8 +32,8 @@ export function syncPlexUsers(db: Database.Database, plexUsers: PlexSharedUser[]
   let added = 0;
   let updated = 0;
   for (const u of withEmail) {
-    upsert.run(u.plexId, u.email, u.username);
-    if (existingIds.has(u.plexId)) {
+    upsert.run(u.userId, u.email, u.username);
+    if (existingIds.has(u.userId)) {
       updated += 1;
     } else {
       added += 1;

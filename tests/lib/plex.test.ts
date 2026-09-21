@@ -94,7 +94,7 @@ describe('getPlexIdentity', () => {
       jsonResponse({ id: 42, email: 'user@example.com', username: 'someuser' })
     );
     const result = await getPlexIdentity('user-token-abc', 'test-client-id', fetchMock);
-    expect(result).toEqual({ plexId: '42', email: 'user@example.com', username: 'someuser' });
+    expect(result).toEqual({ provider: 'plex', userId: '42', email: 'user@example.com', username: 'someuser' });
   });
 
   it('throws when the API returns an error status', async () => {
@@ -118,7 +118,7 @@ describe('getSharedUsers', () => {
 </MediaContainer>`;
     const fetchMock = vi.fn().mockResolvedValue(xmlResponse(xml));
     const result = await getSharedUsers('admin-token', 'My Plex Server', fetchMock);
-    expect(result).toEqual([{ plexId: '1', email: 'alice@example.com', username: 'alice' }]);
+    expect(result).toEqual([{ provider: 'plex', userId: '1', email: 'alice@example.com', username: 'alice' }]);
   });
 
   it('returns an empty array when no user matches the server name', async () => {
@@ -404,13 +404,13 @@ describe('isStillSharedUser', () => {
   </User>
 </MediaContainer>`;
 
-  it('returns true when the plexId is still in the shared-users list', async () => {
+  it('returns true when the userId is still in the shared-users list', async () => {
     const fetchMock = vi.fn().mockResolvedValue(xmlResponse(sharedXml));
     const result = await isStillSharedUser('1', 'admin-token', 'My Plex Server', fetchMock);
     expect(result).toBe(true);
   });
 
-  it('returns false when the plexId is no longer in the shared-users list (share revoked)', async () => {
+  it('returns false when the userId is no longer in the shared-users list (share revoked)', async () => {
     const fetchMock = vi.fn().mockResolvedValue(xmlResponse(sharedXml));
     const result = await isStillSharedUser('999', 'admin-token', 'My Plex Server', fetchMock);
     expect(result).toBe(false);

@@ -1,9 +1,10 @@
-import { pollPin, getPlexIdentity, getSharedUsers, type PlexSharedUser } from '@/lib/media/plex';
+import { pollPin, getPlexIdentity, getSharedUsers } from '@/lib/media/plex';
+import type { MediaMember } from '@/lib/media/types';
 
 export type PollResult =
   | { status: 'pending' }
   | { status: 'denied' }
-  | { status: 'ok'; user: PlexSharedUser; isOwner: boolean };
+  | { status: 'ok'; user: MediaMember; isOwner: boolean };
 
 export interface PollDeps {
   pollPin: typeof pollPin;
@@ -26,12 +27,12 @@ export async function resolvePinToSession(
   const identity = await deps.getPlexIdentity(userToken, ctx.clientIdentifier);
 
   const ownerIdentity = await deps.getPlexIdentity(ctx.serverToken, ctx.clientIdentifier);
-  if (ownerIdentity.plexId === identity.plexId) {
+  if (ownerIdentity.userId === identity.userId) {
     return { status: 'ok', user: ownerIdentity, isOwner: true };
   }
 
   const sharedUsers = await deps.getSharedUsers(ctx.serverToken, ctx.serverName);
-  const match = sharedUsers.find((u) => u.plexId === identity.plexId);
+  const match = sharedUsers.find((u) => u.userId === identity.userId);
 
   if (!match) {
     return { status: 'denied' };

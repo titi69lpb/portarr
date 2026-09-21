@@ -82,7 +82,7 @@ export async function POST(request: NextRequest) {
     let sent = 0;
     let failed = 0;
     for (const recipient of recipients) {
-      const unsubscribeToken = await signUnsubscribeToken(recipient.plex_id, config.session.secret);
+      const unsubscribeToken = await signUnsubscribeToken({ provider: 'plex', userId: recipient.plex_id }, config.session.secret);
       const unsubscribeUrl = `${config.publicBaseUrl}/api/newsletter/unsubscribe?token=${unsubscribeToken}`;
       const html = renderNewsletterHtml(
         items,

@@ -49,7 +49,7 @@ afterEach(() => {
 
 async function requestWithSession(isOwner: boolean): Promise<NextRequest> {
   const token = await createSession(
-    { plexId: '1', email: 'u@b.com', username: 'u', isOwner },
+    { provider: 'plex', userId: '1', email: 'u@b.com', username: 'u', isOwner },
     REQUIRED_ENV.SESSION_SECRET
   );
   const request = new NextRequest('http://localhost/api/admin/whatever');

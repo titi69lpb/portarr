@@ -58,7 +58,7 @@ describe('GET /api/newsletter/unsubscribe', () => {
     // Regression guard: a state-changing GET here would let mail-client link
     // prefetchers (Outlook SafeLinks, spam scanners) silently unsubscribe
     // people who never clicked anything.
-    const token = await signUnsubscribeToken('plex-1', SECRET);
+    const token = await signUnsubscribeToken({ provider: 'plex', userId: 'plex-1' }, SECRET);
     const { GET } = await import('../../src/app/api/newsletter/unsubscribe/route');
     const request = new NextRequest(`http://localhost/api/newsletter/unsubscribe?token=${token}`);
     const response = await GET(request);
@@ -86,7 +86,7 @@ describe('GET /api/newsletter/unsubscribe', () => {
 
 describe('POST /api/newsletter/unsubscribe', () => {
   it('unsubscribes with a valid token submitted as form data', async () => {
-    const token = await signUnsubscribeToken('plex-1', SECRET);
+    const token = await signUnsubscribeToken({ provider: 'plex', userId: 'plex-1' }, SECRET);
     const { POST } = await import('../../src/app/api/newsletter/unsubscribe/route');
     const formData = new FormData();
     formData.set('token', token);

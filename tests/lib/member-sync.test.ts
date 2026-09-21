@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { getDb, resetDbForTests } from '../../src/lib/db';
 import { syncPlexUsers } from '../../src/lib/member-sync';
-import type { PlexSharedUser } from '../../src/lib/media/plex';
+import type { MediaMember } from '../../src/lib/media/types';
 
 describe('syncPlexUsers', () => {
   beforeEach(() => {
@@ -10,7 +10,7 @@ describe('syncPlexUsers', () => {
 
   it('inserts a never-logged-in Plex user with last_login as an empty string, not throwing on the NOT NULL column', () => {
     const db = getDb(':memory:');
-    const plexUsers: PlexSharedUser[] = [{ plexId: '1', email: 'a@b.com', username: 'alice' }];
+    const plexUsers: MediaMember[] = [{ provider: 'plex', userId: '1', email: 'a@b.com', username: 'alice' }];
 
     const result = syncPlexUsers(db, plexUsers);
 
@@ -31,7 +31,7 @@ describe('syncPlexUsers', () => {
       '1', 'old@b.com', 'oldname', '2026-08-01T00:00:00.000Z'
     );
 
-    const result = syncPlexUsers(db, [{ plexId: '1', email: 'new@b.com', username: 'newname' }]);
+    const result = syncPlexUsers(db, [{ provider: 'plex', userId: '1', email: 'new@b.com', username: 'newname' }]);
 
     expect(result).toEqual({ added: 0, updated: 1, skippedNoEmail: 0, total: 1 });
     const row = db.prepare('SELECT * FROM users WHERE plex_id = ?').get('1') as {
@@ -47,7 +47,7 @@ describe('syncPlexUsers', () => {
 
   it('skips a Plex user with no email — nothing to mail them at, and the email column is NOT NULL', () => {
     const db = getDb(':memory:');
-    const result = syncPlexUsers(db, [{ plexId: '1', email: '', username: 'noemail' }]);
+    const result = syncPlexUsers(db, [{ provider: 'plex', userId: '1', email: '', username: 'noemail' }]);
 
     expect(result).toEqual({ added: 0, updated: 0, skippedNoEmail: 1, total: 0 });
     expect(db.prepare('SELECT COUNT(*) as c FROM users').get()).toEqual({ c: 0 });
@@ -60,10 +60,10 @@ describe('syncPlexUsers', () => {
     );
 
     const result = syncPlexUsers(db, [
-      { plexId: '1', email: 'existing@b.com', username: 'existing' },
-      { plexId: '2', email: 'new1@b.com', username: 'new1' },
-      { plexId: '3', email: 'new2@b.com', username: 'new2' },
-      { plexId: '4', email: '', username: 'noemail' },
+      { provider: 'plex', userId: '1', email: 'existing@b.com', username: 'existing' },
+      { provider: 'plex', userId: '2', email: 'new1@b.com', username: 'new1' },
+      { provider: 'plex', userId: '3', email: 'new2@b.com', username: 'new2' },
+      { provider: 'plex', userId: '4', email: '', username: 'noemail' },
     ]);
 
     expect(result).toEqual({ added: 2, updated: 1, skippedNoEmail: 1, total: 3 });
