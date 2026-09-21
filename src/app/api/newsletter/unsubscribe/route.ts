@@ -71,7 +71,7 @@ export async function POST(request: NextRequest) {
     }
 
     const db = getDb();
-    setSubscribed(db, ref.userId, false);
+    setSubscribed(db, ref, false);
 
     return htmlPage('<p>Vous avez été désabonné de la newsletter.</p>');
   } catch (err) {

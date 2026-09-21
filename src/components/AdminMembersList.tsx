@@ -23,7 +23,7 @@ export function AdminMembersList({ members }: { members: MemberOverview[] }) {
         </thead>
         <tbody>
           {members.map((m) => (
-            <tr key={m.plexId} className="border-b border-plexcrew-teal/10 last:border-0">
+            <tr key={`${m.provider}:${m.userId}`} className="border-b border-plexcrew-teal/10 last:border-0">
               <td className="py-2 pr-4 text-plexcrew-screen">
                 {m.username}
                 <span className="ml-2 text-xs text-plexcrew-ash">{m.email}</span>

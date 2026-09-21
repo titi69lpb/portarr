@@ -19,13 +19,13 @@ describe('getMemberOverview', () => {
 
   it('joins portal users with Tautulli activity and newsletter opt-in status', async () => {
     const db = getDb(':memory:');
-    db.prepare('INSERT INTO users (plex_id, email, username, last_login) VALUES (?, ?, ?, ?)').run(
+    db.prepare("INSERT INTO users (provider, external_id, email, username, last_login) VALUES ('plex', ?, ?, ?, ?)").run(
       'p1', 'alice@b.com', 'alice', '2026-08-20T10:00:00.000Z'
     );
-    db.prepare('INSERT INTO users (plex_id, email, username, last_login) VALUES (?, ?, ?, ?)').run(
+    db.prepare("INSERT INTO users (provider, external_id, email, username, last_login) VALUES ('plex', ?, ?, ?, ?)").run(
       'p2', 'bob@b.com', 'bob', '2026-08-25T10:00:00.000Z'
     );
-    setSubscribed(db, 'p2', false);
+    setSubscribed(db, { provider: 'plex', userId: 'p2' }, false);
 
     const fetchMock = vi.fn().mockResolvedValue(
       jsonResponse({
@@ -42,7 +42,7 @@ describe('getMemberOverview', () => {
 
     // Ordered by last_login DESC — bob first
     expect(result[0]).toEqual({
-      plexId: 'p2',
+      provider: 'plex', userId: 'p2',
       username: 'bob',
       email: 'bob@b.com',
       portalLastLogin: '2026-08-25T10:00:00.000Z',
@@ -50,7 +50,7 @@ describe('getMemberOverview', () => {
       newsletterOptedIn: false,
     });
     expect(result[1]).toEqual({
-      plexId: 'p1',
+      provider: 'plex', userId: 'p1',
       username: 'alice',
       email: 'alice@b.com',
       portalLastLogin: '2026-08-20T10:00:00.000Z',
@@ -61,7 +61,7 @@ describe('getMemberOverview', () => {
 
   it('defaults every member to no Tautulli activity when the Tautulli request fails, instead of throwing', async () => {
     const db = getDb(':memory:');
-    db.prepare('INSERT INTO users (plex_id, email, username, last_login) VALUES (?, ?, ?, ?)').run(
+    db.prepare("INSERT INTO users (provider, external_id, email, username, last_login) VALUES ('plex', ?, ?, ?, ?)").run(
       'p1', 'alice@b.com', 'alice', '2026-08-20T10:00:00.000Z'
     );
     vi.spyOn(global, 'fetch').mockResolvedValue(jsonResponse({}, false));
@@ -69,7 +69,7 @@ describe('getMemberOverview', () => {
     const result = await getMemberOverview(db, 'https://tautulli.example.com', 'apikey');
     expect(result).toEqual([
       {
-        plexId: 'p1',
+        provider: 'plex', userId: 'p1',
         username: 'alice',
         email: 'alice@b.com',
         portalLastLogin: '2026-08-20T10:00:00.000Z',
@@ -93,10 +93,10 @@ describe('listUsers', () => {
 
   it('returns portal users ordered by last_login DESC, no Tautulli call', async () => {
     const db = getDb(':memory:');
-    db.prepare('INSERT INTO users (plex_id, email, username, last_login) VALUES (?, ?, ?, ?)').run(
+    db.prepare("INSERT INTO users (provider, external_id, email, username, last_login) VALUES ('plex', ?, ?, ?, ?)").run(
       'p1', 'alice@b.com', 'alice', '2026-08-20T10:00:00.000Z'
     );
-    db.prepare('INSERT INTO users (plex_id, email, username, last_login) VALUES (?, ?, ?, ?)').run(
+    db.prepare("INSERT INTO users (provider, external_id, email, username, last_login) VALUES ('plex', ?, ?, ?, ?)").run(
       'p2', 'bob@b.com', 'bob', '2026-08-25T10:00:00.000Z'
     );
     const fetchSpy = vi.spyOn(global, 'fetch');
@@ -104,8 +104,8 @@ describe('listUsers', () => {
     const result = listUsers(db);
 
     expect(result).toEqual([
-      { plexId: 'p2', username: 'bob', email: 'bob@b.com', lastLogin: '2026-08-25T10:00:00.000Z' },
-      { plexId: 'p1', username: 'alice', email: 'alice@b.com', lastLogin: '2026-08-20T10:00:00.000Z' },
+      { provider: 'plex', userId: 'p2', username: 'bob', email: 'bob@b.com', lastLogin: '2026-08-25T10:00:00.000Z' },
+      { provider: 'plex', userId: 'p1', username: 'alice', email: 'alice@b.com', lastLogin: '2026-08-20T10:00:00.000Z' },
     ]);
     expect(fetchSpy).not.toHaveBeenCalled();
   });

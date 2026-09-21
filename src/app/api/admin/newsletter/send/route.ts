@@ -10,13 +10,15 @@ import { createTransport, sendMail } from '@/lib/mailer';
 import { insertMailLog } from '@/lib/mail-log';
 import { signUnsubscribeToken } from '@/lib/newsletter-token';
 import { insertNewsletterArchive } from '@/lib/newsletter-archive';
+import type { ProviderId } from '@/lib/media/types';
 
 export const dynamic = 'force-dynamic';
 
 const WINDOW_DAYS = 6;
 
 interface UserRow {
-  plex_id: string;
+  provider: ProviderId;
+  external_id: string;
   email: string;
   username: string;
 }
@@ -58,9 +60,9 @@ export async function POST(request: NextRequest) {
 
     const db = getDb();
     const allUsers = db
-      .prepare('SELECT plex_id, email, username FROM users WHERE email != \'\'')
+      .prepare('SELECT provider, external_id, email, username FROM users WHERE email != \'\'')
       .all() as UserRow[];
-    const recipients = allUsers.filter((u) => isSubscribed(db, u.plex_id));
+    const recipients = allUsers.filter((u) => isSubscribed(db, { provider: u.provider, userId: u.external_id }));
 
     // Archive a copy before sending — its unsubscribe link points at the
     // dashboard (no per-recipient token makes sense for a copy anyone can
@@ -82,7 +84,7 @@ export async function POST(request: NextRequest) {
     let sent = 0;
     let failed = 0;
     for (const recipient of recipients) {
-      const unsubscribeToken = await signUnsubscribeToken({ provider: 'plex', userId: recipient.plex_id }, config.session.secret);
+      const unsubscribeToken = await signUnsubscribeToken({ provider: recipient.provider, userId: recipient.external_id }, config.session.secret);
       const unsubscribeUrl = `${config.publicBaseUrl}/api/newsletter/unsubscribe?token=${unsubscribeToken}`;
       const html = renderNewsletterHtml(
         items,

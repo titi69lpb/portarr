@@ -63,7 +63,7 @@ describe('GET /api/newsletter/unsubscribe', () => {
     const request = new NextRequest(`http://localhost/api/newsletter/unsubscribe?token=${token}`);
     const response = await GET(request);
     expect(response.status).toBe(200);
-    expect(isSubscribed(getDb(), 'plex-1')).toBe(true);
+    expect(isSubscribed(getDb(), { provider: 'plex', userId: 'plex-1' })).toBe(true);
     const body = await response.text();
     expect(body).toContain('<form');
     expect(body).toContain(token);
@@ -96,7 +96,7 @@ describe('POST /api/newsletter/unsubscribe', () => {
     });
     const response = await POST(request);
     expect(response.status).toBe(200);
-    expect(isSubscribed(getDb(), 'plex-1')).toBe(false);
+    expect(isSubscribed(getDb(), { provider: 'plex', userId: 'plex-1' })).toBe(false);
   });
 
   it('returns 400 for a missing token', async () => {

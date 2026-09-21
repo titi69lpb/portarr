@@ -1,5 +1,5 @@
 import Database from 'better-sqlite3';
-import { mkdirSync } from 'node:fs';
+import { existsSync, mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';
 
 let instance: Database.Database | null = null;
@@ -7,10 +7,12 @@ let instancePath: string | null = null;
 
 const SCHEMA = `
 CREATE TABLE IF NOT EXISTS users (
-  plex_id TEXT PRIMARY KEY,
+  provider TEXT NOT NULL,
+  external_id TEXT NOT NULL,
   email TEXT NOT NULL,
   username TEXT NOT NULL,
-  last_login TEXT NOT NULL
+  last_login TEXT NOT NULL,
+  PRIMARY KEY (provider, external_id)
 );
 
 CREATE TABLE IF NOT EXISTS announcements (
@@ -42,9 +44,11 @@ CREATE TABLE IF NOT EXISTS mail_log (
 );
 
 CREATE TABLE IF NOT EXISTS newsletter_subscriptions (
-  plex_id TEXT PRIMARY KEY,
+  provider TEXT NOT NULL,
+  external_id TEXT NOT NULL,
   opted_in INTEGER NOT NULL DEFAULT 1,
-  updated_at TEXT NOT NULL
+  updated_at TEXT NOT NULL,
+  PRIMARY KEY (provider, external_id)
 );
 
 CREATE TABLE IF NOT EXISTS newsletter_archive (
@@ -64,6 +68,54 @@ CREATE TABLE IF NOT EXISTS settings (
   value TEXT NOT NULL
 );
 `;
+
+export const LEGACY_BACKUP_SUFFIX = '.pre-provider-migration';
+
+function tableHasColumn(db: Database.Database, table: string, column: string): boolean {
+  const columns = db.prepare(`PRAGMA table_info(${table})`).all() as { name: string }[];
+  return columns.some((c) => c.name === column);
+}
+
+// SQLite cannot alter a primary key, so moving `users` and
+// `newsletter_subscriptions` from `plex_id` to (provider, external_id) means
+// rename -> create new -> copy -> drop, inside one transaction. Guarded by
+// the presence of the legacy `plex_id` column, so it is a no-op on fresh and
+// already-migrated databases. An older Portarr image cannot read the new
+// schema, so a copy of the database is taken first (once) as the rollback.
+function migrateToProviderKeys(db: Database.Database, dbPath: string): void {
+  const usersLegacy = tableHasColumn(db, 'users', 'plex_id');
+  const subsLegacy = tableHasColumn(db, 'newsletter_subscriptions', 'plex_id');
+  if (!usersLegacy && !subsLegacy) return;
+
+  if (dbPath !== ':memory:') {
+    const backupPath = `${dbPath}${LEGACY_BACKUP_SUFFIX}`;
+    if (!existsSync(backupPath)) {
+      // VACUUM INTO writes a consistent copy even in WAL mode; it cannot run
+      // inside a transaction, hence before db.transaction() below.
+      db.exec(`VACUUM INTO '${backupPath.replace(/'/g, "''")}'`);
+    }
+  }
+
+  db.transaction(() => {
+    if (usersLegacy) db.exec('ALTER TABLE users RENAME TO users_legacy');
+    if (subsLegacy) db.exec('ALTER TABLE newsletter_subscriptions RENAME TO newsletter_subscriptions_legacy');
+    db.exec(SCHEMA);
+    if (usersLegacy) {
+      db.exec(
+        `INSERT INTO users (provider, external_id, email, username, last_login)
+         SELECT 'plex', plex_id, email, username, last_login FROM users_legacy`
+      );
+      db.exec('DROP TABLE users_legacy');
+    }
+    if (subsLegacy) {
+      db.exec(
+        `INSERT INTO newsletter_subscriptions (provider, external_id, opted_in, updated_at)
+         SELECT 'plex', plex_id, opted_in, updated_at FROM newsletter_subscriptions_legacy`
+      );
+      db.exec('DROP TABLE newsletter_subscriptions_legacy');
+    }
+  })();
+}
 
 export function getDb(dbPath?: string): Database.Database {
   // If no explicit path and we have an instance, return it
@@ -88,6 +140,7 @@ export function getDb(dbPath?: string): Database.Database {
 
   instance = new Database(resolvedPath);
   instance.pragma('journal_mode = WAL');
+  migrateToProviderKeys(instance, resolvedPath);
   instance.exec(SCHEMA);
   instancePath = resolvedPath;
   return instance;

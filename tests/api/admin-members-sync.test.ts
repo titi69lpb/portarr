@@ -104,10 +104,10 @@ describe('POST /api/admin/members/sync', () => {
     const body = await response.json();
     expect(body).toEqual({ added: 2, updated: 0, skippedNoEmail: 1, total: 2 });
 
-    const rows = getDb().prepare('SELECT plex_id, last_login FROM users ORDER BY plex_id').all();
+    const rows = getDb().prepare('SELECT external_id, last_login FROM users WHERE provider = \'plex\' ORDER BY external_id').all();
     expect(rows).toEqual([
-      { plex_id: '10', last_login: '' },
-      { plex_id: '11', last_login: '' },
+      { external_id: '10', last_login: '' },
+      { external_id: '11', last_login: '' },
     ]);
   });
 

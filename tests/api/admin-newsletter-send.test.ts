@@ -137,13 +137,13 @@ describe('POST /api/admin/newsletter/send', () => {
     );
 
     const db = getDb();
-    db.prepare('INSERT INTO users (plex_id, email, username, last_login) VALUES (?, ?, ?, ?)').run(
+    db.prepare("INSERT INTO users (provider, external_id, email, username, last_login) VALUES ('plex', ?, ?, ?, ?)").run(
       'plex-a', 'a@b.com', 'a', new Date().toISOString()
     );
-    db.prepare('INSERT INTO users (plex_id, email, username, last_login) VALUES (?, ?, ?, ?)').run(
+    db.prepare("INSERT INTO users (provider, external_id, email, username, last_login) VALUES ('plex', ?, ?, ?, ?)").run(
       'plex-b', 'b@b.com', 'b', new Date().toISOString()
     );
-    setSubscribed(db, 'plex-b', false);
+    setSubscribed(db, { provider: 'plex', userId: 'plex-b' }, false);
 
     const request = await ownerRequest({ method: 'POST' });
     const { POST } = await import('../../src/app/api/admin/newsletter/send/route');

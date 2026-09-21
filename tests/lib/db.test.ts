@@ -53,9 +53,9 @@ describe('getDb', () => {
   it('can insert and read back a user', () => {
     const db = getDb(':memory:');
     db.prepare(
-      'INSERT INTO users (plex_id, email, username, last_login) VALUES (?, ?, ?, ?)'
+      "INSERT INTO users (provider, external_id, email, username, last_login) VALUES ('plex', ?, ?, ?, ?)"
     ).run('12345', 'test@example.com', 'tester', new Date().toISOString());
-    const row = db.prepare('SELECT * FROM users WHERE plex_id = ?').get('12345') as {
+    const row = db.prepare("SELECT * FROM users WHERE provider = 'plex' AND external_id = ?").get('12345') as {
       email: string;
     };
     expect(row.email).toBe('test@example.com');

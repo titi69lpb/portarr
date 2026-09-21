@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { loadConfig, isSetupComplete, assertConfigured } from '@/lib/config';
 import { getDb } from '@/lib/db';
 import { getSharedUsers } from '@/lib/media/plex';
-import { syncPlexUsers } from '@/lib/member-sync';
+import { syncMembers } from '@/lib/member-sync';
 import { requireOwner } from '@/lib/route-auth';
 
 export const dynamic = 'force-dynamic';
@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
     const config = assertConfigured(rawConfig);
     const plexUsers = await getSharedUsers(config.plex.serverToken, config.plex.serverName);
     const db = getDb();
-    const result = syncPlexUsers(db, plexUsers);
+    const result = syncMembers(db, plexUsers);
     return NextResponse.json(result);
   } catch (err) {
     console.error('Failed to sync Plex users:', err);
