@@ -9,8 +9,6 @@ export interface PollDeps {
   getSharedUsers: typeof getSharedUsers;
 }
 
-export const defaultDeps: PollDeps = { pollPin, getPlexIdentity, getSharedUsers };
-
 export async function resolvePinToSession(
   pinId: number,
   deps: PollDeps,

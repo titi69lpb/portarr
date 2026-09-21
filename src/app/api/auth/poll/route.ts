@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createSession, SESSION_COOKIE_NAME } from '@/lib/session';
 import { loadConfig, isSetupComplete, assertConfigured } from '@/lib/config';
 import { getDb } from '@/lib/db';
-import { resolvePinToSession, defaultDeps } from '@/lib/media/plex-pin';
+import { getProvider } from '@/lib/media/registry';
 
 export async function GET(request: NextRequest) {
   const pinId = Number(request.nextUrl.searchParams.get('pinId'));
@@ -16,11 +16,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'setup_incomplete' }, { status: 503 });
     }
     const config = assertConfigured(rawConfig);
-    const result = await resolvePinToSession(pinId, defaultDeps, {
-      clientIdentifier: config.plex.clientIdentifier,
-      serverToken: config.plex.serverToken,
-      serverName: config.plex.serverName,
-    });
+    const result = await getProvider(config, 'plex').auth.resolvePin(pinId);
 
     if (result.status !== 'ok') {
       return NextResponse.json({ status: result.status });
