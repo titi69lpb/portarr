@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createSession, SESSION_COOKIE_NAME } from '@/lib/session';
+import { completeLogin } from '@/lib/login';
 import { loadConfig, isSetupComplete, assertConfigured } from '@/lib/config';
 import { getDb } from '@/lib/db';
-import { getProvider } from '@/lib/media/registry';
+import { getPinAuth } from '@/lib/media/registry';
 
 export async function GET(request: NextRequest) {
   const pinId = Number(request.nextUrl.searchParams.get('pinId'));
@@ -16,32 +16,14 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'setup_incomplete' }, { status: 503 });
     }
     const config = assertConfigured(rawConfig);
-    // Deliberately plex-only for now: sub-project 2 (Jellyfin) will select the provider from the request.
-    const result = await getProvider(config, 'plex').auth.resolvePin(pinId);
+    // Plex logs in through the PIN flow; Jellyfin uses POST /api/auth/password.
+    const result = await getPinAuth(config, 'plex').resolvePin(pinId);
 
     if (result.status !== 'ok') {
       return NextResponse.json({ status: result.status });
     }
 
-    const db = getDb();
-    db.prepare(
-      `INSERT INTO users (provider, external_id, email, username, last_login) VALUES (?, ?, ?, ?, ?)
-       ON CONFLICT(provider, external_id) DO UPDATE SET email = excluded.email, username = excluded.username, last_login = excluded.last_login`
-    ).run(result.user.provider, result.user.userId, result.user.email, result.user.username, new Date().toISOString());
-
-    const token = await createSession(
-      { ...result.user, isOwner: result.isOwner },
-      config.session.secret
-    );
-    const response = NextResponse.json({ status: 'ok' });
-    response.cookies.set(SESSION_COOKIE_NAME, token, {
-      httpOnly: true,
-      secure: true,
-      sameSite: 'lax',
-      path: '/',
-      maxAge: 60 * 60 * 24 * 30,
-    });
-    return response;
+    return await completeLogin(getDb(), config.session.secret, result.user, result.isOwner);
   } catch (err) {
     console.error('Failed to verify login status:', err);
     return NextResponse.json({ error: 'Failed to verify login status' }, { status: 502 });

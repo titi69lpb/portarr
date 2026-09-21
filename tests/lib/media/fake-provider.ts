@@ -14,6 +14,8 @@ export function fakeProvider(id: ProviderId, overrides: Partial<MediaServer> = {
     recentlyAdded: async () => [],
     recentlyAddedSplit: async () => ({ movies: [], episodes: [] }),
     search: async () => [],
+    handlesPoster: () => false,
+    poster: async () => null,
     ...overrides,
   };
 }

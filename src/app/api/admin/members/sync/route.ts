@@ -3,6 +3,7 @@ import { loadConfig, isSetupComplete, assertConfigured } from '@/lib/config';
 import { getDb } from '@/lib/db';
 import { getActiveProviders } from '@/lib/media/registry';
 import { listMembersAll } from '@/lib/media/aggregate';
+import { enrichMembersWithEmail, fetchSeerrUsers } from '@/lib/media/seerr-emails';
 import { syncMembers } from '@/lib/member-sync';
 import { requireOwner } from '@/lib/route-auth';
 
@@ -18,7 +19,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'setup_incomplete' }, { status: 503 });
     }
     const config = assertConfigured(rawConfig);
-    const members = await listMembersAll(getActiveProviders(config));
+    let members = await listMembersAll(getActiveProviders(config));
+    // Jellyfin has no email: fill the empty ones from Seerr. A Seerr failure
+    // only leaves those members without an email (they are skipped by the sync).
+    if (members.some((m) => m.provider === 'jellyfin' && !m.email)) {
+      try {
+        members = enrichMembersWithEmail(members, await fetchSeerrUsers(config.overseerr.url, config.overseerr.apiKey));
+      } catch (err) {
+        console.error('Failed to fetch Seerr users for member emails:', err instanceof Error ? err.message : 'unknown error');
+      }
+    }
     const db = getDb();
     const result = syncMembers(db, members);
     return NextResponse.json(result);

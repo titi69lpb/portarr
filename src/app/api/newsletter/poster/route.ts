@@ -1,13 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { loadConfig, assertConfigured } from '@/lib/config';
 import { getDb } from '@/lib/db';
+import { getActiveProviders } from '@/lib/media/registry';
 
 export const dynamic = 'force-dynamic';
 
-const VALID_PATH = /^\/library\/metadata\/\d+\/thumb\/\d+$/;
-
 // A themed "no poster" placeholder, returned with a 200 whenever the
-// underlying Plex item can't be fetched — e.g. a stats/history entry
+// underlying media item can't be fetched — e.g. a stats/history entry
 // pointing at media that has since been deleted (a real, recurring case
 // after the NAS storage incident). Every consumer is a Server Component
 // with no onError fallback (see the NowPlaying Client Component incident
@@ -34,11 +33,8 @@ function placeholderPosterResponse(): NextResponse {
 
 export async function GET(request: NextRequest) {
   try {
-    const path = request.nextUrl.searchParams.get('path');
-    if (!path || !VALID_PATH.test(path)) {
-      // Same degrade-to-placeholder contract as an upstream failure below: every
-      // consumer is a Server Component with no onError fallback, so an error
-      // status here would render as a broken-image glyph instead of a blank one.
+    const ref = request.nextUrl.searchParams.get('path');
+    if (!ref) {
       return placeholderPosterResponse();
     }
 
@@ -46,24 +42,25 @@ export async function GET(request: NextRequest) {
     // below and degraded to the same placeholder as any other upstream
     // failure, which is exactly the right behavior for this route.
     const config = assertConfigured(loadConfig(process.env, getDb()));
-    // Request a resized copy from Plex's own photo transcoder instead of the
-    // raw thumb — the raw file is the full source poster (seen in practice:
-    // 2000x3000, ~1.5MB) while every consumer here renders it at a few
-    // hundred CSS pixels at most. 300x450 covers every current call site
-    // (including retina) at a fraction of the weight.
-    const transcodeUrl =
-      `${config.plex.url}/photo/:/transcode?width=300&height=450&minSize=1&upscale=0` +
-      `&url=${encodeURIComponent(path)}&X-Plex-Token=${config.plex.serverToken}`;
-    const res = await fetch(transcodeUrl);
-    if (!res.ok) {
+
+    // Each provider recognizes only its own poster refs (Plex thumb paths,
+    // Jellyfin `jellyfin:<id>`); a ref nobody handles is malformed or foreign.
+    // Same degrade-to-placeholder contract as an upstream failure: every
+    // consumer is a Server Component with no onError fallback, so an error
+    // status here would render as a broken-image glyph instead of a blank one.
+    const provider = getActiveProviders(config).find((p) => p.handlesPoster(ref));
+    if (!provider) {
       return placeholderPosterResponse();
     }
 
-    const contentType = res.headers.get('content-type') ?? 'image/jpeg';
-    const bytes = await res.arrayBuffer();
-    return new NextResponse(bytes, {
+    const poster = await provider.poster(ref);
+    if (!poster) {
+      return placeholderPosterResponse();
+    }
+
+    return new NextResponse(poster.bytes, {
       status: 200,
-      headers: { 'Content-Type': contentType, 'Cache-Control': 'public, max-age=86400, immutable' },
+      headers: { 'Content-Type': poster.contentType, 'Cache-Control': 'public, max-age=86400, immutable' },
     });
   } catch (err) {
     console.error('Failed to proxy newsletter poster:', err);

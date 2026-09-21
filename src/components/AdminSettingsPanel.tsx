@@ -9,13 +9,14 @@ const SERVICE_TITLES: Record<ServiceKey, string> = {
   publicBaseUrl: 'URL publique',
   plex: 'Plex',
   tautulli: 'Tautulli',
+  jellyfin: 'Jellyfin',
   sonarr: 'Sonarr',
   radarr: 'Radarr',
   overseerr: 'Overseerr',
   smtp: 'SMTP',
 };
 
-const SERVICES: ServiceKey[] = ['publicBaseUrl', 'plex', 'tautulli', 'sonarr', 'radarr', 'overseerr', 'smtp'];
+const SERVICES: ServiceKey[] = ['publicBaseUrl', 'plex', 'tautulli', 'jellyfin', 'sonarr', 'radarr', 'overseerr', 'smtp'];
 
 export function AdminSettingsPanel({
   sources,

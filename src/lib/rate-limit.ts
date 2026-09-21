@@ -24,6 +24,10 @@ export function resetRateLimitsForTests(): void {
   buckets.clear();
 }
 
+export function rateLimitBucketCountForTests(): number {
+  return buckets.size;
+}
+
 export interface RateLimitOptions {
   max: number;
   windowMs: number;
@@ -33,6 +37,13 @@ export interface RateLimitOptions {
 // exceeded `max` requests within the current `windowMs` window.
 export function checkRateLimit(key: string, options: RateLimitOptions): boolean {
   const now = Date.now();
+
+  // Keys are attacker-supplied (client IP header, submitted username): sweep expired buckets so the map
+  // cannot grow without bound.
+  if (buckets.size > 10_000) {
+    for (const [k, b] of buckets) if (b.resetAt <= now) buckets.delete(k);
+  }
+
   const bucket = buckets.get(key);
 
   if (!bucket || bucket.resetAt <= now) {

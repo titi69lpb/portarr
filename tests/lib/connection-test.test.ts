@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { testPlexConnection, testTautulliConnection, testSonarrConnection, testRadarrConnection, testOverseerrConnection, testSmtpConnection } from '../../src/lib/connection-test';
+import { testPlexConnection, testTautulliConnection, testJellyfinConnection, testSonarrConnection, testRadarrConnection, testOverseerrConnection, testSmtpConnection } from '../../src/lib/connection-test';
 import type { MailTransport } from '../../src/lib/mailer';
 
 function jsonResponse(body: unknown, ok = true, status = 200): Response {
@@ -170,5 +170,35 @@ describe('testSmtpConnection', () => {
     const result = await testSmtpConnection(SMTP_CONFIG, createTransportFn);
 
     expect(result).toEqual({ ok: false, error: '535 Authentication failed' });
+  });
+});
+
+describe('testJellyfinConnection', () => {
+  it('succeeds when /System/Info returns a server id, sending the token header', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(jsonResponse({ Id: 'abc', ServerName: 'MyJellyfin' }));
+    const result = await testJellyfinConnection('http://jellyfin.local:8096/', 'key123', fetchMock);
+    expect(result).toEqual({ ok: true, error: null });
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(url).toBe('http://jellyfin.local:8096/System/Info');
+    expect(init.headers.Authorization).toContain('Token="key123"');
+  });
+
+  it('fails with the status code when Jellyfin rejects the key', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(jsonResponse({}, false, 401));
+    const result = await testJellyfinConnection('http://jellyfin.local:8096', 'bad', fetchMock);
+    expect(result.ok).toBe(false);
+    expect(result.error).toContain('401');
+  });
+
+  it('fails on a response without a server id', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(jsonResponse({ hello: 'world' }));
+    const result = await testJellyfinConnection('http://jellyfin.local:8096', 'k', fetchMock);
+    expect(result.ok).toBe(false);
+  });
+
+  it('reports a network error', async () => {
+    const fetchMock = vi.fn().mockRejectedValue(new Error('connect ECONNREFUSED'));
+    const result = await testJellyfinConnection('http://jellyfin.local:8096', 'k', fetchMock);
+    expect(result).toEqual({ ok: false, error: 'connect ECONNREFUSED' });
   });
 });

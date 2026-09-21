@@ -17,6 +17,9 @@ export interface ServiceSettingsFormProps {
   // Fields currently sourced from an env var — always env-priority, editing
   // them here would silently have no effect, so they're locked instead.
   disabledKeys?: Set<string>;
+  // When set, a "Passer cette étape" button appears next to submit — for an
+  // optional service (Jellyfin) whose step can be skipped without saving anything.
+  onSkip?: () => void;
 }
 
 export function ServiceSettingsForm({
@@ -26,6 +29,7 @@ export function ServiceSettingsForm({
   initialValues,
   configuredKeys,
   disabledKeys,
+  onSkip,
 }: ServiceSettingsFormProps) {
   const [values, setValues] = useState<Record<string, string>>(
     Object.fromEntries(
@@ -75,13 +79,25 @@ export function ServiceSettingsForm({
         );
       })}
       {error && <p className="text-sm text-plexcrew-amber">{error}</p>}
-      <button
-        type="submit"
-        disabled={submitting}
-        className="rounded-full bg-plexcrew-teal px-4 py-2 text-sm font-semibold text-plexcrew-ink disabled:opacity-50"
-      >
-        {submitting ? (testable ? 'Test en cours…' : 'Enregistrement…') : testable ? 'Tester et enregistrer' : 'Enregistrer'}
-      </button>
+      <div className="flex flex-wrap gap-3">
+        <button
+          type="submit"
+          disabled={submitting}
+          className="rounded-full bg-plexcrew-teal px-4 py-2 text-sm font-semibold text-plexcrew-ink disabled:opacity-50"
+        >
+          {submitting ? (testable ? 'Test en cours…' : 'Enregistrement…') : testable ? 'Tester et enregistrer' : 'Enregistrer'}
+        </button>
+        {onSkip && (
+          <button
+            type="button"
+            onClick={onSkip}
+            disabled={submitting}
+            className="rounded-full border border-plexcrew-teal/30 px-4 py-2 text-sm font-medium text-plexcrew-screen disabled:opacity-50"
+          >
+            Passer cette étape
+          </button>
+        )}
+      </div>
     </form>
   );
 }

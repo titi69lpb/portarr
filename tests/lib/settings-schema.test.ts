@@ -2,10 +2,17 @@ import { describe, it, expect } from 'vitest';
 import { SERVICE_FIELDS } from '../../src/lib/settings-schema';
 
 describe('SERVICE_FIELDS', () => {
-  it('covers exactly the 7 configurable groups', () => {
+  it('covers exactly the 8 configurable groups', () => {
     expect(Object.keys(SERVICE_FIELDS).sort()).toEqual(
-      ['overseerr', 'plex', 'publicBaseUrl', 'radarr', 'smtp', 'sonarr', 'tautulli'].sort()
+      ['jellyfin', 'overseerr', 'plex', 'publicBaseUrl', 'radarr', 'smtp', 'sonarr', 'tautulli'].sort()
     );
+  });
+
+  it('jellyfin needs a url (text) and an api key (password)', () => {
+    expect(SERVICE_FIELDS.jellyfin.map((f) => [f.envKey, f.type])).toEqual([
+      ['JELLYFIN_URL', 'text'],
+      ['JELLYFIN_API_KEY', 'password'],
+    ]);
   });
 
   it('plex requires url, server token, and server name', () => {

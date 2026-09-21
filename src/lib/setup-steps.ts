@@ -5,6 +5,7 @@ import { resolveConfigValue } from './config';
 import {
   testPlexConnection,
   testTautulliConnection,
+  testJellyfinConnection,
   testSonarrConnection,
   testRadarrConnection,
   testOverseerrConnection,
@@ -28,6 +29,8 @@ async function runConnectionTest(
       return testPlexConnection(resolved.PLEX_URL, resolved.PLEX_SERVER_TOKEN, fetchFn);
     case 'tautulli':
       return testTautulliConnection(resolved.TAUTULLI_URL, resolved.TAUTULLI_API_KEY, fetchFn);
+    case 'jellyfin':
+      return testJellyfinConnection(resolved.JELLYFIN_URL, resolved.JELLYFIN_API_KEY, fetchFn);
     case 'sonarr':
       return testSonarrConnection(resolved.SONARR_URL, resolved.SONARR_API_KEY, fetchFn);
     case 'radarr':

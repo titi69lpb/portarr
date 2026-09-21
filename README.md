@@ -125,6 +125,7 @@ Deux façons de configurer Portarr, au choix :
 | `SESSION_SECRET` | infra (auto-générée en Docker, voir ci-dessus) | Signature du cookie de session |
 | `PLEX_URL`, `PLEX_SERVER_TOKEN`, `PLEX_SERVER_NAME` | assistant ou env | Accès API Plex + connexion |
 | `TAUTULLI_URL`, `TAUTULLI_API_KEY` | assistant ou env | Lecture en cours, statistiques |
+| `JELLYFIN_URL`, `JELLYFIN_API_KEY` | assistant ou env (optionnel) | Connexion Jellyfin (identifiant + mot de passe), récemment ajoutés, recherche, membres |
 | `SONARR_URL`, `SONARR_API_KEY` | assistant ou env | Calendrier des sorties (séries) |
 | `RADARR_URL`, `RADARR_API_KEY` | assistant ou env | Calendrier des sorties (films) |
 | `OVERSEERR_URL`, `OVERSEERR_API_KEY` | assistant ou env | Demandes en attente, notifications de disponibilité |
@@ -337,6 +338,7 @@ Two ways to configure Portarr, your choice:
 | `SESSION_SECRET` | infra (auto-generated in Docker, see above) | Session cookie signing |
 | `PLEX_URL`, `PLEX_SERVER_TOKEN`, `PLEX_SERVER_NAME` | wizard or env | Plex API access + login |
 | `TAUTULLI_URL`, `TAUTULLI_API_KEY` | wizard or env | Now-playing, stats |
+| `JELLYFIN_URL`, `JELLYFIN_API_KEY` | wizard or env (optional) | Jellyfin login (username + password), recently added, search, members |
 | `SONARR_URL`, `SONARR_API_KEY` | wizard or env | Release calendar (TV) |
 | `RADARR_URL`, `RADARR_API_KEY` | wizard or env | Release calendar (movies) |
 | `OVERSEERR_URL`, `OVERSEERR_API_KEY` | wizard or env | Pending requests, availability notifications |

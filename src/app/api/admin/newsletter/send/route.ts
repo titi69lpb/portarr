@@ -10,19 +10,12 @@ import { createTransport, sendMail } from '@/lib/mailer';
 import { insertMailLog } from '@/lib/mail-log';
 import { signUnsubscribeToken } from '@/lib/newsletter-token';
 import { insertNewsletterArchive } from '@/lib/newsletter-archive';
-import type { ProviderId } from '@/lib/media/types';
+import { pickNewsletterRecipients, type NewsletterRow } from '@/lib/newsletter-recipients';
 import { getActiveProviders } from '@/lib/media/registry';
 
 export const dynamic = 'force-dynamic';
 
 const WINDOW_DAYS = 6;
-
-interface UserRow {
-  provider: ProviderId;
-  external_id: string;
-  email: string;
-  username: string;
-}
 
 export async function POST(request: NextRequest) {
   try {
@@ -62,8 +55,10 @@ export async function POST(request: NextRequest) {
     const db = getDb();
     const allUsers = db
       .prepare('SELECT provider, external_id, email, username FROM users WHERE email != \'\'')
-      .all() as UserRow[];
-    const recipients = allUsers.filter((u) => isSubscribed(db, { provider: u.provider, userId: u.external_id }));
+      .all() as NewsletterRow[];
+    const recipients = pickNewsletterRecipients(allUsers, (u) =>
+      isSubscribed(db, { provider: u.provider, userId: u.external_id })
+    );
 
     // Archive a copy before sending — its unsubscribe link points at the
     // dashboard (no per-recipient token makes sense for a copy anyone can

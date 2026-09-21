@@ -1,7 +1,7 @@
 import { XMLParser } from 'fast-xml-parser';
 import { timeoutSignal } from '../fetch-timeout';
 import { withTtlCache, DEFAULT_CACHE_TTL_MS } from '../ttl-cache';
-import type { MediaMember, RecentlyAddedItem, RecentlyAddedSplit, SearchResultItem } from './types';
+import type { MediaMember, PosterResult, RecentlyAddedItem, RecentlyAddedSplit, SearchResultItem } from './types';
 
 // How long a portal session can go without being re-checked against Plex's
 // current share list. Session cookies last 30 days and were never re-verified
@@ -394,4 +394,26 @@ export async function searchLibrary(
     }
   }
   return results;
+}
+
+// Plex item posters are addressed as /library/metadata/<id>/thumb/<ts>.
+export const PLEX_POSTER_PATH = /^\/library\/metadata\/\d+\/thumb\/\d+$/;
+
+// Request a resized copy from Plex's own photo transcoder instead of the raw
+// thumb — the raw file is the full source poster (seen in practice:
+// 2000x3000, ~1.5MB) while every consumer here renders it at a few hundred
+// CSS pixels at most. 300x450 covers every current call site (including
+// retina) at a fraction of the weight.
+export async function fetchPlexPoster(
+  plexUrl: string,
+  serverToken: string,
+  path: string,
+  fetchFn: typeof fetch = fetch
+): Promise<PosterResult | null> {
+  const transcodeUrl =
+    `${plexUrl}/photo/:/transcode?width=300&height=450&minSize=1&upscale=0` +
+    `&url=${encodeURIComponent(path)}&X-Plex-Token=${serverToken}`;
+  const res = await fetchFn(transcodeUrl);
+  if (!res.ok) return null;
+  return { bytes: await res.arrayBuffer(), contentType: res.headers.get('content-type') ?? 'image/jpeg' };
 }

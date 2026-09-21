@@ -54,8 +54,22 @@ export interface PinAuth {
   resolvePin(pinId: number): Promise<PinResolution>;
 }
 
-// Sub-project 2 widens this to `PinAuth | PasswordAuth`.
-export type ProviderAuth = PinAuth;
+export type PasswordResult =
+  | { status: 'denied' }
+  | { status: 'ok'; user: MediaMember; isOwner: boolean };
+
+export interface PasswordAuth {
+  kind: 'password';
+  /** Never logs or persists the password. `denied` covers a wrong password, an unknown account and a disabled account alike. */
+  authenticate(username: string, password: string): Promise<PasswordResult>;
+}
+
+export type ProviderAuth = PinAuth | PasswordAuth;
+
+export interface PosterResult {
+  bytes: ArrayBuffer;
+  contentType: string;
+}
 
 export interface MediaServer {
   readonly id: ProviderId;
@@ -67,4 +81,8 @@ export interface MediaServer {
   recentlyAdded(count: number): Promise<RecentlyAddedItem[]>;
   recentlyAddedSplit(countPerType: number): Promise<RecentlyAddedSplit>;
   search(query: string): Promise<SearchResultItem[]>;
+  /** True when `ref` (the opaque `thumbPath` string an item carried) belongs to this provider. */
+  handlesPoster(ref: string): boolean;
+  /** A resized poster for `ref`, or null when it cannot be fetched. Only called when `handlesPoster(ref)` is true. */
+  poster(ref: string): Promise<PosterResult | null>;
 }
