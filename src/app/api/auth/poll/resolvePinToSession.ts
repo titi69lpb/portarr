@@ -1,4 +1,4 @@
-import { pollPin, getPlexIdentity, getSharedUsers, type PlexSharedUser } from '@/lib/plex';
+import { pollPin, getPlexIdentity, getSharedUsers, type PlexSharedUser } from '@/lib/media/plex';
 
 export type PollResult =
   | { status: 'pending' }

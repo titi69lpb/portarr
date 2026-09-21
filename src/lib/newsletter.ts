@@ -1,4 +1,4 @@
-import { getRecentlyAdded, type RecentlyAddedItem } from './plex';
+import { getRecentlyAdded, type RecentlyAddedItem } from './media/plex';
 
 export interface NewsletterItems {
   movies: RecentlyAddedItem[];

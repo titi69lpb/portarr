@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { loadConfig, isSetupComplete, assertConfigured } from '@/lib/config';
 import { getDb } from '@/lib/db';
-import { getSharedUsers } from '@/lib/plex';
+import { getSharedUsers } from '@/lib/media/plex';
 import { syncPlexUsers } from '@/lib/member-sync';
 import { requireOwner } from '@/lib/route-auth';
 

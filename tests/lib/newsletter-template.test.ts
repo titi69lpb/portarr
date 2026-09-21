@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { renderNewsletterHtml } from '../../src/lib/newsletter-template';
-import type { RecentlyAddedItem } from '../../src/lib/plex';
+import type { RecentlyAddedItem } from '../../src/lib/media/plex';
 
 function item(overrides: Partial<RecentlyAddedItem>): RecentlyAddedItem {
   return {

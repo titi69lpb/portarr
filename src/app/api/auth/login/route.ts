@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createPin } from '@/lib/plex';
+import { createPin } from '@/lib/media/plex';
 import { loadConfig, isSetupComplete, assertConfigured } from '@/lib/config';
 import { getDb } from '@/lib/db';
 import { checkRateLimit, getClientIp } from '@/lib/rate-limit';

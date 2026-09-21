@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { verifySession, SESSION_COOKIE_NAME } from '@/lib/session';
 import { loadConfig, isSetupComplete, assertConfigured } from '@/lib/config';
 import { getDb } from '@/lib/db';
-import { searchLibrary } from '@/lib/plex';
+import { searchLibrary } from '@/lib/media/plex';
 
 export const dynamic = 'force-dynamic';
 

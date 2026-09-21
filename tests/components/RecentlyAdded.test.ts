@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { RecentlyAdded, buildPosterCards } from '../../src/components/RecentlyAdded';
-import type { RecentlyAddedItem } from '../../src/lib/plex';
+import type { RecentlyAddedItem } from '../../src/lib/media/plex';
 
 // buildPosterCards is a plain function (no JSX, no client-only deps like gsap)
 // so the security invariant it encodes — every poster src goes through the

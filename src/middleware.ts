@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifySession, SESSION_COOKIE_NAME, type SessionUser } from '@/lib/session';
-import { isStillSharedUser } from '@/lib/plex';
+import { isStillSharedUser } from '@/lib/media/plex';
 
 // /setup and /api/setup/* are here (not a bespoke gate) because middleware
 // cannot read DB-backed settings to know if setup is complete — Next.js 14

@@ -71,8 +71,8 @@ async function memberRequest(url: string): Promise<NextRequest> {
   return request;
 }
 
-vi.mock('../../src/lib/plex', async () => {
-  const actual = await vi.importActual('../../src/lib/plex');
+vi.mock('../../src/lib/media/plex', async () => {
+  const actual = await vi.importActual('../../src/lib/media/plex');
   return { ...actual, getSharedUsers: vi.fn() };
 });
 
@@ -90,7 +90,7 @@ describe('POST /api/admin/members/sync', () => {
   });
 
   it('syncs Plex-shared users into the users table and returns the sync summary', async () => {
-    const plexModule = await import('../../src/lib/plex');
+    const plexModule = await import('../../src/lib/media/plex');
     vi.mocked(plexModule.getSharedUsers).mockResolvedValue([
       { plexId: '10', email: 'alice@b.com', username: 'alice' },
       { plexId: '11', email: 'bob@b.com', username: 'bob' },
@@ -112,7 +112,7 @@ describe('POST /api/admin/members/sync', () => {
   });
 
   it('returns 502 when the Plex API call fails', async () => {
-    const plexModule = await import('../../src/lib/plex');
+    const plexModule = await import('../../src/lib/media/plex');
     vi.mocked(plexModule.getSharedUsers).mockRejectedValue(new Error('Plex API request failed'));
 
     const { POST } = await import('../../src/app/api/admin/members/sync/route');

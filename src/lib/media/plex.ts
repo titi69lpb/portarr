@@ -1,6 +1,6 @@
 import { XMLParser } from 'fast-xml-parser';
-import { timeoutSignal } from './fetch-timeout';
-import { withTtlCache, DEFAULT_CACHE_TTL_MS } from './ttl-cache';
+import { timeoutSignal } from '../fetch-timeout';
+import { withTtlCache, DEFAULT_CACHE_TTL_MS } from '../ttl-cache';
 
 // How long a portal session can go without being re-checked against Plex's
 // current share list. Session cookies last 30 days and were never re-verified

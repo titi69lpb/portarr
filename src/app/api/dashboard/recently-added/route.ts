@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getRecentlyAdded } from '@/lib/plex';
+import { getRecentlyAdded } from '@/lib/media/plex';
 import { loadConfig, isSetupComplete, assertConfigured } from '@/lib/config';
 import { getDb } from '@/lib/db';
 

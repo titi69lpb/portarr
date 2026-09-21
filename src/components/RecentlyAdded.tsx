@@ -1,4 +1,4 @@
-import type { RecentlyAddedItem, RecentlyAddedSplit } from '@/lib/plex';
+import type { RecentlyAddedItem, RecentlyAddedSplit } from '@/lib/media/plex';
 import { PosterFanCarousel, type PosterCard } from '@/components/PosterFanCarousel';
 
 // Kept as a plain exported function (no JSX, no client-only deps) so the

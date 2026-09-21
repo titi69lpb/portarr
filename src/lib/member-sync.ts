@@ -1,5 +1,5 @@
 import type Database from 'better-sqlite3';
-import type { PlexSharedUser } from './plex';
+import type { PlexSharedUser } from './media/plex';
 
 export interface SyncResult {
   added: number;

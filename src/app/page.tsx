@@ -15,7 +15,7 @@ import { redirect } from 'next/navigation';
 import { verifySession, SESSION_COOKIE_NAME, type SessionUser } from '@/lib/session';
 import { loadConfig, isSetupComplete, assertConfigured, type ConfiguredAppConfig } from '@/lib/config';
 import { getActiveSessions, type ActiveSession } from '@/lib/activity';
-import { getRecentlyAddedSplit, type RecentlyAddedSplit } from '@/lib/plex';
+import { getRecentlyAddedSplit, type RecentlyAddedSplit } from '@/lib/media/plex';
 import { getUpcomingReleases, type CalendarItem } from '@/lib/calendar';
 import { getPendingRequests, type PendingRequest } from '@/lib/overseerr';
 import {

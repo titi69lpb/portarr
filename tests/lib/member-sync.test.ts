@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { getDb, resetDbForTests } from '../../src/lib/db';
 import { syncPlexUsers } from '../../src/lib/member-sync';
-import type { PlexSharedUser } from '../../src/lib/plex';
+import type { PlexSharedUser } from '../../src/lib/media/plex';
 
 describe('syncPlexUsers', () => {
   beforeEach(() => {

@@ -8,7 +8,7 @@ import {
   getRecentlyAddedSplit,
   isStillSharedUser,
   searchLibrary,
-} from '../../src/lib/plex';
+} from '../../src/lib/media/plex';
 import { resetTtlCacheForTests } from '../../src/lib/ttl-cache';
 
 // getRecentlyAdded is now cached (DEFAULT_CACHE_TTL_MS) — without this, a test

@@ -1,5 +1,5 @@
 import type { NewsletterItems } from './newsletter';
-import type { RecentlyAddedItem } from './plex';
+import type { RecentlyAddedItem } from './media/plex';
 import { renderEmailShell } from './email-template';
 
 function escapeHtml(text: string): string {
