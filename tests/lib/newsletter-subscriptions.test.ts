@@ -7,7 +7,7 @@ describe('newsletter-subscriptions', () => {
     resetDbForTests();
   });
 
-  it('treats a plex_id with no row as subscribed', () => {
+  it('treats a member with no row as subscribed', () => {
     const db = getDb(':memory:');
     expect(isSubscribed(db, { provider: 'plex', userId: 'unknown-plex-id' })).toBe(true);
   });

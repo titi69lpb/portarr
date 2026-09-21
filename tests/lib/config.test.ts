@@ -177,3 +177,23 @@ describe('getConfigSources', () => {
     expect(sources.SONARR_URL).toBe('unset');
   });
 });
+
+describe('isSetupComplete — a media provider must be active', () => {
+  beforeEach(() => {
+    resetDbForTests();
+  });
+
+  it('is false when Tautulli is missing (Plex alone is not an active provider)', () => {
+    const { TAUTULLI_URL: _url, TAUTULLI_API_KEY: _key, ...env } = FULL_ENV;
+    expect(isSetupComplete(loadConfig(env, getDb(':memory:')))).toBe(false);
+  });
+
+  it('is false when Plex is missing', () => {
+    const { PLEX_URL: _url, ...env } = FULL_ENV;
+    expect(isSetupComplete(loadConfig(env, getDb(':memory:')))).toBe(false);
+  });
+
+  it('is true when a provider is active and every other service is configured', () => {
+    expect(isSetupComplete(loadConfig(FULL_ENV, getDb(':memory:')))).toBe(true);
+  });
+});

@@ -62,5 +62,6 @@ describe('middleware Edge import graph', () => {
   it('actually walks the media modules (guards the guard)', () => {
     const reached = [...files].map((f) => relative(SRC, f));
     expect(reached).toContain('lib/session.ts');
+    expect(reached).toContain('lib/media/membership.ts');
   });
 });

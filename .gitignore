@@ -10,3 +10,4 @@ node_modules/
 .worktrees/
 next-env.d.ts
 *.tsbuildinfo
+*.pre-provider-migration
