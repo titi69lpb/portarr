@@ -33,7 +33,11 @@ New `src/lib/media/`:
 
 - `types.ts`: `ProviderId = 'plex' | 'jellyfin'`, `MemberRef = { provider, userId }`, the `MediaServer` interface.
 - `registry.ts`: returns the active providers for a given config.
-- `plex.ts`: current `src/lib/plex.ts` content, moved and exposed through the interface. `src/lib/plex.ts` is removed.
+- `plex.ts`: current `src/lib/plex.ts` content, moved (low-level Plex API functions, unchanged). `src/lib/plex.ts` is removed.
+- `plex-provider.ts`: the adapter exposing the Plex functions through `MediaServer`. Kept separate from `plex.ts` so the low-level functions and the adapter do not import each other.
+- `plex-pin.ts`: `resolvePinToSession`, moved out of the `app/api/auth/poll` route folder.
+- `aggregate.ts`: fan-out helpers (`searchAll`, `recentlyAddedAll`, `recentlyAddedSplitAll`, `listMembersAll`) that tolerate one failing provider and rethrow only when all fail.
+- `membership.ts`: `isStillMember(ref, env)`, the Edge-safe entry point the middleware calls.
 
 `MediaServer` surface:
 
