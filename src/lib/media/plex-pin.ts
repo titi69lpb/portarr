@@ -1,10 +1,7 @@
-import { pollPin, getPlexIdentity, getSharedUsers } from '@/lib/media/plex';
-import type { MediaMember } from '@/lib/media/types';
+import { pollPin, getPlexIdentity, getSharedUsers } from './plex';
+import type { PinResolution } from './types';
 
-export type PollResult =
-  | { status: 'pending' }
-  | { status: 'denied' }
-  | { status: 'ok'; user: MediaMember; isOwner: boolean };
+export type PollResult = PinResolution;
 
 export interface PollDeps {
   pollPin: typeof pollPin;

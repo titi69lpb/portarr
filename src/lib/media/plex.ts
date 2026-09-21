@@ -1,7 +1,7 @@
 import { XMLParser } from 'fast-xml-parser';
 import { timeoutSignal } from '../fetch-timeout';
 import { withTtlCache, DEFAULT_CACHE_TTL_MS } from '../ttl-cache';
-import type { MediaMember } from './types';
+import type { MediaMember, RecentlyAddedItem, RecentlyAddedSplit, SearchResultItem } from './types';
 
 // How long a portal session can go without being re-checked against Plex's
 // current share list. Session cookies last 30 days and were never re-verified
@@ -10,18 +10,6 @@ import type { MediaMember } from './types';
 // list itself is cached (see isStillSharedUser) so the actual cost is one
 // Plex API call per TTL window, not one per request.
 export const SESSION_REVALIDATION_TTL_MS = 5 * 60 * 1000;
-
-export interface RecentlyAddedItem {
-  title: string;
-  thumbPath: string;
-  addedAt: string;
-  type: 'movie' | 'episode';
-  /** Deep link into this server's own Plex Web instance, or null if the
-   * machineIdentifier lookup failed or the item had no ratingKey — callers
-   * must treat that as "not clickable" rather than link to a broken URL.
-   * Same contract as SearchResultItem.plexWebUrl below. */
-  plexWebUrl: string | null;
-}
 
 const PLEX_HEADERS = (clientId: string) => ({
   Accept: 'application/json',
@@ -184,11 +172,6 @@ export async function getRecentlyAdded(
   });
 }
 
-export interface RecentlyAddedSplit {
-  movies: RecentlyAddedItem[];
-  episodes: RecentlyAddedItem[];
-}
-
 // Same source data as getRecentlyAdded, kept as two separate lists instead of
 // merged-then-sliced — for a dashboard layout that shows movies and shows as
 // their own sections rather than one interleaved feed. Cached and keyed
@@ -306,24 +289,13 @@ async function fetchRecentlyAddedByType(
     thumbPath: v.thumbPath,
     addedAt: new Date(v.addedAtRaw * 1000).toISOString(),
     type: v.type,
-    plexWebUrl: machineIdentifier && v.ratingKey ? buildPlexWebUrl(plexUrl, machineIdentifier, v.ratingKey) : null,
+    webUrl: machineIdentifier && v.ratingKey ? buildPlexWebUrl(plexUrl, machineIdentifier, v.ratingKey) : null,
   });
 
   return {
     movies: fromMovies.map(toItem),
     episodes: fromTv.map(toItem),
   };
-}
-
-export interface SearchResultItem {
-  title: string;
-  year: number | null;
-  type: 'movie' | 'show';
-  thumbPath: string | null;
-  /** Deep link into this server's own Plex Web instance, or null if the
-   * machineIdentifier lookup failed — callers must treat that as "not
-   * clickable" rather than link to a broken URL. */
-  plexWebUrl: string | null;
 }
 
 interface HubResultEntry {
@@ -412,7 +384,7 @@ export async function searchLibrary(
         year: entry.year ?? null,
         type: hub.type,
         thumbPath: entry.thumb ?? null,
-        plexWebUrl:
+        webUrl:
           machineIdentifier && entry.ratingKey
             ? buildPlexWebUrl(plexUrl, machineIdentifier, entry.ratingKey)
             : null,

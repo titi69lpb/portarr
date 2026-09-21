@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createSession, SESSION_COOKIE_NAME } from '@/lib/session';
 import { loadConfig, isSetupComplete, assertConfigured } from '@/lib/config';
 import { getDb } from '@/lib/db';
-import { resolvePinToSession, defaultDeps } from './resolvePinToSession';
+import { resolvePinToSession, defaultDeps } from '@/lib/media/plex-pin';
 
 export async function GET(request: NextRequest) {
   const pinId = Number(request.nextUrl.searchParams.get('pinId'));

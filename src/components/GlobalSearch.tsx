@@ -8,7 +8,7 @@ interface SearchResultItem {
   year: number | null;
   type: 'movie' | 'show';
   thumbPath: string | null;
-  plexWebUrl: string | null;
+  webUrl: string | null;
 }
 
 const DEBOUNCE_MS = 300;
@@ -142,7 +142,7 @@ export function GlobalSearch() {
                         src={`/api/newsletter/poster?path=${encodeURIComponent(r.thumbPath)}`}
                         alt={r.title}
                         className={`aspect-[2/3] w-full rounded-md bg-plexcrew-charcoal object-cover ring-1 ring-plexcrew-teal/20 ${
-                          r.plexWebUrl ? 'transition motion-safe:duration-200 motion-safe:group-hover:-translate-y-1 motion-safe:group-hover:ring-plexcrew-amber/60' : ''
+                          r.webUrl ? 'transition motion-safe:duration-200 motion-safe:group-hover:-translate-y-1 motion-safe:group-hover:ring-plexcrew-amber/60' : ''
                         }`}
                       />
                     ) : (
@@ -157,8 +157,8 @@ export function GlobalSearch() {
                         </p>
                       </>
                     );
-                    return r.plexWebUrl ? (
-                      <a key={`${r.title}-${i}`} href={r.plexWebUrl} target="_blank" rel="noopener noreferrer" className="group w-full">
+                    return r.webUrl ? (
+                      <a key={`${r.title}-${i}`} href={r.webUrl} target="_blank" rel="noopener noreferrer" className="group w-full">
                         {poster}
                         {caption}
                       </a>

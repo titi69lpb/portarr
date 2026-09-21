@@ -102,7 +102,7 @@ describe('GET /api/search', () => {
         year: 1999,
         type: 'movie',
         thumbPath: '/thumb/1',
-        plexWebUrl: 'https://plex.local/web/index.html#!/server/abc123/details?key=%2Flibrary%2Fmetadata%2F111',
+        webUrl: 'https://plex.local/web/index.html#!/server/abc123/details?key=%2Flibrary%2Fmetadata%2F111',
       },
     ]);
   });

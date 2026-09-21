@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { NextRequest } from 'next/server';
-import { resolvePinToSession } from '../../src/app/api/auth/poll/resolvePinToSession';
+import { resolvePinToSession } from '../../src/lib/media/plex-pin';
 import { GET as pollGET } from '../../src/app/api/auth/poll/route';
 import { POST as loginPOST } from '../../src/app/api/auth/login/route';
 import { POST as logoutPOST } from '../../src/app/api/auth/logout/route';

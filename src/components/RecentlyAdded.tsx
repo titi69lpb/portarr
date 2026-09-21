@@ -1,4 +1,4 @@
-import type { RecentlyAddedItem, RecentlyAddedSplit } from '@/lib/media/plex';
+import type { RecentlyAddedItem, RecentlyAddedSplit } from '@/lib/media/types';
 import { PosterFanCarousel, type PosterCard } from '@/components/PosterFanCarousel';
 
 // Kept as a plain exported function (no JSX, no client-only deps) so the
@@ -12,7 +12,7 @@ export function buildPosterCards(items: RecentlyAddedItem[]): PosterCard[] {
   return items.map((item) => ({
     title: item.title,
     imgUrl: `/api/newsletter/poster?path=${encodeURIComponent(item.thumbPath)}`,
-    href: item.plexWebUrl,
+    href: item.webUrl,
   }));
 }
 
