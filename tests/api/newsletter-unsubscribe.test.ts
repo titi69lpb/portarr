@@ -58,12 +58,12 @@ describe('GET /api/newsletter/unsubscribe', () => {
     // Regression guard: a state-changing GET here would let mail-client link
     // prefetchers (Outlook SafeLinks, spam scanners) silently unsubscribe
     // people who never clicked anything.
-    const token = await signUnsubscribeToken('plex-1', SECRET);
+    const token = await signUnsubscribeToken({ provider: 'plex', userId: 'plex-1' }, SECRET);
     const { GET } = await import('../../src/app/api/newsletter/unsubscribe/route');
     const request = new NextRequest(`http://localhost/api/newsletter/unsubscribe?token=${token}`);
     const response = await GET(request);
     expect(response.status).toBe(200);
-    expect(isSubscribed(getDb(), 'plex-1')).toBe(true);
+    expect(isSubscribed(getDb(), { provider: 'plex', userId: 'plex-1' })).toBe(true);
     const body = await response.text();
     expect(body).toContain('<form');
     expect(body).toContain(token);
@@ -86,7 +86,7 @@ describe('GET /api/newsletter/unsubscribe', () => {
 
 describe('POST /api/newsletter/unsubscribe', () => {
   it('unsubscribes with a valid token submitted as form data', async () => {
-    const token = await signUnsubscribeToken('plex-1', SECRET);
+    const token = await signUnsubscribeToken({ provider: 'plex', userId: 'plex-1' }, SECRET);
     const { POST } = await import('../../src/app/api/newsletter/unsubscribe/route');
     const formData = new FormData();
     formData.set('token', token);
@@ -96,7 +96,7 @@ describe('POST /api/newsletter/unsubscribe', () => {
     });
     const response = await POST(request);
     expect(response.status).toBe(200);
-    expect(isSubscribed(getDb(), 'plex-1')).toBe(false);
+    expect(isSubscribed(getDb(), { provider: 'plex', userId: 'plex-1' })).toBe(false);
   });
 
   it('returns 400 for a missing token', async () => {

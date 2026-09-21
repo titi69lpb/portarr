@@ -53,7 +53,7 @@ afterEach(() => {
 
 async function authedRequest(url: string): Promise<NextRequest> {
   const token = await createSession(
-    { plexId: '1', email: 'a@b.com', username: 'alice', isOwner: false },
+    { provider: 'plex', userId: '1', email: 'a@b.com', username: 'alice', isOwner: false },
     REQUIRED_ENV.SESSION_SECRET
   );
   const request = new NextRequest(url);

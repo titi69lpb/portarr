@@ -19,7 +19,7 @@ afterEach(() => {
 });
 
 async function ownerRequest(body: unknown): Promise<NextRequest> {
-  const token = await createSession({ plexId: '1', email: 'owner@example.com', username: 'owner', isOwner: true }, SECRET);
+  const token = await createSession({ provider: 'plex', userId: '1', email: 'owner@example.com', username: 'owner', isOwner: true }, SECRET);
   const request = new NextRequest('http://localhost/api/admin/settings/step', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -41,7 +41,7 @@ describe('POST /api/admin/settings/step', () => {
   });
 
   it('rejects a non-owner session', async () => {
-    const token = await createSession({ plexId: '1', email: 'u@example.com', username: 'u', isOwner: false }, SECRET);
+    const token = await createSession({ provider: 'plex', userId: '1', email: 'u@example.com', username: 'u', isOwner: false }, SECRET);
     const request = new NextRequest('http://localhost/api/admin/settings/step', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { RecentlyAdded, buildPosterCards } from '../../src/components/RecentlyAdded';
-import type { RecentlyAddedItem } from '../../src/lib/plex';
+import type { RecentlyAddedItem } from '../../src/lib/media/types';
 
 // buildPosterCards is a plain function (no JSX, no client-only deps like gsap)
 // so the security invariant it encodes — every poster src goes through the
@@ -15,7 +15,7 @@ function item(overrides: Partial<RecentlyAddedItem>): RecentlyAddedItem {
     thumbPath: '/library/metadata/1/thumb/1',
     addedAt: new Date().toISOString(),
     type: 'movie',
-    plexWebUrl: null,
+    webUrl: null,
     ...overrides,
   };
 }
@@ -41,9 +41,9 @@ describe('buildPosterCards', () => {
     });
   });
 
-  it('carries plexWebUrl through as the card href, unchanged', () => {
+  it('carries webUrl through as the card href, unchanged', () => {
     const cards = buildPosterCards([
-      item({ title: 'A Movie', plexWebUrl: 'https://plex.example.com/web/index.html#!/server/abc/details?key=%2Flibrary%2Fmetadata%2F1' }),
+      item({ title: 'A Movie', webUrl: 'https://plex.example.com/web/index.html#!/server/abc/details?key=%2Flibrary%2Fmetadata%2F1' }),
     ]);
     expect(cards[0].href).toBe('https://plex.example.com/web/index.html#!/server/abc/details?key=%2Flibrary%2Fmetadata%2F1');
   });

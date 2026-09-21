@@ -4,7 +4,7 @@ import { resolveRecipients, type RecipientDeps } from '../../src/lib/mail-recipi
 
 function seedUsers(db: ReturnType<typeof getDb>) {
   const insert = db.prepare(
-    'INSERT INTO users (plex_id, email, username, last_login) VALUES (?, ?, ?, ?)'
+    "INSERT INTO users (provider, external_id, email, username, last_login) VALUES ('plex', ?, ?, ?, ?)"
   );
   insert.run('1', 'alice@example.com', 'alice', new Date().toISOString());
   insert.run('2', 'bob@example.com', 'bob', new Date().toISOString());

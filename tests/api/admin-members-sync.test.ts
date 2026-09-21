@@ -53,7 +53,7 @@ afterEach(() => {
 
 async function ownerRequest(url: string): Promise<NextRequest> {
   const token = await createSession(
-    { plexId: '1', email: 'owner@b.com', username: 'owner', isOwner: true },
+    { provider: 'plex', userId: '1', email: 'owner@b.com', username: 'owner', isOwner: true },
     REQUIRED_ENV.SESSION_SECRET
   );
   const request = new NextRequest(url, { method: 'POST' });
@@ -63,7 +63,7 @@ async function ownerRequest(url: string): Promise<NextRequest> {
 
 async function memberRequest(url: string): Promise<NextRequest> {
   const token = await createSession(
-    { plexId: '2', email: 'member@b.com', username: 'member', isOwner: false },
+    { provider: 'plex', userId: '2', email: 'member@b.com', username: 'member', isOwner: false },
     REQUIRED_ENV.SESSION_SECRET
   );
   const request = new NextRequest(url, { method: 'POST' });
@@ -71,8 +71,8 @@ async function memberRequest(url: string): Promise<NextRequest> {
   return request;
 }
 
-vi.mock('../../src/lib/plex', async () => {
-  const actual = await vi.importActual('../../src/lib/plex');
+vi.mock('../../src/lib/media/plex', async () => {
+  const actual = await vi.importActual('../../src/lib/media/plex');
   return { ...actual, getSharedUsers: vi.fn() };
 });
 
@@ -90,11 +90,11 @@ describe('POST /api/admin/members/sync', () => {
   });
 
   it('syncs Plex-shared users into the users table and returns the sync summary', async () => {
-    const plexModule = await import('../../src/lib/plex');
+    const plexModule = await import('../../src/lib/media/plex');
     vi.mocked(plexModule.getSharedUsers).mockResolvedValue([
-      { plexId: '10', email: 'alice@b.com', username: 'alice' },
-      { plexId: '11', email: 'bob@b.com', username: 'bob' },
-      { plexId: '12', email: '', username: 'noemail' },
+      { provider: 'plex', userId: '10', email: 'alice@b.com', username: 'alice' },
+      { provider: 'plex', userId: '11', email: 'bob@b.com', username: 'bob' },
+      { provider: 'plex', userId: '12', email: '', username: 'noemail' },
     ]);
 
     const { POST } = await import('../../src/app/api/admin/members/sync/route');
@@ -104,15 +104,15 @@ describe('POST /api/admin/members/sync', () => {
     const body = await response.json();
     expect(body).toEqual({ added: 2, updated: 0, skippedNoEmail: 1, total: 2 });
 
-    const rows = getDb().prepare('SELECT plex_id, last_login FROM users ORDER BY plex_id').all();
+    const rows = getDb().prepare('SELECT external_id, last_login FROM users WHERE provider = \'plex\' ORDER BY external_id').all();
     expect(rows).toEqual([
-      { plex_id: '10', last_login: '' },
-      { plex_id: '11', last_login: '' },
+      { external_id: '10', last_login: '' },
+      { external_id: '11', last_login: '' },
     ]);
   });
 
   it('returns 502 when the Plex API call fails', async () => {
-    const plexModule = await import('../../src/lib/plex');
+    const plexModule = await import('../../src/lib/media/plex');
     vi.mocked(plexModule.getSharedUsers).mockRejectedValue(new Error('Plex API request failed'));
 
     const { POST } = await import('../../src/app/api/admin/members/sync/route');

@@ -1,17 +1,13 @@
-import { pollPin, getPlexIdentity, getSharedUsers, type PlexSharedUser } from '@/lib/plex';
+import { pollPin, getPlexIdentity, getSharedUsers } from './plex';
+import type { PinResolution } from './types';
 
-export type PollResult =
-  | { status: 'pending' }
-  | { status: 'denied' }
-  | { status: 'ok'; user: PlexSharedUser; isOwner: boolean };
+export type PollResult = PinResolution;
 
 export interface PollDeps {
   pollPin: typeof pollPin;
   getPlexIdentity: typeof getPlexIdentity;
   getSharedUsers: typeof getSharedUsers;
 }
-
-export const defaultDeps: PollDeps = { pollPin, getPlexIdentity, getSharedUsers };
 
 export async function resolvePinToSession(
   pinId: number,
@@ -26,12 +22,12 @@ export async function resolvePinToSession(
   const identity = await deps.getPlexIdentity(userToken, ctx.clientIdentifier);
 
   const ownerIdentity = await deps.getPlexIdentity(ctx.serverToken, ctx.clientIdentifier);
-  if (ownerIdentity.plexId === identity.plexId) {
+  if (ownerIdentity.userId === identity.userId) {
     return { status: 'ok', user: ownerIdentity, isOwner: true };
   }
 
   const sharedUsers = await deps.getSharedUsers(ctx.serverToken, ctx.serverName);
-  const match = sharedUsers.find((u) => u.plexId === identity.plexId);
+  const match = sharedUsers.find((u) => u.userId === identity.userId);
 
   if (!match) {
     return { status: 'denied' };

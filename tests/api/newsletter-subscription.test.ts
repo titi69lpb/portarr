@@ -54,7 +54,7 @@ afterEach(() => {
 
 async function memberRequest(url: string, init?: ConstructorParameters<typeof NextRequest>[1]): Promise<NextRequest> {
   const token = await createSession(
-    { plexId: 'plex-1', email: 'member@b.com', username: 'member', isOwner: false },
+    { provider: 'plex', userId: 'plex-1', email: 'member@b.com', username: 'member', isOwner: false },
     SECRET
   );
   const request = new NextRequest(url, init);

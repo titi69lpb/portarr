@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { getNewsletterItems } from '../../src/lib/newsletter';
+import { createPlexProvider } from '../../src/lib/media/plex-provider';
 import { resetTtlCacheForTests } from '../../src/lib/ttl-cache';
 
 // getNewsletterItems delegates to getRecentlyAdded, which is now cached — every
@@ -44,7 +45,10 @@ describe('getNewsletterItems', () => {
       },
     ];
     const fetchMock = hubFetchMock(movies, tv);
-    const result = await getNewsletterItems('https://plex.example.com', 'server-token', 6, fetchMock);
+    const result = await getNewsletterItems(
+      [createPlexProvider({ url: 'https://plex.example.com', serverToken: 'server-token', serverName: 'S', clientIdentifier: 'c' }, fetchMock)],
+      6
+    );
     expect(result.movies.map((m) => m.title)).toEqual(['Recent Movie']);
     expect(result.episodes.map((e) => e.title)).toEqual(['Recent Episode']);
   });
@@ -53,7 +57,10 @@ describe('getNewsletterItems', () => {
     const oldAddedAt = Math.floor((Date.now() - 30 * 24 * 60 * 60 * 1000) / 1000);
     const movies = [{ title: 'Old Movie', thumb: '/library/metadata/1/thumb/1', addedAt: oldAddedAt, type: 'movie' }];
     const fetchMock = hubFetchMock(movies, []);
-    const result = await getNewsletterItems('https://plex.example.com', 'server-token', 6, fetchMock);
+    const result = await getNewsletterItems(
+      [createPlexProvider({ url: 'https://plex.example.com', serverToken: 'server-token', serverName: 'S', clientIdentifier: 'c' }, fetchMock)],
+      6
+    );
     expect(result).toEqual({ movies: [], episodes: [] });
   });
 
@@ -64,7 +71,10 @@ describe('getNewsletterItems', () => {
       { title: 'No Thumb', addedAt: recentAddedAt, type: 'movie' },
     ];
     const fetchMock = hubFetchMock(movies, []);
-    const result = await getNewsletterItems('https://plex.example.com', 'server-token', 6, fetchMock);
+    const result = await getNewsletterItems(
+      [createPlexProvider({ url: 'https://plex.example.com', serverToken: 'server-token', serverName: 'S', clientIdentifier: 'c' }, fetchMock)],
+      6
+    );
     expect(result.movies.map((m) => m.title)).toEqual(['Has Thumb']);
   });
 });

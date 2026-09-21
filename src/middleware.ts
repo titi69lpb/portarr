@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifySession, SESSION_COOKIE_NAME, type SessionUser } from '@/lib/session';
-import { isStillSharedUser } from '@/lib/plex';
+import { isStillMember } from '@/lib/media/membership';
 
 // /setup and /api/setup/* are here (not a bespoke gate) because middleware
 // cannot read DB-backed settings to know if setup is complete — Next.js 14
@@ -40,20 +40,16 @@ export async function middleware(request: NextRequest) {
   const token = request.cookies.get(SESSION_COOKIE_NAME)?.value;
   let sessionUser = token && sessionSecret ? await verifySession(token, sessionSecret) : null;
 
-  // Session cookies last 30 days and, until now, were never re-checked against
-  // Plex after login — a share revoked at plex.tv kept full portal access for
-  // up to 30 days. Owner sessions are exempt (see isStillSharedUser).
-  // isStillSharedUser fails open on a Plex/network error, so an upstream
-  // hiccup never locks everyone out at once. Plex creds are read directly
-  // from env here (never via config.ts/DB) — an install with Plex configured
-  // only via the DB/wizard skips this specific revalidation check (falls
-  // back to the plain 30-day JWT expiry), a known, accepted degradation
-  // documented in the plan's 2026-09-18 revision.
-  const plexServerToken = process.env.PLEX_SERVER_TOKEN;
-  const plexServerName = process.env.PLEX_SERVER_NAME;
-  if (sessionUser && !sessionUser.isOwner && plexServerToken && plexServerName) {
-    const stillShared = await isStillSharedUser(sessionUser.plexId, plexServerToken, plexServerName);
-    if (!stillShared) {
+  // Re-check that a non-owner session is still a member of its media server.
+  // isStillMember reads credentials from process.env only (never config.ts /
+  // the DB — Edge runtime) and fails open on an upstream error, so a hiccup
+  // never locks everyone out. An install configured only via the DB/wizard
+  // skips this check and falls back to the plain 30-day JWT expiry — a
+  // known, accepted degradation (see the admin-wizard spec's 2026-09-18
+  // revision).
+  if (sessionUser && !sessionUser.isOwner) {
+    const stillMember = await isStillMember(sessionUser, process.env);
+    if (!stillMember) {
       sessionUser = null;
     }
   }

@@ -8,7 +8,7 @@ import {
   getRecentlyAddedSplit,
   isStillSharedUser,
   searchLibrary,
-} from '../../src/lib/plex';
+} from '../../src/lib/media/plex';
 import { resetTtlCacheForTests } from '../../src/lib/ttl-cache';
 
 // getRecentlyAdded is now cached (DEFAULT_CACHE_TTL_MS) — without this, a test
@@ -94,7 +94,7 @@ describe('getPlexIdentity', () => {
       jsonResponse({ id: 42, email: 'user@example.com', username: 'someuser' })
     );
     const result = await getPlexIdentity('user-token-abc', 'test-client-id', fetchMock);
-    expect(result).toEqual({ plexId: '42', email: 'user@example.com', username: 'someuser' });
+    expect(result).toEqual({ provider: 'plex', userId: '42', email: 'user@example.com', username: 'someuser' });
   });
 
   it('throws when the API returns an error status', async () => {
@@ -118,7 +118,7 @@ describe('getSharedUsers', () => {
 </MediaContainer>`;
     const fetchMock = vi.fn().mockResolvedValue(xmlResponse(xml));
     const result = await getSharedUsers('admin-token', 'My Plex Server', fetchMock);
-    expect(result).toEqual([{ plexId: '1', email: 'alice@example.com', username: 'alice' }]);
+    expect(result).toEqual([{ provider: 'plex', userId: '1', email: 'alice@example.com', username: 'alice' }]);
   });
 
   it('returns an empty array when no user matches the server name', async () => {
@@ -140,7 +140,7 @@ describe('getRecentlyAdded', () => {
   const MACHINE_ID = 'recent-machine-id';
 
   // getRecentlyAdded fans out to two Hub calls (type=1 movies, type=2 TV) plus
-  // a machineIdentifier lookup (used to build plexWebUrl) via Promise.all.
+  // a machineIdentifier lookup (used to build webUrl) via Promise.all.
   // Route each mock response by URL rather than call order.
   function hubFetchMock(movies: Record<string, unknown>[], tv: Record<string, unknown>[], identityOk = true) {
     return vi.fn().mockImplementation((url: string) => {
@@ -192,32 +192,32 @@ describe('getRecentlyAdded', () => {
         thumbPath: '/library/metadata/2/thumb/456',
         addedAt: new Date(1787900100 * 1000).toISOString(),
         type: 'episode',
-        plexWebUrl: `https://plex.example.com/web/index.html#!/server/${MACHINE_ID}/details?key=%2Flibrary%2Fmetadata%2F2`,
+        webUrl: `https://plex.example.com/web/index.html#!/server/${MACHINE_ID}/details?key=%2Flibrary%2Fmetadata%2F2`,
       },
       {
         title: 'Some Movie',
         thumbPath: '/library/metadata/1/thumb/123',
         addedAt: new Date(1787900000 * 1000).toISOString(),
         type: 'movie',
-        plexWebUrl: `https://plex.example.com/web/index.html#!/server/${MACHINE_ID}/details?key=%2Flibrary%2Fmetadata%2F1`,
+        webUrl: `https://plex.example.com/web/index.html#!/server/${MACHINE_ID}/details?key=%2Flibrary%2Fmetadata%2F1`,
       },
     ]);
   });
 
-  it('sets plexWebUrl to null (not throwing) when the machineIdentifier lookup fails', async () => {
+  it('sets webUrl to null (not throwing) when the machineIdentifier lookup fails', async () => {
     const movies = [
       { title: 'Some Movie', thumb: '/thumb/1', addedAt: 1000, type: 'movie', ratingKey: '1' },
     ];
     const fetchMock = hubFetchMock(movies, [], false);
     const result = await getRecentlyAdded('https://plex.example.com', 'server-token', 10, fetchMock);
-    expect(result[0].plexWebUrl).toBeNull();
+    expect(result[0].webUrl).toBeNull();
   });
 
-  it('sets plexWebUrl to null when an item has no ratingKey', async () => {
+  it('sets webUrl to null when an item has no ratingKey', async () => {
     const movies = [{ title: 'No Rating Key', thumb: '/thumb/1', addedAt: 1000, type: 'movie' }];
     const fetchMock = hubFetchMock(movies, []);
     const result = await getRecentlyAdded('https://plex.example.com', 'server-token', 10, fetchMock);
-    expect(result[0].plexWebUrl).toBeNull();
+    expect(result[0].webUrl).toBeNull();
   });
 
   it('surfaces a new episode added to an already-known season', async () => {
@@ -244,7 +244,7 @@ describe('getRecentlyAdded', () => {
         thumbPath: '/library/metadata/2/thumb/456',
         addedAt: new Date(1787900200 * 1000).toISOString(),
         type: 'episode',
-        plexWebUrl: null,
+        webUrl: null,
       },
     ]);
   });
@@ -277,14 +277,14 @@ describe('getRecentlyAdded', () => {
         thumbPath: '/library/metadata/10/thumb/1',
         addedAt: new Date(2000 * 1000).toISOString(),
         type: 'episode',
-        plexWebUrl: null,
+        webUrl: null,
       },
       {
         title: 'Westworld',
         thumbPath: '/library/metadata/20/thumb/1',
         addedAt: new Date(1000 * 1000).toISOString(),
         type: 'episode',
-        plexWebUrl: null,
+        webUrl: null,
       },
     ]);
   });
@@ -344,7 +344,7 @@ describe('getRecentlyAddedSplit', () => {
     expect(result.episodes.map((r) => r.title)).toEqual(['Some Show']);
   });
 
-  it('resolves plexWebUrl for each item, using parentRatingKey for episode-grouped rows', async () => {
+  it('resolves webUrl for each item, using parentRatingKey for episode-grouped rows', async () => {
     const movies = [{ title: 'A Movie', thumb: '/thumb/1', addedAt: 1000, type: 'movie', ratingKey: '10' }];
     const tv = [
       {
@@ -359,10 +359,10 @@ describe('getRecentlyAddedSplit', () => {
     const fetchMock = hubFetchMock(movies, tv);
     const result = await getRecentlyAddedSplit('https://plex.example.com', 'server-token', 10, fetchMock);
 
-    expect(result.movies[0].plexWebUrl).toBe(
+    expect(result.movies[0].webUrl).toBe(
       `https://plex.example.com/web/index.html#!/server/${MACHINE_ID}/details?key=%2Flibrary%2Fmetadata%2F10`
     );
-    expect(result.episodes[0].plexWebUrl).toBe(
+    expect(result.episodes[0].webUrl).toBe(
       `https://plex.example.com/web/index.html#!/server/${MACHINE_ID}/details?key=%2Flibrary%2Fmetadata%2F20`
     );
   });
@@ -404,13 +404,13 @@ describe('isStillSharedUser', () => {
   </User>
 </MediaContainer>`;
 
-  it('returns true when the plexId is still in the shared-users list', async () => {
+  it('returns true when the userId is still in the shared-users list', async () => {
     const fetchMock = vi.fn().mockResolvedValue(xmlResponse(sharedXml));
     const result = await isStillSharedUser('1', 'admin-token', 'My Plex Server', fetchMock);
     expect(result).toBe(true);
   });
 
-  it('returns false when the plexId is no longer in the shared-users list (share revoked)', async () => {
+  it('returns false when the userId is no longer in the shared-users list (share revoked)', async () => {
     const fetchMock = vi.fn().mockResolvedValue(xmlResponse(sharedXml));
     const result = await isStillSharedUser('999', 'admin-token', 'My Plex Server', fetchMock);
     expect(result).toBe(false);
@@ -465,19 +465,19 @@ describe('searchLibrary', () => {
         year: 1999,
         type: 'movie',
         thumbPath: '/thumb/1',
-        plexWebUrl: `https://plex.example.com/web/index.html#!/server/${MACHINE_ID}/details?key=%2Flibrary%2Fmetadata%2F111`,
+        webUrl: `https://plex.example.com/web/index.html#!/server/${MACHINE_ID}/details?key=%2Flibrary%2Fmetadata%2F111`,
       },
       {
         title: 'The Wire',
         year: 2002,
         type: 'show',
         thumbPath: '/thumb/2',
-        plexWebUrl: `https://plex.example.com/web/index.html#!/server/${MACHINE_ID}/details?key=%2Flibrary%2Fmetadata%2F222`,
+        webUrl: `https://plex.example.com/web/index.html#!/server/${MACHINE_ID}/details?key=%2Flibrary%2Fmetadata%2F222`,
       },
     ]);
   });
 
-  it('sets plexWebUrl to null (not throwing) when the machineIdentifier lookup fails', async () => {
+  it('sets webUrl to null (not throwing) when the machineIdentifier lookup fails', async () => {
     const hubs = {
       MediaContainer: {
         Hub: [{ type: 'movie', Metadata: [{ title: 'Fight Club', ratingKey: '111', thumb: '/thumb/1' }] }],
@@ -485,10 +485,10 @@ describe('searchLibrary', () => {
     };
     const fetchMock = mockFetchWith(hubs, false);
     const results = await searchLibrary('https://plex.example.com', 'server-token', 'fight', fetchMock);
-    expect(results[0].plexWebUrl).toBeNull();
+    expect(results[0].webUrl).toBeNull();
   });
 
-  it('sets plexWebUrl to null when a result has no ratingKey', async () => {
+  it('sets webUrl to null when a result has no ratingKey', async () => {
     const hubs = {
       MediaContainer: {
         Hub: [{ type: 'movie', Metadata: [{ title: 'No Rating Key', thumb: '/thumb/1' }] }],
@@ -496,7 +496,7 @@ describe('searchLibrary', () => {
     };
     const fetchMock = mockFetchWith(hubs);
     const results = await searchLibrary('https://plex.example.com', 'server-token', 'x', fetchMock);
-    expect(results[0].plexWebUrl).toBeNull();
+    expect(results[0].webUrl).toBeNull();
   });
 
   it('skips hub types other than movie/show (actor, episode, collection, playlist...)', async () => {
@@ -531,7 +531,7 @@ describe('searchLibrary', () => {
         year: 2020,
         type: 'movie',
         thumbPath: '/thumb/3',
-        plexWebUrl: `https://plex.example.com/web/index.html#!/server/${MACHINE_ID}/details?key=%2Flibrary%2Fmetadata%2F333`,
+        webUrl: `https://plex.example.com/web/index.html#!/server/${MACHINE_ID}/details?key=%2Flibrary%2Fmetadata%2F333`,
       },
     ]);
   });

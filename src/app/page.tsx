@@ -15,7 +15,9 @@ import { redirect } from 'next/navigation';
 import { verifySession, SESSION_COOKIE_NAME, type SessionUser } from '@/lib/session';
 import { loadConfig, isSetupComplete, assertConfigured, type ConfiguredAppConfig } from '@/lib/config';
 import { getActiveSessions, type ActiveSession } from '@/lib/activity';
-import { getRecentlyAddedSplit, type RecentlyAddedSplit } from '@/lib/plex';
+import { getActiveProviders } from '@/lib/media/registry';
+import { recentlyAddedSplitAll } from '@/lib/media/aggregate';
+import type { RecentlyAddedSplit } from '@/lib/media/types';
 import { getUpcomingReleases, type CalendarItem } from '@/lib/calendar';
 import { getPendingRequests, type PendingRequest } from '@/lib/overseerr';
 import {
@@ -112,7 +114,7 @@ export default async function DashboardPage() {
       getActiveSessions(config.tautulli.url, config.tautulli.apiKey)
     ),
     safe<RecentlyAddedSplit>('recently-added', { movies: [], episodes: [] }, () =>
-      getRecentlyAddedSplit(config.plex.url, config.plex.serverToken, 15)
+      recentlyAddedSplitAll(getActiveProviders(config), 15)
     ),
     safe<CalendarItem[]>('calendar', [], async () => {
       const items = await getUpcomingReleases(config.sonarr, config.radarr, calendarStart, calendarEnd);

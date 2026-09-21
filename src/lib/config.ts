@@ -2,6 +2,7 @@ import type Database from 'better-sqlite3';
 import { getSetting } from './settings';
 import { ensureAutoSecret } from './secrets';
 import type { VolumeConfig } from './storage';
+import { getActiveProviders } from './media/registry';
 
 export interface ShortcutConfig {
   name: string;
@@ -179,8 +180,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env, db: Database.Da
 
 export function isSetupComplete(config: AppConfig): boolean {
   return (
-    config.plex !== null &&
-    config.tautulli !== null &&
+    getActiveProviders(config).length > 0 &&
     config.sonarr !== null &&
     config.radarr !== null &&
     config.overseerr !== null &&
@@ -189,6 +189,7 @@ export function isSetupComplete(config: AppConfig): boolean {
   );
 }
 
+// plex/tautulli stay non-null here while Plex is the only provider; sub-project 2 (Jellyfin) relaxes this.
 export interface ConfiguredAppConfig extends AppConfig {
   plex: PlexConfig;
   tautulli: TautulliConfig;

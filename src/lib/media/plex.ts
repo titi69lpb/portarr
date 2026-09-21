@@ -1,6 +1,7 @@
 import { XMLParser } from 'fast-xml-parser';
-import { timeoutSignal } from './fetch-timeout';
-import { withTtlCache, DEFAULT_CACHE_TTL_MS } from './ttl-cache';
+import { timeoutSignal } from '../fetch-timeout';
+import { withTtlCache, DEFAULT_CACHE_TTL_MS } from '../ttl-cache';
+import type { MediaMember, RecentlyAddedItem, RecentlyAddedSplit, SearchResultItem } from './types';
 
 // How long a portal session can go without being re-checked against Plex's
 // current share list. Session cookies last 30 days and were never re-verified
@@ -9,24 +10,6 @@ import { withTtlCache, DEFAULT_CACHE_TTL_MS } from './ttl-cache';
 // list itself is cached (see isStillSharedUser) so the actual cost is one
 // Plex API call per TTL window, not one per request.
 export const SESSION_REVALIDATION_TTL_MS = 5 * 60 * 1000;
-
-export interface PlexSharedUser {
-  plexId: string;
-  email: string;
-  username: string;
-}
-
-export interface RecentlyAddedItem {
-  title: string;
-  thumbPath: string;
-  addedAt: string;
-  type: 'movie' | 'episode';
-  /** Deep link into this server's own Plex Web instance, or null if the
-   * machineIdentifier lookup failed or the item had no ratingKey — callers
-   * must treat that as "not clickable" rather than link to a broken URL.
-   * Same contract as SearchResultItem.plexWebUrl below. */
-  plexWebUrl: string | null;
-}
 
 const PLEX_HEADERS = (clientId: string) => ({
   Accept: 'application/json',
@@ -76,7 +59,7 @@ export async function getPlexIdentity(
   userToken: string,
   clientId: string,
   fetchFn: typeof fetch = fetch
-): Promise<{ plexId: string; email: string; username: string }> {
+): Promise<MediaMember> {
   const res = await fetchFn('https://plex.tv/api/v2/user', {
     headers: { ...PLEX_HEADERS(clientId), 'X-Plex-Token': userToken },
     signal: timeoutSignal(),
@@ -86,7 +69,7 @@ export async function getPlexIdentity(
     throw new Error(`Plex API request failed: ${res.status} ${res.statusText}`);
   }
   const data = (await res.json()) as { id: number; email: string; username: string };
-  return { plexId: String(data.id), email: data.email, username: data.username };
+  return { provider: 'plex', userId: String(data.id), email: data.email, username: data.username };
 }
 
 const xmlParser = new XMLParser({ ignoreAttributes: false, attributeNamePrefix: '' });
@@ -95,7 +78,7 @@ export async function getSharedUsers(
   serverToken: string,
   serverName: string,
   fetchFn: typeof fetch = fetch
-): Promise<PlexSharedUser[]> {
+): Promise<MediaMember[]> {
   const res = await fetchFn(`https://plex.tv/api/users?X-Plex-Token=${serverToken}`, {
     signal: timeoutSignal(),
   cache: 'no-store',
@@ -110,7 +93,7 @@ export async function getSharedUsers(
   const rawUsers = parsed.MediaContainer?.User;
   const users = Array.isArray(rawUsers) ? rawUsers : rawUsers ? [rawUsers] : [];
 
-  const result: PlexSharedUser[] = [];
+  const result: MediaMember[] = [];
   for (const u of users as Array<Record<string, unknown>>) {
     const servers = u.Server;
     const serverList = Array.isArray(servers) ? servers : servers ? [servers] : [];
@@ -119,7 +102,8 @@ export async function getSharedUsers(
     );
     if (isShared) {
       result.push({
-        plexId: String(u.id),
+        provider: 'plex',
+        userId: String(u.id),
         email: String(u.email ?? ''),
         username: String(u.username ?? ''),
       });
@@ -135,7 +119,7 @@ async function fetchSharedUsersCached(
   serverToken: string,
   serverName: string,
   fetchFn: typeof fetch
-): Promise<PlexSharedUser[]> {
+): Promise<MediaMember[]> {
   return withTtlCache(
     `shared-users:${serverName}`,
     SESSION_REVALIDATION_TTL_MS,
@@ -153,14 +137,14 @@ async function fetchSharedUsersCached(
 // this check must not lock out every non-owner session at once, consistent
 // with the rest of this app's tolerance for upstream failures.
 export async function isStillSharedUser(
-  plexId: string,
+  userId: string,
   serverToken: string,
   serverName: string,
   fetchFn: typeof fetch = fetch
 ): Promise<boolean> {
   try {
     const shared = await fetchSharedUsersCached(serverToken, serverName, fetchFn);
-    return shared.some((u) => u.plexId === plexId);
+    return shared.some((u) => u.userId === userId);
   } catch (err) {
     console.error('Failed to re-verify Plex share, allowing session through:', err);
     return true;
@@ -188,16 +172,13 @@ export async function getRecentlyAdded(
   });
 }
 
-export interface RecentlyAddedSplit {
-  movies: RecentlyAddedItem[];
-  episodes: RecentlyAddedItem[];
-}
-
 // Same source data as getRecentlyAdded, kept as two separate lists instead of
 // merged-then-sliced — for a dashboard layout that shows movies and shows as
 // their own sections rather than one interleaved feed. Cached and keyed
-// separately from getRecentlyAdded (different shape, different consumers —
-// this one page.tsx, that one also newsletter.ts).
+// separately from getRecentlyAdded (different shape, different consumers:
+// this one backs the dashboard page via recentlyAddedSplitAll, that one backs
+// the newsletter and the recently-added API route via recentlyAddedAll; both
+// are reached through the MediaServer provider methods).
 export async function getRecentlyAddedSplit(
   plexUrl: string,
   serverToken: string,
@@ -310,24 +291,13 @@ async function fetchRecentlyAddedByType(
     thumbPath: v.thumbPath,
     addedAt: new Date(v.addedAtRaw * 1000).toISOString(),
     type: v.type,
-    plexWebUrl: machineIdentifier && v.ratingKey ? buildPlexWebUrl(plexUrl, machineIdentifier, v.ratingKey) : null,
+    webUrl: machineIdentifier && v.ratingKey ? buildPlexWebUrl(plexUrl, machineIdentifier, v.ratingKey) : null,
   });
 
   return {
     movies: fromMovies.map(toItem),
     episodes: fromTv.map(toItem),
   };
-}
-
-export interface SearchResultItem {
-  title: string;
-  year: number | null;
-  type: 'movie' | 'show';
-  thumbPath: string | null;
-  /** Deep link into this server's own Plex Web instance, or null if the
-   * machineIdentifier lookup failed — callers must treat that as "not
-   * clickable" rather than link to a broken URL. */
-  plexWebUrl: string | null;
 }
 
 interface HubResultEntry {
@@ -416,7 +386,7 @@ export async function searchLibrary(
         year: entry.year ?? null,
         type: hub.type,
         thumbPath: entry.thumb ?? null,
-        plexWebUrl:
+        webUrl:
           machineIdentifier && entry.ratingKey
             ? buildPlexWebUrl(plexUrl, machineIdentifier, entry.ratingKey)
             : null,

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
-import { getRecentlyAdded } from '@/lib/plex';
+import { getActiveProviders } from '@/lib/media/registry';
+import { recentlyAddedAll } from '@/lib/media/aggregate';
 import { loadConfig, isSetupComplete, assertConfigured } from '@/lib/config';
 import { getDb } from '@/lib/db';
 
@@ -12,7 +13,7 @@ export async function GET() {
   }
   const config = assertConfigured(rawConfig);
   try {
-    const items = await getRecentlyAdded(config.plex.url, config.plex.serverToken, 15);
+    const items = await recentlyAddedAll(getActiveProviders(config), 15);
     return NextResponse.json(items);
   } catch (err) {
     console.error('Failed to fetch recently added:', err);

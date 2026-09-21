@@ -57,7 +57,7 @@ async function ownerRequest(
   init?: ConstructorParameters<typeof NextRequest>[1]
 ): Promise<NextRequest> {
   const token = await createSession(
-    { plexId: '1', email: 'owner@b.com', username: 'owner', isOwner: true },
+    { provider: 'plex', userId: '1', email: 'owner@b.com', username: 'owner', isOwner: true },
     REQUIRED_ENV.SESSION_SECRET
   );
   const request = new NextRequest(url, init);
@@ -70,7 +70,7 @@ async function memberRequest(
   init?: ConstructorParameters<typeof NextRequest>[1]
 ): Promise<NextRequest> {
   const token = await createSession(
-    { plexId: '2', email: 'member@b.com', username: 'member', isOwner: false },
+    { provider: 'plex', userId: '2', email: 'member@b.com', username: 'member', isOwner: false },
     REQUIRED_ENV.SESSION_SECRET
   );
   const request = new NextRequest(url, init);
@@ -136,10 +136,10 @@ describe('POST /api/admin/mail/send', () => {
     const created = createMailTemplate(getDb(), 'A', 'Sujet', 'Corps');
     const db = getDb();
     db.prepare(
-      'INSERT INTO users (plex_id, email, username, last_login) VALUES (?, ?, ?, ?)'
+      "INSERT INTO users (provider, external_id, email, username, last_login) VALUES ('plex', ?, ?, ?, ?)"
     ).run('1', 'a@b.com', 'a', new Date().toISOString());
     db.prepare(
-      'INSERT INTO users (plex_id, email, username, last_login) VALUES (?, ?, ?, ?)'
+      "INSERT INTO users (provider, external_id, email, username, last_login) VALUES ('plex', ?, ?, ?, ?)"
     ).run('2', 'c@d.com', 'c', new Date().toISOString());
 
     const { POST } = await import('../../src/app/api/admin/mail/send/route');
@@ -170,13 +170,13 @@ describe('POST /api/admin/mail/send', () => {
     const created = createMailTemplate(getDb(), 'A', 'Sujet', 'Corps');
     const db = getDb();
     db.prepare(
-      'INSERT INTO users (plex_id, email, username, last_login) VALUES (?, ?, ?, ?)'
+      "INSERT INTO users (provider, external_id, email, username, last_login) VALUES ('plex', ?, ?, ?, ?)"
     ).run('1', 'good1@b.com', 'good1', new Date().toISOString());
     db.prepare(
-      'INSERT INTO users (plex_id, email, username, last_login) VALUES (?, ?, ?, ?)'
+      "INSERT INTO users (provider, external_id, email, username, last_login) VALUES ('plex', ?, ?, ?, ?)"
     ).run('2', 'bad@b.com', 'bad', new Date().toISOString());
     db.prepare(
-      'INSERT INTO users (plex_id, email, username, last_login) VALUES (?, ?, ?, ?)'
+      "INSERT INTO users (provider, external_id, email, username, last_login) VALUES ('plex', ?, ?, ?, ?)"
     ).run('3', 'good2@b.com', 'good2', new Date().toISOString());
 
     const mailerModule = await import('../../src/lib/mailer');

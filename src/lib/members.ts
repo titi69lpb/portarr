@@ -1,9 +1,11 @@
 import type Database from 'better-sqlite3';
 import { getUserActivity } from './tautulli';
 import { isSubscribed } from './newsletter-subscriptions';
+import type { ProviderId } from './media/types';
 
 export interface MemberOverview {
-  plexId: string;
+  provider: ProviderId;
+  userId: string;
   username: string;
   email: string;
   portalLastLogin: string;
@@ -12,14 +14,16 @@ export interface MemberOverview {
 }
 
 interface UserRow {
-  plex_id: string;
+  provider: ProviderId;
+  external_id: string;
   username: string;
   email: string;
   last_login: string;
 }
 
 export interface PortalUser {
-  plexId: string;
+  provider: ProviderId;
+  userId: string;
   username: string;
   email: string;
   lastLogin: string;
@@ -31,9 +35,15 @@ export interface PortalUser {
 // rather than duplicating the query.
 export function listUsers(db: Database.Database): PortalUser[] {
   const users = db
-    .prepare('SELECT plex_id, username, email, last_login FROM users ORDER BY last_login DESC')
+    .prepare('SELECT provider, external_id, username, email, last_login FROM users ORDER BY last_login DESC')
     .all() as UserRow[];
-  return users.map((u) => ({ plexId: u.plex_id, username: u.username, email: u.email, lastLogin: u.last_login }));
+  return users.map((u) => ({
+    provider: u.provider,
+    userId: u.external_id,
+    username: u.username,
+    email: u.email,
+    lastLogin: u.last_login,
+  }));
 }
 
 export async function getMemberOverview(
@@ -54,12 +64,13 @@ export async function getMemberOverview(
   return users.map((u) => {
     const lastSeen = activityByEmail.get(u.email.toLowerCase()) ?? null;
     return {
-      plexId: u.plexId,
+      provider: u.provider,
+      userId: u.userId,
       username: u.username,
       email: u.email,
       portalLastLogin: u.lastLogin,
       tautulliLastSeen: lastSeen ? lastSeen.toISOString() : null,
-      newsletterOptedIn: isSubscribed(db, u.plexId),
+      newsletterOptedIn: isSubscribed(db, { provider: u.provider, userId: u.userId }),
     };
   });
 }

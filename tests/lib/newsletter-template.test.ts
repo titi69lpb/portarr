@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { renderNewsletterHtml } from '../../src/lib/newsletter-template';
-import type { RecentlyAddedItem } from '../../src/lib/plex';
+import type { RecentlyAddedItem } from '../../src/lib/media/types';
 
 function item(overrides: Partial<RecentlyAddedItem>): RecentlyAddedItem {
   return {
@@ -8,7 +8,7 @@ function item(overrides: Partial<RecentlyAddedItem>): RecentlyAddedItem {
     thumbPath: '/library/metadata/1/thumb/1',
     addedAt: new Date().toISOString(),
     type: 'movie',
-    plexWebUrl: null,
+    webUrl: null,
     ...overrides,
   };
 }

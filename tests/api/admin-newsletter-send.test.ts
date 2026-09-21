@@ -83,7 +83,7 @@ function hubFetchMock(movies: Record<string, unknown>[] = [], tv: Record<string,
 
 async function ownerRequest(init?: ConstructorParameters<typeof NextRequest>[1]): Promise<NextRequest> {
   const token = await createSession(
-    { plexId: 'owner-1', email: 'owner@b.com', username: 'owner', isOwner: true },
+    { provider: 'plex', userId: 'owner-1', email: 'owner@b.com', username: 'owner', isOwner: true },
     SECRET
   );
   const request = new NextRequest('http://localhost/api/admin/newsletter/send', init);
@@ -109,7 +109,7 @@ describe('POST /api/admin/newsletter/send', () => {
 
   it('returns 403 for a valid but non-owner session', async () => {
     const token = await createSession(
-      { plexId: 'member-1', email: 'member@b.com', username: 'member', isOwner: false },
+      { provider: 'plex', userId: 'member-1', email: 'member@b.com', username: 'member', isOwner: false },
       SECRET
     );
     const { POST } = await import('../../src/app/api/admin/newsletter/send/route');
@@ -137,13 +137,13 @@ describe('POST /api/admin/newsletter/send', () => {
     );
 
     const db = getDb();
-    db.prepare('INSERT INTO users (plex_id, email, username, last_login) VALUES (?, ?, ?, ?)').run(
+    db.prepare("INSERT INTO users (provider, external_id, email, username, last_login) VALUES ('plex', ?, ?, ?, ?)").run(
       'plex-a', 'a@b.com', 'a', new Date().toISOString()
     );
-    db.prepare('INSERT INTO users (plex_id, email, username, last_login) VALUES (?, ?, ?, ?)').run(
+    db.prepare("INSERT INTO users (provider, external_id, email, username, last_login) VALUES ('plex', ?, ?, ?, ?)").run(
       'plex-b', 'b@b.com', 'b', new Date().toISOString()
     );
-    setSubscribed(db, 'plex-b', false);
+    setSubscribed(db, { provider: 'plex', userId: 'plex-b' }, false);
 
     const request = await ownerRequest({ method: 'POST' });
     const { POST } = await import('../../src/app/api/admin/newsletter/send/route');
