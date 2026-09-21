@@ -11,6 +11,7 @@ import { insertMailLog } from '@/lib/mail-log';
 import { signUnsubscribeToken } from '@/lib/newsletter-token';
 import { insertNewsletterArchive } from '@/lib/newsletter-archive';
 import type { ProviderId } from '@/lib/media/types';
+import { getActiveProviders } from '@/lib/media/registry';
 
 export const dynamic = 'force-dynamic';
 
@@ -48,7 +49,7 @@ export async function POST(request: NextRequest) {
     }
     const config = assertConfigured(rawConfig);
 
-    const items = await getNewsletterItems(config.plex.url, config.plex.serverToken, WINDOW_DAYS);
+    const items = await getNewsletterItems(getActiveProviders(config), WINDOW_DAYS);
     if (items.movies.length === 0 && items.episodes.length === 0) {
       return NextResponse.json({ sent: 0, failed: 0, total: 0, skipped: true });
     }

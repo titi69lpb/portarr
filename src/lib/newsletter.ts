@@ -1,5 +1,5 @@
-import { getRecentlyAdded } from './media/plex';
-import type { RecentlyAddedItem } from './media/types';
+import { recentlyAddedAll } from './media/aggregate';
+import type { MediaServer, RecentlyAddedItem } from './media/types';
 
 export interface NewsletterItems {
   movies: RecentlyAddedItem[];
@@ -9,12 +9,10 @@ export interface NewsletterItems {
 const FETCH_COUNT = 200;
 
 export async function getNewsletterItems(
-  plexUrl: string,
-  serverToken: string,
-  windowDays: number,
-  fetchFn: typeof fetch = fetch
+  providers: MediaServer[],
+  windowDays: number
 ): Promise<NewsletterItems> {
-  const items = await getRecentlyAdded(plexUrl, serverToken, FETCH_COUNT, fetchFn);
+  const items = await recentlyAddedAll(providers, FETCH_COUNT);
   const cutoff = Date.now() - windowDays * 24 * 60 * 60 * 1000;
   const withinWindow = items.filter((item) => new Date(item.addedAt).getTime() >= cutoff);
   const withThumb = withinWindow.filter((item) => item.thumbPath && item.thumbPath !== 'undefined');

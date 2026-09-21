@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { verifySession, SESSION_COOKIE_NAME } from '@/lib/session';
 import { loadConfig, isSetupComplete, assertConfigured } from '@/lib/config';
 import { getDb } from '@/lib/db';
-import { searchLibrary } from '@/lib/media/plex';
+import { getActiveProviders } from '@/lib/media/registry';
+import { searchAll } from '@/lib/media/aggregate';
 
 export const dynamic = 'force-dynamic';
 
@@ -24,7 +25,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ results: [] });
     }
 
-    const results = await searchLibrary(config.plex.url, config.plex.serverToken, query);
+    const results = await searchAll(getActiveProviders(config), query);
     return NextResponse.json({ results });
   } catch (err) {
     console.error('Failed to search Plex library:', err);
