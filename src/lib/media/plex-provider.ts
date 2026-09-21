@@ -7,6 +7,8 @@ import {
   getRecentlyAdded,
   getRecentlyAddedSplit,
   searchLibrary,
+  fetchPlexPoster,
+  PLEX_POSTER_PATH,
 } from './plex';
 import { resolvePinToSession, type PollDeps } from './plex-pin';
 import type { MediaServer } from './types';
@@ -48,5 +50,10 @@ export function createPlexProvider(cfg: PlexProviderConfig, fetchFn: typeof fetc
     recentlyAdded: (count) => getRecentlyAdded(cfg.url, cfg.serverToken, count, fetchFn),
     recentlyAddedSplit: (countPerType) => getRecentlyAddedSplit(cfg.url, cfg.serverToken, countPerType, fetchFn),
     search: (query) => searchLibrary(cfg.url, cfg.serverToken, query, fetchFn),
+    handlesPoster: (ref) => PLEX_POSTER_PATH.test(ref),
+    poster: (ref) =>
+      PLEX_POSTER_PATH.test(ref)
+        ? fetchPlexPoster(cfg.url, cfg.serverToken, ref, fetchFn)
+        : Promise.resolve(null),
   };
 }

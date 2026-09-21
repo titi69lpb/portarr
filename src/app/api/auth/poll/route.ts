@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createSession, SESSION_COOKIE_NAME } from '@/lib/session';
 import { loadConfig, isSetupComplete, assertConfigured } from '@/lib/config';
 import { getDb } from '@/lib/db';
-import { getProvider } from '@/lib/media/registry';
+import { getPinAuth } from '@/lib/media/registry';
 
 export async function GET(request: NextRequest) {
   const pinId = Number(request.nextUrl.searchParams.get('pinId'));
@@ -16,8 +16,8 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'setup_incomplete' }, { status: 503 });
     }
     const config = assertConfigured(rawConfig);
-    // Deliberately plex-only for now: sub-project 2 (Jellyfin) will select the provider from the request.
-    const result = await getProvider(config, 'plex').auth.resolvePin(pinId);
+    // Plex logs in through the PIN flow; Jellyfin uses POST /api/auth/password.
+    const result = await getPinAuth(config, 'plex').resolvePin(pinId);
 
     if (result.status !== 'ok') {
       return NextResponse.json({ status: result.status });

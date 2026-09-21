@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getProvider } from '@/lib/media/registry';
+import { getPinAuth } from '@/lib/media/registry';
 import { loadConfig, isSetupComplete, assertConfigured } from '@/lib/config';
 import { getDb } from '@/lib/db';
 import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
@@ -20,8 +20,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'setup_incomplete' }, { status: 503 });
     }
     const config = assertConfigured(rawConfig);
-    // Deliberately plex-only for now: sub-project 2 (Jellyfin) will select the provider from the request.
-    const { pinId, authUrl } = await getProvider(config, 'plex').auth.createPin();
+    // Plex logs in through the PIN flow; Jellyfin uses POST /api/auth/password.
+    const { pinId, authUrl } = await getPinAuth(config, 'plex').createPin();
     return NextResponse.json({ pinId, authUrl });
   } catch (err) {
     console.error('Failed to create Plex login PIN:', err);

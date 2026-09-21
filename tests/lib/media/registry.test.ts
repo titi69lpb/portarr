@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { getActiveProviders, getProvider } from '../../../src/lib/media/registry';
+import { getActiveProviders, getProvider, getPinAuth, getPasswordAuth } from '../../../src/lib/media/registry';
 
 const PLEX = { url: 'http://plex', serverToken: 't', serverName: 'S', clientIdentifier: 'c' };
 const TAUTULLI = { url: 'http://tautulli', apiKey: 'k' };
@@ -26,5 +26,20 @@ describe('getProvider', () => {
   it('throws when the provider is not active', () => {
     expect(() => getProvider({ plex: PLEX, tautulli: TAUTULLI }, 'jellyfin')).toThrow(/jellyfin/);
     expect(() => getProvider({ plex: null, tautulli: null }, 'plex')).toThrow(/plex/);
+  });
+});
+
+describe('getPinAuth / getPasswordAuth', () => {
+  it('getPinAuth returns the plex pin auth', () => {
+    expect(getPinAuth({ plex: PLEX, tautulli: TAUTULLI }, 'plex').kind).toBe('pin');
+  });
+
+  it('getPasswordAuth refuses a provider that uses pin auth', () => {
+    expect(() => getPasswordAuth({ plex: PLEX, tautulli: TAUTULLI }, 'plex')).toThrow(/does not use password auth/);
+  });
+
+  it('both throw when the provider is not active', () => {
+    expect(() => getPinAuth({ plex: null, tautulli: null }, 'plex')).toThrow(/not active/);
+    expect(() => getPasswordAuth({ plex: PLEX, tautulli: TAUTULLI }, 'jellyfin')).toThrow(/not active/);
   });
 });

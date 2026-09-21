@@ -47,6 +47,7 @@ describe('createPlexProvider', () => {
 
   it('createPin returns only pinId and authUrl', async () => {
     const p = createPlexProvider(CFG, fetchStub({ '/api/v2/pins': () => json({ id: 7, code: 'ABCD' }) }));
+    if (p.auth.kind !== 'pin') throw new Error('expected pin auth');
     expect(await p.auth.createPin()).toEqual({
       pinId: 7,
       authUrl: expect.stringContaining('code=ABCD'),
@@ -113,5 +114,33 @@ describe('createPlexProvider', () => {
     const split = await p.recentlyAddedSplit(15);
     expect(split.movies.map((i) => i.title)).toEqual(['Dune']);
     expect(split.episodes.map((i) => i.title)).toEqual(['Show']);
+  });
+  it('handlesPoster accepts only Plex thumb paths', () => {
+    const p = createPlexProvider(CFG, fetchStub({}));
+    expect(p.handlesPoster('/library/metadata/1/thumb/1')).toBe(true);
+    expect(p.handlesPoster('/etc/passwd')).toBe(false);
+    expect(p.handlesPoster('jellyfin:0123456789abcdef0123456789abcdef')).toBe(false);
+  });
+
+  it('poster fetches the resized Plex transcode and returns bytes + content type', async () => {
+    const fetchFn = vi.fn(
+      async () => new Response(new Uint8Array([1, 2, 3]), { status: 200, headers: { 'Content-Type': 'image/jpeg' } })
+    ) as unknown as typeof fetch;
+    const p = createPlexProvider(CFG, fetchFn);
+    const result = await p.poster('/library/metadata/1/thumb/1');
+    expect(result?.contentType).toBe('image/jpeg');
+    expect(Array.from(new Uint8Array(result!.bytes))).toEqual([1, 2, 3]);
+    const url = String((fetchFn as unknown as ReturnType<typeof vi.fn>).mock.calls[0][0]);
+    expect(url).toContain('http://plex.local:32400/photo/:/transcode?');
+    expect(url).toContain('width=300');
+    expect(url).toContain('X-Plex-Token=tok');
+  });
+
+  it('poster returns null for a foreign ref without fetching, and for an upstream failure', async () => {
+    const fetchFn = vi.fn(async () => new Response('nope', { status: 404 })) as unknown as typeof fetch;
+    const p = createPlexProvider(CFG, fetchFn);
+    expect(await p.poster('jellyfin:0123456789abcdef0123456789abcdef')).toBeNull();
+    expect(fetchFn).not.toHaveBeenCalled();
+    expect(await p.poster('/library/metadata/1/thumb/1')).toBeNull();
   });
 });
