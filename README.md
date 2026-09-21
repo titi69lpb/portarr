@@ -1,7 +1,7 @@
 <div align="center">
   <img src="docs/screenshots/logo-full.jpg" alt="Portarr" width="360">
 
-  <h3>A lightweight, modern portal for your Plex community — the friendly Organizr replacement.</h3>
+  <h3>A lightweight, modern portal for your Plex and Jellyfin community — the friendly Organizr replacement.</h3>
 
   <p>
     🇫🇷 <a href="#français">Français</a> &nbsp;·&nbsp; 🇬🇧 <a href="#english">English</a>
@@ -23,6 +23,7 @@ Si vous faites tourner Plex pour votre famille ou vos amis, vous êtes probablem
 Concrètement, ça donne :
 
 - **Une vraie connexion Plex**, pas un mot de passe de portail partagé — chaque utilisateur se connecte avec son propre compte Plex, et l'accès suit exactement ce que votre serveur partage réellement.
+- **Plex, et Jellyfin en complément** — chaque membre se connecte sur son propre serveur (compte Plex, ou identifiant et mot de passe Jellyfin), et les deux bibliothèques apparaissent dans la même page.
 - **Un contenu qui s'adapte à qui regarde** — historique de visionnage personnel, stats personnelles, uniquement ses propres demandes en attente.
 - **Pas d'iframes à dompter** — pas de galère avec X-Frame-Options, pas de CSS qui se bat entre cinq thèmes différents. Une interface cohérente, rendue côté serveur, rapide.
 - **Un admin qui n'a pas besoin de toucher au serveur** pour poster une annonce, envoyer un mail groupé, ou voir qui utilise vraiment le portail.
@@ -86,15 +87,16 @@ Des modèles de mail réutilisables, un historique d'envoi, et la newsletter aut
 ## Fonctionnalités
 
 - **Connexion Plex SSO** — flux OAuth PIN, pas de système de comptes séparé. L'accès est réservé aux comptes que votre serveur Plex partage réellement.
+- **Connexion Jellyfin** *(optionnel)* — identifiant et mot de passe vérifiés par votre serveur Jellyfin (jamais stockés), avec limitation de débit par IP et par utilisateur. Les membres Jellyfin apparaissent dans la liste des membres, leurs derniers ajouts et la recherche s'affichent avec ceux de Plex.
 - **Dashboard** — carrousel des derniers ajouts, calendrier des sorties, lecture en cours, demandes en attente, stats Tautulli globales et personnelles, historique de visionnage perso, widget stockage optionnel.
-- **Recherche globale** — recherche dans votre bibliothèque Plex, liens directs vers Plex Web.
+- **Recherche globale** — recherche dans vos bibliothèques Plex et Jellyfin, liens directs vers Plex Web ou Jellyfin.
 - **Explorateur de fichiers** *(optionnel)* — navigation en lecture seule dans un dossier, téléchargements signés et reprenables ; sert les fichiers directement ou redirige vers un service proxy séparé.
 - **Test de vitesse** — débit et latence entre l'utilisateur et ce serveur, paliers adaptatifs jusqu'à 100 Mo, jauge animée.
 - **Annonces** — une bannière gérée par l'admin sur le dashboard, sans redéploiement.
 - **Mailing** — diffusion vers vos utilisateurs (par groupe d'activité ou sélection manuelle), modèles Markdown réutilisables, envoi de test obligatoire avant tout envoi de masse.
 - **Newsletter** — récap automatique des nouveautés, opt-in/opt-out par utilisateur, archive web publique, déclenchement cron ou manuel.
 - **Notifications de disponibilité** — email automatique quand une demande Overseerr approuvée devient disponible.
-- **Assistant de configuration** — premier lancement guidé (`/setup`) : configurez Plex/Tautulli/Sonarr/Radarr/Overseerr/SMTP/URL publique depuis le navigateur, sans éditer `.env`. Chaque étape teste la vraie connexion avant d'enregistrer. Modifiable ensuite depuis `/admin/settings` (accès propriétaire).
+- **Assistant de configuration** — premier lancement guidé (`/setup`) : configurez Plex/Tautulli/(Jellyfin, optionnel)/Sonarr/Radarr/Overseerr/SMTP/URL publique depuis le navigateur, sans éditer `.env`. Chaque étape teste la vraie connexion avant d'enregistrer. Modifiable ensuite depuis `/admin/settings` (accès propriétaire).
 - **Panneau d'administration** — annonces, modèles de mail + historique, vue des membres, synchronisation Plex manuelle, usage du stockage, réglages des services.
 
 ## Stack technique
@@ -106,6 +108,7 @@ Next.js 14 (App Router, TypeScript) · SQLite (`better-sqlite3`) · Docker
 - Un serveur Plex Media Server, avec un token API pour un compte pouvant voir votre bibliothèque et vos utilisateurs partagés.
 - Des instances Sonarr et Radarr (pour le calendrier des sorties).
 - Tautulli (pour la lecture en cours et les stats).
+- Jellyfin *(optionnel)* — une clé API administrateur (Tableau de bord > Clés API). Plex et Tautulli restent requis dans cette version.
 - Overseerr (pour le suivi des demandes).
 - Un compte SMTP (pour le mailing/newsletter/notifications).
 - Node.js 20+ (pour le dev local) ou Docker (pour le déploiement).
@@ -141,6 +144,14 @@ Deux façons de configurer Portarr, au choix :
 | `KUMA_URL`, `KUMA_API_KEY` | optionnel | Un badge de statut "tout est en ligne" / "N services en panne" sur le dashboard, alimenté par [Uptime Kuma](https://github.com/louislam/uptime-kuma) |
 
 Référence complète avec commentaires : [`.env.example`](.env.example).
+
+### Jellyfin (optionnel)
+
+Renseignez `JELLYFIN_URL` et `JELLYFIN_API_KEY` (étape optionnelle de l'assistant, ou `/admin/settings`). Les membres se connectent alors avec leur identifiant et mot de passe Jellyfin ; tous les comptes Jellyfin actifs sont membres, et les administrateurs Jellyfin sont propriétaires du portail.
+
+- Jellyfin n'a pas d'email par utilisateur : Portarr le retrouve dans la liste des utilisateurs d'Overseerr/Seerr (correspondance unique par nom, ou par identifiant Jellyfin quand Seerr le connaît). Sans correspondance, le membre est listé mais exclu des envois.
+- Une adresse partagée par deux membres (par exemple la même personne sur Plex et Jellyfin) reçoit la newsletter une seule fois, et seulement si chacun de ces membres y est abonné.
+- Pour l'instant, la lecture en cours, les statistiques et l'historique restent alimentés par Tautulli, donc par Plex uniquement.
 
 ## Lancer en local
 
@@ -189,6 +200,12 @@ docker run -d \
 
 Placez un reverse proxy (Traefik, Caddy, nginx...) devant pour le TLS ; l'app elle-même ne parle qu'en HTTP simple sur le port 3000.
 
+### Mise à jour depuis la 1.4
+
+Au premier démarrage de la 1.5, Portarr migre automatiquement sa base SQLite (les utilisateurs et abonnements deviennent propres à chaque serveur : Plex ou Jellyfin) et copie d'abord la base vers `<DATABASE_PATH>.pre-provider-migration`. **Une image antérieure ne sait pas relire la nouvelle base : cette copie est votre retour arrière.** Si la copie ne peut pas être écrite, le démarrage s'arrête avec un message clair et la base reste intacte. Les cookies de session et les liens de désinscription déjà émis restent valides.
+
+Changement pour qui consomme l'API : la clé JSON `plexWebUrl` devient `webUrl` dans `/api/search` et `/api/dashboard/recently-added`.
+
 ### Monter un dossier pour l'explorateur de fichiers (optionnel)
 
 Si vous définissez `FILES_ROOT_PATH`, montez le dossier correspondant en lecture seule dans le conteneur à ce même chemin, ex :
@@ -236,6 +253,7 @@ If you're running Plex for family or friends, you've probably reached for [Organ
 What that gets you, concretely:
 
 - **Real Plex login**, not a shared portal password — every user signs in with their own Plex account, and access follows whoever your server actually shares with.
+- **Plex, with Jellyfin alongside** — each member signs in on their own server (Plex account, or Jellyfin username and password), and both libraries show up on the same page.
 - **Content that reacts to who's looking** — personal watch history, personal stats, only your own pending requests.
 - **No iframes to fight with** — no X-Frame-Options headaches, no CSS fighting five different apps' themes. One consistent UI, server-rendered, fast.
 - **An admin who doesn't need to touch the server** to post an announcement, send a broadcast email, or check who's actually using the thing.
@@ -299,15 +317,16 @@ Reusable mail templates, a send history, and the automated newsletter, all in on
 ## Features
 
 - **Plex SSO login** — OAuth PIN flow, no separate account system. Access is restricted to accounts your Plex server actually shares with.
+- **Jellyfin login** *(optional)* — username and password checked by your Jellyfin server (never stored), rate-limited per IP and per username. Jellyfin members show up in the members list, and their recently-added items and search results appear next to Plex's.
 - **Dashboard** — recently-added carousel, release calendar, now-playing, pending requests, server-wide and personal Tautulli stats, personal watch history, optional storage widget.
-- **Global search** — searches your Plex library, links straight into Plex Web.
+- **Global search** — searches your Plex and Jellyfin libraries, links straight into Plex Web or Jellyfin.
 - **File browser** *(optional)* — read-only directory browsing with signed, resumable downloads; serves files directly or redirects to a separate proxy service.
 - **Speed test** — throughput and latency between the user and this server, adaptive staging up to 100 MB, animated gauge.
 - **Announcements** — an admin-managed banner on the dashboard, no redeploy needed.
 - **Mailing** — broadcast to your user base (by activity group or hand-picked), reusable Markdown templates, a required test-send before any mass send.
 - **Newsletter** — automated "what's new" recap, opt-in/opt-out per user, a public web archive, cron-triggered or manual.
 - **Availability notifications** — emails a user automatically when their approved Overseerr request becomes available.
-- **Setup wizard** — a guided first-run flow (`/setup`): configure Plex/Tautulli/Sonarr/Radarr/Overseerr/SMTP/public URL from the browser, no `.env` editing required. Each step tests the real connection before saving. Editable afterward from `/admin/settings` (owner access).
+- **Setup wizard** — a guided first-run flow (`/setup`): configure Plex/Tautulli/(Jellyfin, optional)/Sonarr/Radarr/Overseerr/SMTP/public URL from the browser, no `.env` editing required. Each step tests the real connection before saving. Editable afterward from `/admin/settings` (owner access).
 - **Admin panel** — announcements, mail templates + history, members view, manual Plex sync, storage usage, service settings.
 
 ## Stack
@@ -319,6 +338,7 @@ Next.js 14 (App Router, TypeScript) · SQLite (`better-sqlite3`) · Docker
 - A Plex Media Server, with an API token for an account that can see your library and shared users.
 - Sonarr and Radarr instances (used for the upcoming-releases calendar).
 - Tautulli (used for now-playing and stats).
+- Jellyfin *(optional)* — an administrator API key (Dashboard > API Keys). Plex and Tautulli are still required in this version.
 - Overseerr (used for request tracking).
 - An SMTP account (used for mailing/newsletter/notifications).
 - Node.js 20+ (for local dev) or Docker (for deployment).
@@ -354,6 +374,14 @@ Two ways to configure Portarr, your choice:
 | `KUMA_URL`, `KUMA_API_KEY` | optional | An "all up" / "N down" status badge on the dashboard, backed by [Uptime Kuma](https://github.com/louislam/uptime-kuma) |
 
 Full reference with inline comments: [`.env.example`](.env.example).
+
+### Jellyfin (optional)
+
+Set `JELLYFIN_URL` and `JELLYFIN_API_KEY` (the optional wizard step, or `/admin/settings`). Members then sign in with their Jellyfin username and password; every enabled Jellyfin account is a member, and Jellyfin administrators are portal owners.
+
+- Jellyfin has no per-user email: Portarr looks it up in the Overseerr/Seerr user list (unique name match, or by Jellyfin id when Seerr knows it). With no match the member is listed but excluded from mailings.
+- An address shared by two members (for example the same person on Plex and Jellyfin) gets the newsletter once, and only when each of those members is subscribed.
+- For now, now-playing, stats and history are still fed by Tautulli, so by Plex only.
 
 ## Run locally
 
@@ -401,6 +429,12 @@ docker run -d \
 `HOSTNAME=0.0.0.0` is required — without it, the Next.js standalone server binds to the container's internal IP and its own internal API self-fetches (used by a couple of routes) break.
 
 Put a reverse proxy (Traefik, Caddy, nginx...) in front for TLS; the app itself only speaks plain HTTP on port 3000.
+
+### Upgrading from 1.4
+
+On first start, 1.5 migrates its SQLite database automatically (users and subscriptions become per-server: Plex or Jellyfin) and first copies the database to `<DATABASE_PATH>.pre-provider-migration`. **An earlier image cannot read the new database: that copy is your rollback.** If the copy cannot be written, startup stops with a clear message and the database is left untouched. Existing session cookies and unsubscribe links stay valid.
+
+Change for API consumers: the JSON key `plexWebUrl` is now `webUrl` in `/api/search` and `/api/dashboard/recently-added`.
 
 ### Mount a file browser directory (optional)
 
