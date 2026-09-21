@@ -1,4 +1,5 @@
 import type { MemberOverview } from '@/lib/members';
+import { providerLabel } from '@/lib/media/labels';
 
 function formatDate(iso: string | null): string {
   if (!iso) return '—';
@@ -26,6 +27,9 @@ export function AdminMembersList({ members }: { members: MemberOverview[] }) {
             <tr key={`${m.provider}:${m.userId}`} className="border-b border-plexcrew-teal/10 last:border-0">
               <td className="py-2 pr-4 text-plexcrew-screen">
                 {m.username}
+                <span className="ml-2 rounded border border-plexcrew-teal/30 px-1.5 py-0.5 text-[10px] uppercase tracking-wider text-plexcrew-ash">
+                  {providerLabel(m.provider)}
+                </span>
                 <span className="ml-2 text-xs text-plexcrew-ash">{m.email}</span>
               </td>
               <td className="py-2 pr-4 font-mono text-xs text-plexcrew-ash">
