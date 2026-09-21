@@ -30,7 +30,28 @@ describe('isStillMember', () => {
     expect(fetchFn).not.toHaveBeenCalled();
   });
 
-  it('allows a jellyfin ref until the jellyfin adapter exists', async () => {
-    expect(await isStillMember({ provider: 'jellyfin', userId: 'x' }, ENV, usersFetch())).toBe(true);
+  const JELLYFIN_ENV = { JELLYFIN_URL: 'http://jellyfin.local:8096', JELLYFIN_API_KEY: 'k' };
+  const UID = '1a2b3c4d5e6f47a8b9c0d1e2f3a4b5c6';
+
+  function jellyfinUsersFetch(): typeof fetch {
+    return vi.fn(
+      async () =>
+        ({
+          ok: true,
+          status: 200,
+          json: async () => [{ Id: UID, Name: 'alice', Policy: { IsAdministrator: false, IsDisabled: false } }],
+        }) as unknown as Response
+    ) as unknown as typeof fetch;
+  }
+
+  it('confirms an enabled jellyfin user and rejects an unknown one', async () => {
+    expect(await isStillMember({ provider: 'jellyfin', userId: UID }, JELLYFIN_ENV, jellyfinUsersFetch())).toBe(true);
+    expect(await isStillMember({ provider: 'jellyfin', userId: 'e'.repeat(32) }, JELLYFIN_ENV, jellyfinUsersFetch())).toBe(false);
+  });
+
+  it('skips revalidation (allows) when jellyfin is not configured through env', async () => {
+    const fetchFn = jellyfinUsersFetch();
+    expect(await isStillMember({ provider: 'jellyfin', userId: 'e'.repeat(32) }, {}, fetchFn)).toBe(true);
+    expect(fetchFn).not.toHaveBeenCalled();
   });
 });

@@ -1,3 +1,4 @@
+import { createJellyfinProvider } from './jellyfin-provider';
 import { createPlexProvider } from './plex-provider';
 import type { MemberRef } from './types';
 
@@ -6,9 +7,9 @@ import type { MemberRef } from './types';
 // only ever reads credentials from env (never config.ts / the DB) and stays
 // inside the DB-free import graph enforced by tests/middleware-edge-imports.
 //
-// Fails open — an install configured only via the DB/wizard has no env
-// credentials here, so revalidation is skipped and the 30-day JWT expiry is
-// the fallback (accepted, documented degradation).
+// Fails open for both providers — an install configured only via the
+// DB/wizard has no env credentials here, so revalidation is skipped and the
+// 30-day JWT expiry is the fallback (accepted, documented degradation).
 export async function isStillMember(
   ref: MemberRef,
   env: Record<string, string | undefined>,
@@ -30,9 +31,11 @@ export async function isStillMember(
       );
       return plex.isMember(ref.userId);
     }
-    case 'jellyfin':
-      // Sub-project 2 implements Jellyfin revalidation. No Jellyfin session
-      // can exist before then.
-      return true;
+    case 'jellyfin': {
+      const url = env.JELLYFIN_URL;
+      const apiKey = env.JELLYFIN_API_KEY;
+      if (!url || !apiKey) return true;
+      return createJellyfinProvider({ url: url.replace(/\/+$/, ''), apiKey }, fetchFn).isMember(ref.userId);
+    }
   }
 }

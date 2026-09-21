@@ -43,3 +43,24 @@ describe('getPinAuth / getPasswordAuth', () => {
     expect(() => getPasswordAuth({ plex: PLEX, tautulli: TAUTULLI }, 'jellyfin')).toThrow(/not active/);
   });
 });
+
+describe('jellyfin activation', () => {
+  const JELLYFIN = { url: 'http://jellyfin.local:8096', apiKey: 'k' };
+
+  it('activates jellyfin next to plex when both are configured', () => {
+    expect(getActiveProviders({ plex: PLEX, tautulli: TAUTULLI, jellyfin: JELLYFIN }).map((p) => p.id)).toEqual([
+      'plex',
+      'jellyfin',
+    ]);
+  });
+
+  it('activates jellyfin on its own, independently of Tautulli', () => {
+    expect(getActiveProviders({ plex: null, tautulli: null, jellyfin: JELLYFIN }).map((p) => p.id)).toEqual(['jellyfin']);
+  });
+
+  it('getPasswordAuth returns the jellyfin password auth, getPinAuth refuses it', () => {
+    const config = { plex: PLEX, tautulli: TAUTULLI, jellyfin: JELLYFIN };
+    expect(getPasswordAuth(config, 'jellyfin').kind).toBe('password');
+    expect(() => getPinAuth(config, 'jellyfin')).toThrow(/does not use pin auth/);
+  });
+});

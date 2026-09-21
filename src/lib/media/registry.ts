@@ -1,3 +1,5 @@
+import { createJellyfinProvider } from './jellyfin-provider';
+import type { JellyfinProviderConfig } from './jellyfin';
 import { createPlexProvider, type PlexProviderConfig } from './plex-provider';
 import type { MediaServer, PasswordAuth, PinAuth, ProviderId } from './types';
 
@@ -6,14 +8,19 @@ import type { MediaServer, PasswordAuth, PinAuth, ProviderId } from './types';
 export interface ProviderConfigSource {
   plex: PlexProviderConfig | null;
   tautulli: object | null;
+  jellyfin?: JellyfinProviderConfig | null;
 }
 
 // A provider is active when everything it needs is configured. Plex also
-// needs Tautulli, because now-playing/stats/history still come from it.
+// needs Tautulli, because now-playing/stats/history still come from it;
+// Jellyfin stands on its own.
 export function getActiveProviders(config: ProviderConfigSource, fetchFn: typeof fetch = fetch): MediaServer[] {
   const providers: MediaServer[] = [];
   if (config.plex && config.tautulli) {
     providers.push(createPlexProvider(config.plex, fetchFn));
+  }
+  if (config.jellyfin) {
+    providers.push(createJellyfinProvider(config.jellyfin, fetchFn));
   }
   return providers;
 }
