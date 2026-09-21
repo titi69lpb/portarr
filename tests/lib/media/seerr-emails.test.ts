@@ -40,6 +40,13 @@ describe('fetchSeerrUsers', () => {
     expect(calls[0][1].headers['X-Api-Key']).toBe('seerr-key');
   });
 
+  it('trims trailing slashes from the base url', async () => {
+    const fetchFn = vi.fn().mockResolvedValueOnce(res({ pageInfo: { pages: 1 }, results: [] })) as unknown as typeof fetch;
+    await fetchSeerrUsers('http://seerr.local:5055/', 'k', fetchFn);
+    const calls = (fetchFn as unknown as ReturnType<typeof vi.fn>).mock.calls;
+    expect(calls[0][0]).toBe('http://seerr.local:5055/api/v1/user?take=100&skip=0');
+  });
+
   it('throws with the status when Seerr answers non-ok', async () => {
     const fetchFn = vi.fn().mockResolvedValue(res({}, 403)) as unknown as typeof fetch;
     await expect(fetchSeerrUsers('http://seerr.local:5055', 'k', fetchFn)).rejects.toThrow('403');

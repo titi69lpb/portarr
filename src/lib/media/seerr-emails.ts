@@ -33,8 +33,9 @@ export async function fetchSeerrUsers(
   fetchFn: typeof fetch = fetch
 ): Promise<SeerrUser[]> {
   const users: SeerrUser[] = [];
+  const baseUrl = url.replace(/\/+$/, '');
   for (let page = 0; page < MAX_PAGES; page++) {
-    const res = await fetchFn(`${url}/api/v1/user?take=${PAGE_SIZE}&skip=${page * PAGE_SIZE}`, {
+    const res = await fetchFn(`${baseUrl}/api/v1/user?take=${PAGE_SIZE}&skip=${page * PAGE_SIZE}`, {
       headers: { 'X-Api-Key': apiKey, Accept: 'application/json' },
       signal: timeoutSignal(),
       cache: 'no-store',
