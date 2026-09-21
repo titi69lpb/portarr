@@ -196,6 +196,27 @@ describe('isSetupComplete — a media provider must be active', () => {
   it('is true when a provider is active and every other service is configured', () => {
     expect(isSetupComplete(loadConfig(FULL_ENV, getDb(':memory:')))).toBe(true);
   });
+
+  it('is false for a Jellyfin-only install without Plex (assertConfigured would hand out a null plex)', () => {
+    const { PLEX_URL: _url, ...env } = FULL_ENV;
+    const config = loadConfig(
+      { ...env, JELLYFIN_URL: 'http://j.local:8096', JELLYFIN_API_KEY: 'jkey' },
+      getDb(':memory:')
+    );
+    expect(config.jellyfin).not.toBeNull();
+    expect(isSetupComplete(config)).toBe(false);
+    expect(() => assertConfigured(config)).toThrow();
+  });
+
+  it('is false for Jellyfin + Plex without Tautulli', () => {
+    const { TAUTULLI_URL: _url, ...env } = FULL_ENV;
+    const config = loadConfig(
+      { ...env, JELLYFIN_URL: 'http://j.local:8096', JELLYFIN_API_KEY: 'jkey' },
+      getDb(':memory:')
+    );
+    expect(config.jellyfin).not.toBeNull();
+    expect(isSetupComplete(config)).toBe(false);
+  });
 });
 
 describe('jellyfin config', () => {

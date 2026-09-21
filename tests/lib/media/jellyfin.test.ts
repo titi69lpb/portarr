@@ -95,6 +95,11 @@ describe('authenticateByName', () => {
     expect(await authenticateByName(CFG, 'x', 'y', fetchFn)).toEqual({ status: 'denied' });
   });
 
+  it('returns denied on 403 too (a disabled account must look like a wrong password)', async () => {
+    const fetchFn = vi.fn(async () => res('Forbidden', 403)) as unknown as typeof fetch;
+    expect(await authenticateByName(CFG, 'x', 'y', fetchFn)).toEqual({ status: 'denied' });
+  });
+
   it('throws on other failures without leaking the password into the message', async () => {
     const fetchFn = vi.fn(async () => res({}, 500)) as unknown as typeof fetch;
     const error = await authenticateByName(CFG, 'x', 'p4ssw0rd-secret', fetchFn).catch((e: Error) => e);

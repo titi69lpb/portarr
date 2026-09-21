@@ -103,6 +103,9 @@ export function createJellyfinProvider(cfg: JellyfinProviderConfig, fetchFn: typ
       async authenticate(username, password) {
         const result = await authenticateByName(cfg, username, password, fetchFn);
         if (result.status === 'denied') return { status: 'denied' };
+        // Decide first, then always end the temporary session, so a disabled
+        // account costs the same round-trips as a successful login.
+        const disabled = result.user.isDisabled;
         // The token only proves the credentials: end that Jellyfin session
         // right away so Portarr never leaves one behind.
         try {
@@ -110,7 +113,7 @@ export function createJellyfinProvider(cfg: JellyfinProviderConfig, fetchFn: typ
         } catch (err) {
           console.error('Failed to end the temporary Jellyfin session:', err instanceof Error ? err.message : 'unknown error');
         }
-        if (result.user.isDisabled) return { status: 'denied' };
+        if (disabled) return { status: 'denied' };
         return { status: 'ok', user: toMember(result.user), isOwner: result.user.isAdministrator };
       },
     },

@@ -133,7 +133,9 @@ export async function authenticateByName(
     signal: timeoutSignal(),
     cache: 'no-store',
   });
-  if (res.status === 401) {
+  // Jellyfin answers a wrong password with 401 and (unverified) a disabled/blocked account with 403: both
+  // must look the same to the caller so the account state is not an oracle.
+  if (res.status === 401 || res.status === 403) {
     return { status: 'denied' };
   }
   if (!res.ok) {

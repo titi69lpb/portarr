@@ -6,7 +6,7 @@ import { getActiveProviders } from '@/lib/media/registry';
 export const dynamic = 'force-dynamic';
 
 // A themed "no poster" placeholder, returned with a 200 whenever the
-// underlying Plex item can't be fetched — e.g. a stats/history entry
+// underlying media item can't be fetched — e.g. a stats/history entry
 // pointing at media that has since been deleted (a real, recurring case
 // after the NAS storage incident). Every consumer is a Server Component
 // with no onError fallback (see the NowPlaying Client Component incident

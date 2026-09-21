@@ -115,6 +115,17 @@ describe('createJellyfinProvider: password auth', () => {
     const auth = createJellyfinProvider(CFG, fetchFn).auth;
     if (auth.kind !== 'password') throw new Error('expected password auth');
     expect(await auth.authenticate('alice', 'pw')).toEqual({ status: 'denied' });
+    // Same round-trips as a successful login, so the disabled state is not timeable.
+    expect(urls(fetchFn).some((u) => u.includes('/Sessions/Logout'))).toBe(true);
+  });
+
+  it('is denied on 403 (disabled/blocked account) and has no session to log out', async () => {
+    const fetchFn = stub({ '/Users/AuthenticateByName': () => res('Forbidden', 403) });
+    const auth = createJellyfinProvider(CFG, fetchFn).auth;
+    if (auth.kind !== 'password') throw new Error('expected password auth');
+    expect(await auth.authenticate('alice', 'pw')).toEqual({ status: 'denied' });
+    expect(urls(fetchFn)).toHaveLength(1);
+    expect(urls(fetchFn).some((u) => u.includes('/Sessions/Logout'))).toBe(false);
   });
 
   it('still succeeds when the temporary session cannot be ended', async () => {

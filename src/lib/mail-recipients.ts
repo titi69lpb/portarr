@@ -22,7 +22,27 @@ interface UserRow {
   username: string;
 }
 
+// One person can be a Plex and a Jellyfin member sharing an address: mail it once (first wins).
+export function dedupeRecipientsByEmail<T extends { email: string }>(recipients: T[]): T[] {
+  const seen = new Set<string>();
+  return recipients.filter((r) => {
+    const key = r.email.toLowerCase();
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
 export async function resolveRecipients(
+  db: Database.Database,
+  params: RecipientParams,
+  deps: RecipientDeps,
+  tautulliCtx: { url: string; apiKey: string }
+): Promise<Recipient[]> {
+  return dedupeRecipientsByEmail(await selectRecipients(db, params, deps, tautulliCtx));
+}
+
+async function selectRecipients(
   db: Database.Database,
   params: RecipientParams,
   deps: RecipientDeps,

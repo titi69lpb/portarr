@@ -192,6 +192,10 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env, db: Database.Da
 
 export function isSetupComplete(config: AppConfig): boolean {
   return (
+    // Jellyfin runs alongside Plex + Tautulli in this sub-project, so both stay required: this is what
+    // makes assertConfigured's cast sound. Sub-project 3 relaxes it (Jellyfin-only, Tautulli optional).
+    config.plex !== null &&
+    config.tautulli !== null &&
     getActiveProviders(config).length > 0 &&
     config.sonarr !== null &&
     config.radarr !== null &&
@@ -201,7 +205,7 @@ export function isSetupComplete(config: AppConfig): boolean {
   );
 }
 
-// plex/tautulli stay non-null here while Plex is the only provider; sub-project 2 (Jellyfin) relaxes this.
+// plex/tautulli stay non-null here because isSetupComplete still requires them; sub-project 3 (Jellyfin-only installs) relaxes this.
 export interface ConfiguredAppConfig extends AppConfig {
   plex: PlexConfig;
   tautulli: TautulliConfig;

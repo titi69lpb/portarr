@@ -133,6 +133,15 @@ describe('POST /api/auth/password', () => {
     expect(response.cookies.get(SESSION_COOKIE_NAME)).toBeUndefined();
   });
 
+  it('answers 401 denied, with no cookie, when Jellyfin answers 403 (disabled/blocked account)', async () => {
+    installFetch({ auth: () => jsonRes('Forbidden', 403) });
+    const { POST } = await import('../../src/app/api/auth/password/route');
+    const response = await POST(login());
+    expect(response.status).toBe(401);
+    expect(await response.json()).toEqual({ status: 'denied' });
+    expect(response.cookies.get(SESSION_COOKIE_NAME)).toBeUndefined();
+  });
+
   it('answers 401 denied for a disabled account', async () => {
     installFetch({ auth: () => jsonRes({ User: { Id: UID, Name: 'alice', Policy: { IsAdministrator: false, IsDisabled: true } }, AccessToken: 't' }) });
     const { POST } = await import('../../src/app/api/auth/password/route');

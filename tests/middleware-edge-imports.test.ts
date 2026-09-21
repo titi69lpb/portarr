@@ -67,5 +67,7 @@ describe('middleware Edge import graph', () => {
     const reached = [...files].map((f) => relative(SRC, f));
     expect(reached).toContain('lib/session.ts');
     expect(reached).toContain('lib/media/membership.ts');
+    expect(reached).toContain('lib/media/jellyfin-provider.ts');
+    expect(reached).toContain('lib/media/jellyfin.ts');
   });
 });

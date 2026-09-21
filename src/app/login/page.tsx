@@ -10,12 +10,15 @@ import { JellyfinLoginForm } from '@/components/JellyfinLoginForm';
 export const dynamic = 'force-dynamic';
 
 export default function LoginPage() {
-  const config = loadConfig(process.env, getDb());
-  // Before setup completes no provider is active; keep offering the Plex
-  // button, as this page always did.
-  const active: ProviderId[] = isSetupComplete(config)
-    ? getActiveProviders(config).map((p) => p.id)
-    : ['plex'];
+  // Before setup completes no provider is active; keep offering the Plex button, as this page always did.
+  let active: ProviderId[] = ['plex'];
+  try {
+    const config = loadConfig(process.env, getDb());
+    if (isSetupComplete(config)) active = getActiveProviders(config).map((p) => p.id);
+  } catch {
+    // Unconfigured (no SESSION_SECRET / no DB): still offer the Plex button, as this page did before it
+    // became a server component.
+  }
 
   return (
     <main
