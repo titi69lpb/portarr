@@ -16,6 +16,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'setup_incomplete' }, { status: 503 });
     }
     const config = assertConfigured(rawConfig);
+    // Deliberately plex-only for now: sub-project 2 (Jellyfin) will select the provider from the request.
     const result = await getProvider(config, 'plex').auth.resolvePin(pinId);
 
     if (result.status !== 'ok') {

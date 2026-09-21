@@ -1,9 +1,9 @@
-export type ProviderId = 'plex' | 'jellyfin';
+const PROVIDER_IDS = ['plex', 'jellyfin'] as const;
 
-const PROVIDER_IDS: readonly string[] = ['plex', 'jellyfin'];
+export type ProviderId = (typeof PROVIDER_IDS)[number];
 
 export function isProviderId(value: unknown): value is ProviderId {
-  return typeof value === 'string' && PROVIDER_IDS.includes(value);
+  return typeof value === 'string' && (PROVIDER_IDS as readonly string[]).includes(value);
 }
 
 /** Identity of one account on one media server. Two accounts on two

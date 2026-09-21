@@ -175,8 +175,10 @@ export async function getRecentlyAdded(
 // Same source data as getRecentlyAdded, kept as two separate lists instead of
 // merged-then-sliced — for a dashboard layout that shows movies and shows as
 // their own sections rather than one interleaved feed. Cached and keyed
-// separately from getRecentlyAdded (different shape, different consumers —
-// this one page.tsx, that one also newsletter.ts).
+// separately from getRecentlyAdded (different shape, different consumers:
+// this one backs the dashboard page via recentlyAddedSplitAll, that one backs
+// the newsletter and the recently-added API route via recentlyAddedAll; both
+// are reached through the MediaServer provider methods).
 export async function getRecentlyAddedSplit(
   plexUrl: string,
   serverToken: string,

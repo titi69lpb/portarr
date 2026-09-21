@@ -37,7 +37,7 @@ function walk(entry: string): { files: Set<string>; externals: Set<string> } {
       const spec = match[1];
       const resolved = resolveImport(file, spec);
       if (resolved) queue.push(resolved);
-      else if (!spec.startsWith('.') && !spec.startsWith('@/')) externals.add(spec.replace(/^node:/, ''));
+      else if (!spec.startsWith('.') && !spec.startsWith('@/')) externals.add(spec);
     }
   }
   return { files, externals };
@@ -54,9 +54,13 @@ describe('middleware Edge import graph', () => {
   });
 
   it('never imports better-sqlite3 or a node builtin', () => {
-    for (const forbidden of FORBIDDEN_EXTERNALS) {
-      expect([...externals]).not.toContain(forbidden);
-    }
+    // Prefix match so subpaths (fs/promises, path/posix) are caught, and any
+    // node:-prefixed specifier is a builtin whatever its name (worker_threads).
+    const offenders = [...externals].filter((spec) => {
+      if (spec.startsWith('node:')) return true;
+      return FORBIDDEN_EXTERNALS.some((f) => spec === f || spec.startsWith(`${f}/`));
+    });
+    expect(offenders).toEqual([]);
   });
 
   it('actually walks the media modules (guards the guard)', () => {

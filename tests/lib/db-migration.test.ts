@@ -1,6 +1,6 @@
 import { describe, it, expect, afterEach, beforeEach } from 'vitest';
 import Database from 'better-sqlite3';
-import { mkdtempSync, existsSync, rmSync } from 'node:fs';
+import { mkdtempSync, existsSync, rmSync, mkdirSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { getDb, resetDbForTests, LEGACY_BACKUP_SUFFIX } from '../../src/lib/db';
@@ -99,6 +99,90 @@ describe('provider-keyed migration', () => {
     const backupRows = backup.prepare('SELECT plex_id FROM users').all();
     backup.close();
     expect(backupRows).toEqual([{ plex_id: '42' }]);
+  });
+
+  describe('pre-migration backup safety', () => {
+    function legacyShape(path: string): { legacy: boolean; migrated: boolean } {
+      const raw = new Database(path, { readonly: true });
+      try {
+        const cols = (raw.prepare('PRAGMA table_info(users)').all() as { name: string }[]).map((c) => c.name);
+        const leftovers = raw
+          .prepare("SELECT name FROM sqlite_master WHERE type='table' AND name LIKE '%_legacy'")
+          .all();
+        return { legacy: cols.includes('plex_id') && leftovers.length === 0, migrated: cols.includes('provider') };
+      } finally {
+        raw.close();
+      }
+    }
+
+    it('does not overwrite a complete backup left by an earlier run', () => {
+      const path = makeLegacyDb();
+      const backupPath = `${path}${LEGACY_BACKUP_SUFFIX}`;
+      const earlier = new Database(backupPath);
+      earlier.exec("CREATE TABLE users (plex_id TEXT PRIMARY KEY); INSERT INTO users VALUES ('sentinel');");
+      earlier.close();
+
+      const db = getDb(path);
+      expect(db.prepare('SELECT external_id FROM users').all()).toEqual([{ external_id: '42' }]);
+
+      const backup = new Database(backupPath, { readonly: true });
+      const rows = backup.prepare('SELECT plex_id FROM users').all();
+      backup.close();
+      expect(rows).toEqual([{ plex_id: 'sentinel' }]);
+      expect(existsSync(`${backupPath}.tmp`)).toBe(false);
+    });
+
+    it('recovers from a stale .tmp left by a crashed earlier attempt', () => {
+      const path = makeLegacyDb();
+      const backupPath = `${path}${LEGACY_BACKUP_SUFFIX}`;
+      writeFileSync(`${backupPath}.tmp`, 'half-written garbage from a crash');
+
+      const db = getDb(path);
+      expect(db.prepare('SELECT external_id FROM users').all()).toEqual([{ external_id: '42' }]);
+
+      const backup = new Database(backupPath, { readonly: true });
+      const rows = backup.prepare('SELECT plex_id, email FROM users').all();
+      backup.close();
+      expect(rows).toEqual([{ plex_id: '42', email: 'a@b.com' }]);
+      expect(existsSync(`${backupPath}.tmp`)).toBe(false);
+    });
+
+    it('never leaves a backup at the final path that is not a complete database', () => {
+      const path = makeLegacyDb();
+      const backupPath = `${path}${LEGACY_BACKUP_SUFFIX}`;
+      getDb(path);
+      const backup = new Database(backupPath, { readonly: true });
+      expect(backup.pragma('integrity_check', { simple: true })).toBe('ok');
+      backup.close();
+    });
+
+    it('aborts with a clear error naming the backup path, and leaves the database legacy, when the backup cannot be written', () => {
+      // A directory sitting where the temporary backup file must go makes
+      // the backup step fail deterministically (root-safe, no chmod).
+      const path = makeLegacyDb();
+      const backupPath = `${path}${LEGACY_BACKUP_SUFFIX}`;
+      mkdirSync(`${backupPath}.tmp`);
+
+      expect(() => getDb(path)).toThrow(/pre-migration backup/);
+      expect(() => getDb(path)).toThrow(backupPath);
+      expect(existsSync(backupPath)).toBe(false);
+      expect(legacyShape(path)).toEqual({ legacy: true, migrated: false });
+    });
+
+    it('aborts with a clear error when VACUUM INTO itself fails, and leaves the database legacy', () => {
+      // 233-char db name + the 23-char suffix + '.tmp' exceeds the 255-byte
+      // filename limit, so VACUUM INTO cannot create its target.
+      const path = join(dir, `${'x'.repeat(230)}.db`);
+      const legacy = new Database(path);
+      legacy.exec("CREATE TABLE users (plex_id TEXT PRIMARY KEY, email TEXT NOT NULL, username TEXT NOT NULL, last_login TEXT NOT NULL); CREATE TABLE newsletter_subscriptions (plex_id TEXT PRIMARY KEY, opted_in INTEGER NOT NULL DEFAULT 1, updated_at TEXT NOT NULL);");
+      legacy.close();
+      const backupPath = `${path}${LEGACY_BACKUP_SUFFIX}`;
+
+      expect(() => getDb(path)).toThrow(/pre-migration backup/);
+      expect(() => getDb(path)).toThrow(backupPath);
+      expect(existsSync(backupPath)).toBe(false);
+      expect(legacyShape(path)).toEqual({ legacy: true, migrated: false });
+    });
   });
 
   it('creates the new schema directly on a fresh database, with no backup', () => {

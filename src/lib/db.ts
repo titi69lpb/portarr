@@ -1,5 +1,5 @@
 import Database from 'better-sqlite3';
-import { existsSync, mkdirSync } from 'node:fs';
+import { existsSync, mkdirSync, renameSync, rmSync } from 'node:fs';
 import { dirname } from 'node:path';
 
 let instance: Database.Database | null = null;
@@ -90,9 +90,31 @@ function migrateToProviderKeys(db: Database.Database, dbPath: string): void {
   if (dbPath !== ':memory:') {
     const backupPath = `${dbPath}${LEGACY_BACKUP_SUFFIX}`;
     if (!existsSync(backupPath)) {
-      // VACUUM INTO writes a consistent copy even in WAL mode; it cannot run
-      // inside a transaction, hence before db.transaction() below.
-      db.exec(`VACUUM INTO '${backupPath.replace(/'/g, "''")}'`);
+      // Write to a temp file and rename into place: rename is atomic on one
+      // filesystem, so the final path either does not exist or is a complete
+      // backup, never the half-written file a crash or full disk would leave.
+      // VACUUM INTO refuses an existing target, so clear a stale temp first.
+      // It writes a consistent copy even in WAL mode and cannot run inside a
+      // transaction, hence before db.transaction() below.
+      const tmpPath = `${backupPath}.tmp`;
+      try {
+        rmSync(tmpPath, { force: true });
+        db.exec(`VACUUM INTO '${tmpPath.replace(/'/g, "''")}'`);
+        renameSync(tmpPath, backupPath);
+      } catch (err) {
+        try {
+          rmSync(tmpPath, { force: true });
+        } catch {
+          // best effort: the original failure is the one worth reporting
+        }
+        const reason = err instanceof Error ? err.message : String(err);
+        // Aborting is deliberate: the database stays fully legacy (readable
+        // by the previous image) rather than migrating without a rollback.
+        throw new Error(
+          `Portarr refused to migrate the database: could not write the pre-migration backup ${backupPath} (${reason}). ` +
+            'The database was left unchanged; free disk space or fix write access to its directory and restart.'
+        );
+      }
     }
   }
 
@@ -140,7 +162,15 @@ export function getDb(dbPath?: string): Database.Database {
 
   instance = new Database(resolvedPath);
   instance.pragma('journal_mode = WAL');
-  migrateToProviderKeys(instance, resolvedPath);
+  try {
+    migrateToProviderKeys(instance, resolvedPath);
+  } catch (err) {
+    // Do not leave a half-initialised (still legacy) handle for the next
+    // getDb() call to hand out.
+    instance.close();
+    instance = null;
+    throw err;
+  }
   instance.exec(SCHEMA);
   instancePath = resolvedPath;
   return instance;

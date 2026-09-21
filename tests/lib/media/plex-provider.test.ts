@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { createPlexProvider } from '../../../src/lib/media/plex-provider';
 import { resetTtlCacheForTests } from '../../../src/lib/ttl-cache';
 
@@ -8,6 +8,10 @@ const CFG = {
   serverName: 'MyPlex',
   clientIdentifier: 'cid',
 };
+
+afterEach(() => {
+  vi.restoreAllMocks();
+});
 
 beforeEach(() => {
   resetTtlCacheForTests();
