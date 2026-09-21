@@ -27,6 +27,11 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'invalid_json' }, { status: 400 });
   }
 
+  // JSON.parse accepts null, numbers, strings and arrays: only a plain object is a valid body.
+  if (typeof body !== 'object' || body === null || Array.isArray(body)) {
+    return NextResponse.json({ error: 'invalid_request' }, { status: 400 });
+  }
+
   const { provider, username, password } = body;
   if (
     provider !== 'jellyfin' ||

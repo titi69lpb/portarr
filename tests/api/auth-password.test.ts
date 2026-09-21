@@ -167,6 +167,10 @@ describe('POST /api/auth/password', () => {
     const { POST } = await import('../../src/app/api/auth/password/route');
     for (const body of [
       'not json',
+      'null',
+      '123',
+      '"text"',
+      '[]',
       { provider: 'plex', username: 'a', password: 'b' },
       { provider: 'jellyfin', username: '', password: 'b' },
       { provider: 'jellyfin', username: 'a' },
