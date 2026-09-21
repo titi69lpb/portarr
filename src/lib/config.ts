@@ -61,6 +61,10 @@ export interface TautulliConfig {
   url: string;
   apiKey: string;
 }
+export interface JellyfinConfig {
+  url: string;
+  apiKey: string;
+}
 export interface SonarrConfig {
   url: string;
   apiKey: string;
@@ -87,6 +91,7 @@ export interface AppConfig {
   session: { secret: string };
   plex: PlexConfig | null;
   tautulli: TautulliConfig | null;
+  jellyfin: JellyfinConfig | null;
   sonarr: SonarrConfig | null;
   radarr: RadarrConfig | null;
   overseerr: OverseerrConfig | null;
@@ -118,6 +123,12 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env, db: Database.Da
   const tautulliApiKey = v('TAUTULLI_API_KEY');
   const tautulli: TautulliConfig | null =
     tautulliUrl && tautulliApiKey ? { url: tautulliUrl, apiKey: tautulliApiKey } : null;
+
+  const jellyfinUrl = v('JELLYFIN_URL');
+  const jellyfinApiKey = v('JELLYFIN_API_KEY');
+  // A trailing slash would produce `//System/Info` style URLs.
+  const jellyfin: JellyfinConfig | null =
+    jellyfinUrl && jellyfinApiKey ? { url: jellyfinUrl.replace(/\/+$/, ''), apiKey: jellyfinApiKey } : null;
 
   const sonarrUrl = v('SONARR_URL');
   const sonarrApiKey = v('SONARR_API_KEY');
@@ -162,6 +173,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env, db: Database.Da
     session: { secret: env.SESSION_SECRET },
     plex,
     tautulli,
+    jellyfin,
     sonarr,
     radarr,
     overseerr,
@@ -223,6 +235,8 @@ const CONFIGURABLE_KEYS = [
   'PLEX_SERVER_NAME',
   'TAUTULLI_URL',
   'TAUTULLI_API_KEY',
+  'JELLYFIN_URL',
+  'JELLYFIN_API_KEY',
   'SONARR_URL',
   'SONARR_API_KEY',
   'RADARR_URL',

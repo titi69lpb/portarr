@@ -96,4 +96,33 @@ describe('applyServiceSettings', () => {
     expect(result.ok).toBe(true);
     expect(getSetting(db, 'PLEX_URL')).toBeNull();
   });
+
+  it('tests and persists the jellyfin step (url and key) on success', async () => {
+    const db = getDb(':memory:');
+    const fetchMock = vi.fn().mockResolvedValue(jsonResponse({ Id: 'srv' }));
+    const result = await applyServiceSettings(
+      db,
+      'jellyfin',
+      { JELLYFIN_URL: 'http://jellyfin.local:8096', JELLYFIN_API_KEY: 'key123' },
+      { NODE_ENV: 'test' as const },
+      fetchMock
+    );
+    expect(result).toEqual({ ok: true, error: null });
+    expect(getSetting(db, 'JELLYFIN_URL')).toBe('http://jellyfin.local:8096');
+    expect(getSetting(db, 'JELLYFIN_API_KEY')).toBe('key123');
+  });
+
+  it('does not persist the jellyfin step when the connection test fails', async () => {
+    const db = getDb(':memory:');
+    const fetchMock = vi.fn().mockResolvedValue(jsonResponse({}, false, 401));
+    const result = await applyServiceSettings(
+      db,
+      'jellyfin',
+      { JELLYFIN_URL: 'http://jellyfin.local:8096', JELLYFIN_API_KEY: 'bad' },
+      { NODE_ENV: 'test' as const },
+      fetchMock
+    );
+    expect(result.ok).toBe(false);
+    expect(getSetting(db, 'JELLYFIN_URL')).toBeNull();
+  });
 });

@@ -1,5 +1,6 @@
 import { timeoutSignal } from './fetch-timeout';
 import { createTransport } from './mailer';
+import { jellyfinTokenAuth } from './media/jellyfin';
 
 export interface ConnectionTestResult {
   ok: boolean;
@@ -46,6 +47,28 @@ export async function testTautulliConnection(
     const data = (await res.json()) as { response?: { result?: string; message?: string } };
     if (data.response?.result !== 'success') {
       return { ok: false, error: data.response?.message ?? 'Réponse Tautulli inattendue' };
+    }
+    return { ok: true, error: null };
+  } catch (err) {
+    return { ok: false, error: messageFromError(err) };
+  }
+}
+
+export async function testJellyfinConnection(
+  url: string,
+  apiKey: string,
+  fetchFn: typeof fetch = fetch
+): Promise<ConnectionTestResult> {
+  try {
+    const res = await fetchFn(`${url.replace(/\/+$/, '')}/System/Info`, {
+      headers: { Authorization: jellyfinTokenAuth(apiKey), Accept: 'application/json' },
+      signal: timeoutSignal(),
+      cache: 'no-store',
+    });
+    if (!res.ok) return { ok: false, error: `Jellyfin a répondu ${res.status} ${res.statusText}` };
+    const data = (await res.json()) as { Id?: string };
+    if (!data.Id) {
+      return { ok: false, error: "Réponse Jellyfin inattendue (pas d'identifiant serveur)" };
     }
     return { ok: true, error: null };
   } catch (err) {

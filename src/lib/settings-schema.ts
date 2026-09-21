@@ -2,6 +2,7 @@ export type ServiceKey =
   | 'publicBaseUrl'
   | 'plex'
   | 'tautulli'
+  | 'jellyfin'
   | 'sonarr'
   | 'radarr'
   | 'overseerr'
@@ -25,6 +26,10 @@ export const SERVICE_FIELDS: Record<ServiceKey, FieldDef[]> = {
   tautulli: [
     { envKey: 'TAUTULLI_URL', label: 'URL Tautulli', type: 'text' },
     { envKey: 'TAUTULLI_API_KEY', label: 'Clé API Tautulli', type: 'password' },
+  ],
+  jellyfin: [
+    { envKey: 'JELLYFIN_URL', label: 'URL du serveur Jellyfin', type: 'text' },
+    { envKey: 'JELLYFIN_API_KEY', label: 'Clé API Jellyfin (Tableau de bord > Clés API)', type: 'password' },
   ],
   sonarr: [
     { envKey: 'SONARR_URL', label: 'URL Sonarr', type: 'text' },

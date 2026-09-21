@@ -197,3 +197,40 @@ describe('isSetupComplete — a media provider must be active', () => {
     expect(isSetupComplete(loadConfig(FULL_ENV, getDb(':memory:')))).toBe(true);
   });
 });
+
+describe('jellyfin config', () => {
+  beforeEach(() => {
+    resetDbForTests();
+  });
+
+  it('is null when JELLYFIN_URL or JELLYFIN_API_KEY is missing', () => {
+    expect(loadConfig(FULL_ENV, getDb(':memory:')).jellyfin).toBeNull();
+    resetDbForTests();
+    expect(loadConfig({ ...FULL_ENV, JELLYFIN_URL: 'http://j.local:8096' }, getDb(':memory:')).jellyfin).toBeNull();
+  });
+
+  it('is loaded from env with the trailing slash trimmed', () => {
+    const config = loadConfig(
+      { ...FULL_ENV, JELLYFIN_URL: 'http://j.local:8096/', JELLYFIN_API_KEY: 'key123' },
+      getDb(':memory:')
+    );
+    expect(config.jellyfin).toEqual({ url: 'http://j.local:8096', apiKey: 'key123' });
+  });
+
+  it('never changes isSetupComplete (Jellyfin is optional)', () => {
+    const withJellyfin = loadConfig(
+      { ...FULL_ENV, JELLYFIN_URL: 'http://j.local:8096', JELLYFIN_API_KEY: 'key123' },
+      getDb(':memory:')
+    );
+    expect(isSetupComplete(withJellyfin)).toBe(true);
+    resetDbForTests();
+    expect(isSetupComplete(loadConfig(FULL_ENV, getDb(':memory:')))).toBe(true);
+  });
+
+  it('reports the source of the jellyfin keys', () => {
+    const db = getDb(':memory:');
+    const sources = getConfigSources({ ...FULL_ENV, JELLYFIN_URL: 'http://j.local:8096' }, db);
+    expect(sources.JELLYFIN_URL).toBe('env');
+    expect(sources.JELLYFIN_API_KEY).toBe('unset');
+  });
+});
