@@ -11,6 +11,8 @@ import {
   jellyfinPosterRef,
   parseJellyfinPosterRef,
   jellyfinWebUrl,
+  getSessions,
+  normalizeJellyfinSessions,
 } from '../../../src/lib/media/jellyfin';
 
 const CFG = { url: 'http://jellyfin.local:8096', apiKey: 'key123' };
@@ -242,5 +244,87 @@ describe('jellyfinWebUrl', () => {
       `http://j.local:8096/web/index.html#/details?id=${ID}&serverId=srv1`
     );
     expect(jellyfinWebUrl('http://j.local:8096', ID, null)).toBe(`http://j.local:8096/web/index.html#/details?id=${ID}`);
+  });
+});
+
+describe('getSessions', () => {
+  it('drops idle sessions (no NowPlayingItem) and keeps ones that are playing', async () => {
+    const fetchFn = vi.fn(async () =>
+      res([
+        { UserName: null, DeviceName: 'Jellyfin Server' },
+        {
+          UserName: 'alice',
+          DeviceName: 'Living Room TV',
+          NowPlayingItem: {
+            Id: 'a'.repeat(32),
+            Name: 'Some Movie',
+            Type: 'Movie',
+            ProductionYear: 2024,
+            RunTimeTicks: 72000000000,
+          },
+          PlayState: { IsPaused: false, PositionTicks: 6000000000, PlayMethod: 'DirectPlay' },
+        },
+      ])
+    ) as unknown as typeof fetch;
+    const sessions = await getSessions(CFG, fetchFn);
+    expect(sessions).toEqual([
+      {
+        userName: 'alice',
+        deviceName: 'Living Room TV',
+        item: {
+          id: 'a'.repeat(32),
+          name: 'Some Movie',
+          type: 'Movie',
+          seriesName: null,
+          seasonId: null,
+          seasonNumber: null,
+          episodeNumber: null,
+          runTimeTicks: 72000000000,
+          productionYear: 2024,
+        },
+        isPaused: false,
+        positionTicks: 6000000000,
+        playMethod: 'DirectPlay',
+        transcodingBitrate: null,
+      },
+    ]);
+    const url = (fetchFn as unknown as ReturnType<typeof vi.fn>).mock.calls[0][0];
+    expect(url).toBe(`${CFG.url}/Sessions`);
+  });
+
+  it('maps an episode session, including transcoding bitrate', async () => {
+    const fetchFn = vi.fn(async () =>
+      res([
+        {
+          UserName: 'bob',
+          DeviceName: 'Chrome',
+          NowPlayingItem: {
+            Id: 'b'.repeat(32),
+            Name: 'Episode Title',
+            Type: 'Episode',
+            SeriesName: 'Some Show',
+            SeasonId: 'c'.repeat(32),
+            ParentIndexNumber: 2,
+            IndexNumber: 5,
+            RunTimeTicks: 18000000000,
+          },
+          PlayState: { IsPaused: true, PositionTicks: 1000000000, PlayMethod: 'Transcode' },
+          TranscodingInfo: { Bitrate: 4000000 },
+        },
+      ])
+    ) as unknown as typeof fetch;
+    const sessions = await getSessions(CFG, fetchFn);
+    expect(sessions[0]).toMatchObject({
+      userName: 'bob',
+      item: { seriesName: 'Some Show', seasonId: 'c'.repeat(32), seasonNumber: 2, episodeNumber: 5, productionYear: null },
+      isPaused: true,
+      playMethod: 'Transcode',
+      transcodingBitrate: 4000000,
+    });
+  });
+
+  it('returns [] when nobody is playing', async () => {
+    const fetchFn = vi.fn(async () => res([])) as unknown as typeof fetch;
+    expect(await getSessions(CFG, fetchFn)).toEqual([]);
   });
 });
