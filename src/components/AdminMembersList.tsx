@@ -18,7 +18,7 @@ export function AdminMembersList({ members }: { members: MemberOverview[] }) {
           <tr className="border-b border-plexcrew-teal/20 text-xs font-semibold uppercase tracking-wider text-plexcrew-ash">
             <th className="py-2 pr-4">Membre</th>
             <th className="py-2 pr-4">Dernière connexion portail</th>
-            <th className="py-2 pr-4">Dernière activité Plex</th>
+            <th className="py-2 pr-4">Dernière activité</th>
             <th className="py-2">Newsletter</th>
           </tr>
         </thead>
@@ -36,7 +36,7 @@ export function AdminMembersList({ members }: { members: MemberOverview[] }) {
                 {formatDate(m.portalLastLogin)}
               </td>
               <td className="py-2 pr-4 font-mono text-xs text-plexcrew-ash">
-                {formatDate(m.tautulliLastSeen)}
+                {formatDate(m.lastSeen)}
               </td>
               <td className="py-2 text-xs">
                 {m.newsletterOptedIn ? (

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
-import { getActiveSessions } from '@/lib/activity/tautulli-source';
+import { nowPlayingAll } from '@/lib/activity/aggregate';
+import { getActivitySources } from '@/lib/activity/registry';
 import { loadConfig, isSetupComplete, assertConfigured } from '@/lib/config';
 import { getDb } from '@/lib/db';
 
@@ -12,7 +13,7 @@ export async function GET() {
   }
   const config = assertConfigured(rawConfig);
   try {
-    const sessions = await getActiveSessions(config.tautulli.url, config.tautulli.apiKey);
+    const sessions = await nowPlayingAll(getActivitySources(config));
     return NextResponse.json(sessions);
   } catch (err) {
     console.error('Failed to fetch active sessions:', err);

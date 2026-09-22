@@ -5,6 +5,7 @@ import { verifySession, SESSION_COOKIE_NAME } from '@/lib/session';
 import { loadConfig, isSetupComplete, assertConfigured } from '@/lib/config';
 import { getDb } from '@/lib/db';
 import { getMemberOverview } from '@/lib/members';
+import { getActivitySources } from '@/lib/activity/registry';
 import { AdminMembersList } from '@/components/AdminMembersList';
 import { AdminMemberSync } from '@/components/AdminMemberSync';
 
@@ -27,7 +28,7 @@ export default async function AdminMembersPage() {
   const config = assertConfigured(rawConfig);
 
   const db = getDb();
-  const members = await getMemberOverview(db, config.tautulli.url, config.tautulli.apiKey);
+  const members = await getMemberOverview(db, getActivitySources(config));
 
   return (
     <main className="mx-auto max-w-3xl space-y-8 p-6 sm:p-8">
