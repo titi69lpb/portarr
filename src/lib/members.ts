@@ -1,5 +1,5 @@
 import type Database from 'better-sqlite3';
-import { getUserActivity } from './tautulli';
+import { getUserActivity } from './activity/tautulli-source';
 import { isSubscribed } from './newsletter-subscriptions';
 import type { ProviderId } from './media/types';
 

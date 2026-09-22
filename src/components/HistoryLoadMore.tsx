@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import type { RecentHistoryItem } from '@/lib/tautulli';
+import type { RecentHistoryItem } from '@/lib/activity/tautulli-source';
 
 function HistoryTile({ item, index }: { item: RecentHistoryItem; index: number }) {
   return (

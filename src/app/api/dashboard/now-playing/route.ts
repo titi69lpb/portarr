@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getActiveSessions } from '@/lib/activity';
+import { getActiveSessions } from '@/lib/activity/tautulli-source';
 import { loadConfig, isSetupComplete, assertConfigured } from '@/lib/config';
 import { getDb } from '@/lib/db';
 

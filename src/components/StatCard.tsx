@@ -1,4 +1,4 @@
-import type { GlobalStat } from '@/lib/tautulli';
+import type { GlobalStat } from '@/lib/activity/tautulli-source';
 
 const RANK_COLORS = ['text-plexcrew-amber', 'text-plexcrew-screen', 'text-plexcrew-ash'];
 

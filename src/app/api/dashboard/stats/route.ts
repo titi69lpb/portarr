@@ -6,7 +6,7 @@ import {
   getUserIdByEmail,
   getRecentWatchHistory,
   type PersonalStatsByType,
-} from '@/lib/tautulli';
+} from '@/lib/activity/tautulli-source';
 import { verifySession, SESSION_COOKIE_NAME } from '@/lib/session';
 import { loadConfig, isSetupComplete, assertConfigured } from '@/lib/config';
 import { getDb } from '@/lib/db';

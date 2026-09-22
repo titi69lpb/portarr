@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation';
 import { verifySession, SESSION_COOKIE_NAME } from '@/lib/session';
 import { loadConfig, isSetupComplete, assertConfigured } from '@/lib/config';
 import { getDb } from '@/lib/db';
-import { getUserIdByEmail, getWatchHistoryPage } from '@/lib/tautulli';
+import { getUserIdByEmail, getWatchHistoryPage } from '@/lib/activity/tautulli-source';
 import { AppSidebarServer } from '@/components/AppSidebarServer';
 import { HistoryLoadMore } from '@/components/HistoryLoadMore';
 

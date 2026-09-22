@@ -14,7 +14,7 @@ import { DashboardSections } from '@/components/DashboardSections';
 import { redirect } from 'next/navigation';
 import { verifySession, SESSION_COOKIE_NAME, type SessionUser } from '@/lib/session';
 import { loadConfig, isSetupComplete, assertConfigured, type ConfiguredAppConfig } from '@/lib/config';
-import { getActiveSessions, type ActiveSession } from '@/lib/activity';
+import { getActiveSessions, type ActiveSession } from '@/lib/activity/tautulli-source';
 import { getActiveProviders } from '@/lib/media/registry';
 import { recentlyAddedSplitAll } from '@/lib/media/aggregate';
 import type { RecentlyAddedSplit } from '@/lib/media/types';
@@ -31,7 +31,7 @@ import {
   type PersonalStatsByType,
   type RecentHistoryItem,
   type StatCategory,
-} from '@/lib/tautulli';
+} from '@/lib/activity/tautulli-source';
 import { getDb } from '@/lib/db';
 import { getActiveAnnouncement } from '@/lib/announcements';
 import { renderMarkdown } from '@/lib/markdown';

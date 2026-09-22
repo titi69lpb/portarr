@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { verifySession, SESSION_COOKIE_NAME } from '@/lib/session';
 import { loadConfig, isSetupComplete, assertConfigured } from '@/lib/config';
 import { getDb } from '@/lib/db';
-import { getUserIdByEmail, getWatchHistoryPage } from '@/lib/tautulli';
+import { getUserIdByEmail, getWatchHistoryPage } from '@/lib/activity/tautulli-source';
 
 export const dynamic = 'force-dynamic';
 

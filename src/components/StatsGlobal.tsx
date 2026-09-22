@@ -1,4 +1,4 @@
-import type { GlobalStat, StatCategory } from '@/lib/tautulli';
+import type { GlobalStat, StatCategory } from '@/lib/activity/tautulli-source';
 import { StatCard } from './StatCard';
 
 const CARD_TITLES: Record<StatCategory, string> = {
