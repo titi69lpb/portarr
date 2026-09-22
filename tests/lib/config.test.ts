@@ -255,3 +255,35 @@ describe('jellyfin config', () => {
     expect(sources.JELLYFIN_API_KEY).toBe('unset');
   });
 });
+
+describe('jellystat and activity-source config', () => {
+  beforeEach(() => {
+    resetDbForTests();
+  });
+
+  it('jellystat is null when either field is missing', () => {
+    expect(loadConfig(FULL_ENV, getDb(':memory:')).jellystat).toBeNull();
+    resetDbForTests();
+    expect(loadConfig({ ...FULL_ENV, JELLYSTAT_URL: 'http://js.local:3000' }, getDb(':memory:')).jellystat).toBeNull();
+  });
+
+  it('jellystat is loaded from env', () => {
+    const config = loadConfig({ ...FULL_ENV, JELLYSTAT_URL: 'http://js.local:3000', JELLYSTAT_API_KEY: 'key' }, getDb(':memory:'));
+    expect(config.jellystat).toEqual({ url: 'http://js.local:3000', apiKey: 'key' });
+  });
+
+  it('jellyfinActivitySource defaults to native and accepts jellystat', () => {
+    expect(loadConfig(FULL_ENV, getDb(':memory:')).jellyfinActivitySource).toBe('native');
+    resetDbForTests();
+    expect(loadConfig({ ...FULL_ENV, JELLYFIN_ACTIVITY_SOURCE: 'jellystat' }, getDb(':memory:')).jellyfinActivitySource).toBe('jellystat');
+  });
+
+  it('an unrecognized jellyfinActivitySource value falls back to native', () => {
+    expect(loadConfig({ ...FULL_ENV, JELLYFIN_ACTIVITY_SOURCE: 'bogus' }, getDb(':memory:')).jellyfinActivitySource).toBe('native');
+  });
+
+  it('never changes isSetupComplete', () => {
+    const config = loadConfig({ ...FULL_ENV, JELLYSTAT_URL: 'http://js.local:3000', JELLYSTAT_API_KEY: 'key', JELLYFIN_ACTIVITY_SOURCE: 'jellystat' }, getDb(':memory:'));
+    expect(isSetupComplete(config)).toBe(true);
+  });
+});

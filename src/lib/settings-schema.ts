@@ -3,6 +3,8 @@ export type ServiceKey =
   | 'plex'
   | 'tautulli'
   | 'jellyfin'
+  | 'jellystat'
+  | 'jellyfinActivitySource'
   | 'sonarr'
   | 'radarr'
   | 'overseerr'
@@ -11,7 +13,8 @@ export type ServiceKey =
 export interface FieldDef {
   envKey: string;
   label: string;
-  type: 'text' | 'password';
+  type: 'text' | 'password' | 'select';
+  options?: { value: string; label: string }[];
 }
 
 export const SERVICE_FIELDS: Record<ServiceKey, FieldDef[]> = {
@@ -30,6 +33,21 @@ export const SERVICE_FIELDS: Record<ServiceKey, FieldDef[]> = {
   jellyfin: [
     { envKey: 'JELLYFIN_URL', label: 'URL du serveur Jellyfin', type: 'text' },
     { envKey: 'JELLYFIN_API_KEY', label: 'Clé API Jellyfin (Tableau de bord > Clés API)', type: 'password' },
+  ],
+  jellystat: [
+    { envKey: 'JELLYSTAT_URL', label: 'URL Jellystat', type: 'text' },
+    { envKey: 'JELLYSTAT_API_KEY', label: 'Clé API Jellystat (Réglages > Clés API)', type: 'password' },
+  ],
+  jellyfinActivitySource: [
+    {
+      envKey: 'JELLYFIN_ACTIVITY_SOURCE',
+      label: "Source d'activité Jellyfin",
+      type: 'select',
+      options: [
+        { value: 'native', label: 'Natif (lecture en cours uniquement)' },
+        { value: 'jellystat', label: 'Jellystat (statistiques et historique complets)' },
+      ],
+    },
   ],
   sonarr: [
     { envKey: 'SONARR_URL', label: 'URL Sonarr', type: 'text' },

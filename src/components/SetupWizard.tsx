@@ -5,13 +5,15 @@ import { ServiceSettingsForm } from './ServiceSettingsForm';
 import { SERVICE_FIELDS, type ServiceKey } from '@/lib/settings-schema';
 import type { ConfigSource } from '@/lib/config';
 
-const STEPS: ServiceKey[] = ['publicBaseUrl', 'plex', 'tautulli', 'jellyfin', 'sonarr', 'radarr', 'overseerr', 'smtp'];
+const STEPS: ServiceKey[] = ['publicBaseUrl', 'plex', 'tautulli', 'jellyfin', 'jellystat', 'jellyfinActivitySource', 'sonarr', 'radarr', 'overseerr', 'smtp'];
 
 const STEP_TITLES: Record<ServiceKey, string> = {
   publicBaseUrl: 'URL publique',
   plex: 'Plex',
   tautulli: 'Tautulli',
   jellyfin: 'Jellyfin (optionnel)',
+  jellystat: 'Jellystat (optionnel)',
+  jellyfinActivitySource: "Source d'activité Jellyfin",
   sonarr: 'Sonarr',
   radarr: 'Radarr',
   overseerr: 'Overseerr',
@@ -93,11 +95,11 @@ export function SetupWizard({ token, sources }: { token: string; sources: Record
       <ServiceSettingsForm
         key={step}
         fields={stepFields}
-        testable={step !== 'publicBaseUrl'}
+        testable={step !== 'publicBaseUrl' && step !== 'jellyfinActivitySource'}
         disabledKeys={disabledKeys}
         configuredKeys={configuredKeys}
         onSubmit={handleStepSubmit}
-        onSkip={step === 'jellyfin' ? () => setStepIndex(stepIndex + 1) : undefined}
+        onSkip={step === 'jellyfin' || step === 'jellystat' ? () => setStepIndex(stepIndex + 1) : undefined}
       />
       {completing && <p className="text-sm text-plexcrew-ash">Finalisation…</p>}
       {completeError && <p className="text-sm text-plexcrew-amber">{completeError}</p>}

@@ -76,6 +76,24 @@ export async function testJellyfinConnection(
   }
 }
 
+export async function testJellystatConnection(
+  url: string,
+  apiKey: string,
+  fetchFn: typeof fetch = fetch
+): Promise<ConnectionTestResult> {
+  try {
+    const res = await fetchFn(`${url.replace(/\/+$/, '')}/api/keys`, {
+      headers: { 'x-api-token': apiKey, Accept: 'application/json' },
+      signal: timeoutSignal(),
+      cache: 'no-store',
+    });
+    if (!res.ok) return { ok: false, error: `Jellystat a répondu ${res.status} ${res.statusText}` };
+    return { ok: true, error: null };
+  } catch (err) {
+    return { ok: false, error: messageFromError(err) };
+  }
+}
+
 async function testArrConnection(
   serviceName: string,
   url: string,

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { testPlexConnection, testTautulliConnection, testJellyfinConnection, testSonarrConnection, testRadarrConnection, testOverseerrConnection, testSmtpConnection } from '../../src/lib/connection-test';
+import { testPlexConnection, testTautulliConnection, testJellyfinConnection, testJellystatConnection, testSonarrConnection, testRadarrConnection, testOverseerrConnection, testSmtpConnection } from '../../src/lib/connection-test';
 import type { MailTransport } from '../../src/lib/mailer';
 
 function jsonResponse(body: unknown, ok = true, status = 200): Response {
@@ -199,6 +199,30 @@ describe('testJellyfinConnection', () => {
   it('reports a network error', async () => {
     const fetchMock = vi.fn().mockRejectedValue(new Error('connect ECONNREFUSED'));
     const result = await testJellyfinConnection('http://jellyfin.local:8096', 'k', fetchMock);
+    expect(result).toEqual({ ok: false, error: 'connect ECONNREFUSED' });
+  });
+});
+
+describe('testJellystatConnection', () => {
+  it('succeeds when the api-key endpoint answers 200, sending the x-api-token header', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(jsonResponse([{ name: 'CLAUDE', key: 'x' }]));
+    const result = await testJellystatConnection('http://jellystat.local:3000/', 'js-key', fetchMock);
+    expect(result).toEqual({ ok: true, error: null });
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(url).toBe('http://jellystat.local:3000/api/keys');
+    expect(init.headers['x-api-token']).toBe('js-key');
+  });
+
+  it('fails with the status code when Jellystat rejects the key', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(jsonResponse({}, false, 401));
+    const result = await testJellystatConnection('http://jellystat.local:3000', 'bad', fetchMock);
+    expect(result.ok).toBe(false);
+    expect(result.error).toContain('401');
+  });
+
+  it('reports a network error', async () => {
+    const fetchMock = vi.fn().mockRejectedValue(new Error('connect ECONNREFUSED'));
+    const result = await testJellystatConnection('http://jellystat.local:3000', 'js-key', fetchMock);
     expect(result).toEqual({ ok: false, error: 'connect ECONNREFUSED' });
   });
 });

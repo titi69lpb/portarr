@@ -33,7 +33,10 @@ export function ServiceSettingsForm({
 }: ServiceSettingsFormProps) {
   const [values, setValues] = useState<Record<string, string>>(
     Object.fromEntries(
-      fields.map((f) => [f.envKey, f.type === 'text' ? initialValues?.[f.envKey] ?? '' : ''])
+      fields.map((f) => [
+        f.envKey,
+        f.type === 'text' || f.type === 'select' ? initialValues?.[f.envKey] ?? (f.type === 'select' ? f.options![0].value : '') : '',
+      ])
     )
   );
   const [submitting, setSubmitting] = useState(false);
@@ -61,20 +64,34 @@ export function ServiceSettingsForm({
         return (
           <label key={field.envKey} className="flex flex-col gap-1 text-sm text-plexcrew-ash">
             {field.label}
-            <input
-              type={field.type === 'password' ? 'password' : 'text'}
-              disabled={disabled}
-              value={values[field.envKey]}
-              placeholder={
-                disabled
-                  ? "Défini via variable d'environnement"
-                  : alreadyConfigured
-                    ? '•••••••• (laisser vide pour ne pas changer)'
-                    : undefined
-              }
-              onChange={(e) => setValues({ ...values, [field.envKey]: e.target.value })}
-              className="rounded-md border border-plexcrew-teal/20 bg-plexcrew-charcoal/60 px-3 py-2 text-plexcrew-screen disabled:opacity-50"
-            />
+            {field.type === 'select' ? (
+              <select
+                value={values[field.envKey]}
+                onChange={(e) => setValues({ ...values, [field.envKey]: e.target.value })}
+                className="rounded-md border border-plexcrew-teal/20 bg-plexcrew-charcoal/60 px-3 py-2 text-plexcrew-screen"
+              >
+                {field.options!.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
+            ) : (
+              <input
+                type={field.type === 'password' ? 'password' : 'text'}
+                disabled={disabled}
+                value={values[field.envKey]}
+                placeholder={
+                  disabled
+                    ? "Défini via variable d'environnement"
+                    : alreadyConfigured
+                      ? '•••••••• (laisser vide pour ne pas changer)'
+                      : undefined
+                }
+                onChange={(e) => setValues({ ...values, [field.envKey]: e.target.value })}
+                className="rounded-md border border-plexcrew-teal/20 bg-plexcrew-charcoal/60 px-3 py-2 text-plexcrew-screen disabled:opacity-50"
+              />
+            )}
           </label>
         );
       })}

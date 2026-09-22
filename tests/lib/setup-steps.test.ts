@@ -125,4 +125,33 @@ describe('applyServiceSettings', () => {
     expect(result.ok).toBe(false);
     expect(getSetting(db, 'JELLYFIN_URL')).toBeNull();
   });
+
+  it('tests and persists the jellystat step on success', async () => {
+    const db = getDb(':memory:');
+    const fetchMock = vi.fn().mockResolvedValue(jsonResponse([]));
+    const result = await applyServiceSettings(
+      db,
+      'jellystat',
+      { JELLYSTAT_URL: 'http://jellystat.local:3000', JELLYSTAT_API_KEY: 'js-key' },
+      { NODE_ENV: 'test' as const },
+      fetchMock
+    );
+    expect(result).toEqual({ ok: true, error: null });
+    expect(getSetting(db, 'JELLYSTAT_URL')).toBe('http://jellystat.local:3000');
+  });
+
+  it('persists the jellyfinActivitySource step with no connection test', async () => {
+    const db = getDb(':memory:');
+    const fetchMock = vi.fn();
+    const result = await applyServiceSettings(
+      db,
+      'jellyfinActivitySource',
+      { JELLYFIN_ACTIVITY_SOURCE: 'jellystat' },
+      { NODE_ENV: 'test' as const },
+      fetchMock
+    );
+    expect(result).toEqual({ ok: true, error: null });
+    expect(getSetting(db, 'JELLYFIN_ACTIVITY_SOURCE')).toBe('jellystat');
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
 });

@@ -6,6 +6,7 @@ import {
   testPlexConnection,
   testTautulliConnection,
   testJellyfinConnection,
+  testJellystatConnection,
   testSonarrConnection,
   testRadarrConnection,
   testOverseerrConnection,
@@ -31,6 +32,10 @@ async function runConnectionTest(
       return testTautulliConnection(resolved.TAUTULLI_URL, resolved.TAUTULLI_API_KEY, fetchFn);
     case 'jellyfin':
       return testJellyfinConnection(resolved.JELLYFIN_URL, resolved.JELLYFIN_API_KEY, fetchFn);
+    case 'jellystat':
+      return testJellystatConnection(resolved.JELLYSTAT_URL, resolved.JELLYSTAT_API_KEY, fetchFn);
+    case 'jellyfinActivitySource':
+      return { ok: true, error: null };
     case 'sonarr':
       return testSonarrConnection(resolved.SONARR_URL, resolved.SONARR_API_KEY, fetchFn);
     case 'radarr':
