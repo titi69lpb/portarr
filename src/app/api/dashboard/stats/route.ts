@@ -27,11 +27,13 @@ export async function GET(request: NextRequest) {
     if (sessionUser) {
       const source = getActivitySourceFor(sources, sessionUser.provider);
       if (source) {
-        [personal, personalByType, recentHistory] = await Promise.all([
-          source.personalStats(sessionUser),
-          source.personalStatsByType(sessionUser),
-          source.recentHistory(sessionUser, 8),
-        ]);
+        personal = await source.personalStats(sessionUser);
+        if (personal !== null) {
+          [personalByType, recentHistory] = await Promise.all([
+            source.personalStatsByType(sessionUser),
+            source.recentHistory(sessionUser, 8),
+          ]);
+        }
       }
     }
 
