@@ -152,7 +152,6 @@ Renseignez `JELLYFIN_URL` et `JELLYFIN_API_KEY` (étape optionnelle de l'assista
 
 - Jellyfin n'a pas d'email par utilisateur : Portarr le retrouve dans la liste des utilisateurs d'Overseerr/Seerr (correspondance unique par nom, ou par identifiant Jellyfin quand Seerr le connaît). Sans correspondance, le membre est listé mais exclu des envois.
 - Une adresse partagée par deux membres (par exemple la même personne sur Plex et Jellyfin) reçoit la newsletter une seule fois, et seulement si chacun de ces membres y est abonné.
-- Pour l'instant, la lecture en cours, les statistiques et l'historique restent alimentés par Tautulli, donc par Plex uniquement.
 
 Pour les statistiques, l'historique et le classement "Box Office" côté Jellyfin, configurez aussi Jellystat (`JELLYSTAT_URL`, `JELLYSTAT_API_KEY`) et choisissez la source d'activité "Jellystat" — sinon la lecture en cours reste la seule information disponible pour ces membres.
 
@@ -385,7 +384,6 @@ Set `JELLYFIN_URL` and `JELLYFIN_API_KEY` (the optional wizard step, or `/admin/
 
 - Jellyfin has no per-user email: Portarr looks it up in the Overseerr/Seerr user list (unique name match, or by Jellyfin id when Seerr knows it). With no match the member is listed but excluded from mailings.
 - An address shared by two members (for example the same person on Plex and Jellyfin) gets the newsletter once, and only when each of those members is subscribed.
-- For now, now-playing, stats and history are still fed by Tautulli, so by Plex only.
 
 For Jellyfin stats, history and the "Box Office" ranking, also configure Jellystat (`JELLYSTAT_URL`, `JELLYSTAT_API_KEY`) and pick the "Jellystat" activity source — otherwise now-playing is the only information available for those members.
 
