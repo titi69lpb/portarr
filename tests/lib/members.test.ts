@@ -41,7 +41,7 @@ describe('getMemberOverview', () => {
 
     const result = await getMemberOverview(
       db,
-      getActivitySources({ tautulli: { url: 'https://tautulli.example.com', apiKey: 'apikey' } })
+      getActivitySources({ tautulli: { url: 'https://tautulli.example.com', apiKey: 'apikey' }, jellyfin: null })
     );
 
     // Ordered by last_login DESC — bob first
@@ -72,7 +72,7 @@ describe('getMemberOverview', () => {
 
     const result = await getMemberOverview(
       db,
-      getActivitySources({ tautulli: { url: 'https://tautulli.example.com', apiKey: 'apikey' } })
+      getActivitySources({ tautulli: { url: 'https://tautulli.example.com', apiKey: 'apikey' }, jellyfin: null })
     );
     expect(result).toEqual([
       {
@@ -92,7 +92,7 @@ describe('getMemberOverview', () => {
     expect(
       await getMemberOverview(
         db,
-        getActivitySources({ tautulli: { url: 'https://tautulli.example.com', apiKey: 'apikey' } })
+        getActivitySources({ tautulli: { url: 'https://tautulli.example.com', apiKey: 'apikey' }, jellyfin: null })
       )
     ).toEqual([]);
   });

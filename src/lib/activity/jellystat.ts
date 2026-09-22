@@ -47,11 +47,15 @@ async function jsPost<T>(cfg: JellystatConfig, path: string, body: unknown, fetc
 export interface JellystatMemberActivity {
   userId: string;
   lastSeenAt: string | null;
+  totalPlays: number;
+  totalWatchTimeSeconds: number;
 }
 
 interface RawMemberActivity {
   UserId: string;
   LastActivityDate?: string | null;
+  TotalPlays?: number;
+  TotalWatchTime?: number;
 }
 
 // GET /stats/getAllUserActivity returns every member's activity in one call —
@@ -60,7 +64,12 @@ interface RawMemberActivity {
 export async function listMemberActivity(cfg: JellystatConfig, fetchFn: typeof fetch = fetch): Promise<JellystatMemberActivity[]> {
   return withTtlCache(`jellystat-activity:${cfg.url}`, DEFAULT_CACHE_TTL_MS, async () => {
     const rows = await jsGet<RawMemberActivity[]>(cfg, '/stats/getAllUserActivity', fetchFn);
-    return rows.map((r) => ({ userId: r.UserId, lastSeenAt: r.LastActivityDate ?? null }));
+    return rows.map((r) => ({
+      userId: r.UserId,
+      lastSeenAt: r.LastActivityDate ?? null,
+      totalPlays: r.TotalPlays ?? 0,
+      totalWatchTimeSeconds: r.TotalWatchTime ?? 0,
+    }));
   });
 }
 

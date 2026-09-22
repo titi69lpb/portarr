@@ -31,7 +31,7 @@ describe('listMemberActivity', () => {
       res([{ UserId: UID, UserName: 'alice', LastActivityDate: '2026-05-18T13:53:12.541Z', TotalPlays: 7, TotalWatchTime: 10046 }])
     ) as unknown as typeof fetch;
     const activity = await listMemberActivity(CFG, fetchFn);
-    expect(activity).toEqual([{ userId: UID, lastSeenAt: '2026-05-18T13:53:12.541Z' }]);
+    expect(activity).toEqual([{ userId: UID, lastSeenAt: '2026-05-18T13:53:12.541Z', totalPlays: 7, totalWatchTimeSeconds: 10046 }]);
     const [url, init] = calls(fetchFn)[0];
     expect(url).toBe('http://jellystat.local:3000/stats/getAllUserActivity');
     expect((init.headers as Record<string, string>)['x-api-token']).toBe('js-key');
@@ -42,7 +42,7 @@ describe('listMemberActivity', () => {
 
   it('handles a member with no activity date', async () => {
     const fetchFn = vi.fn(async () => res([{ UserId: UID, UserName: 'alice', LastActivityDate: null }])) as unknown as typeof fetch;
-    expect(await listMemberActivity(CFG, fetchFn)).toEqual([{ userId: UID, lastSeenAt: null }]);
+    expect(await listMemberActivity(CFG, fetchFn)).toEqual([{ userId: UID, lastSeenAt: null, totalPlays: 0, totalWatchTimeSeconds: 0 }]);
   });
 
   it('throws with the status when Jellystat answers non-ok', async () => {
