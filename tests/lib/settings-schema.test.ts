@@ -26,9 +26,9 @@ describe('SERVICE_FIELDS', () => {
     ]);
   });
 
-  it('publicBaseUrl has exactly one field', () => {
-    expect(SERVICE_FIELDS.publicBaseUrl).toHaveLength(1);
-    expect(SERVICE_FIELDS.publicBaseUrl[0].envKey).toBe('PUBLIC_BASE_URL');
+  it('publicBaseUrl has PUBLIC_BASE_URL and PUBLIC_COMMUNITY_NAME', () => {
+    expect(SERVICE_FIELDS.publicBaseUrl.map((f) => f.envKey)).toEqual(['PUBLIC_BASE_URL', 'PUBLIC_COMMUNITY_NAME']);
+    expect(SERVICE_FIELDS.publicBaseUrl.map((f) => f.type)).toEqual(['text', 'text']);
   });
 
   it('marks API keys and passwords as type "password", URLs and names as "text"', () => {

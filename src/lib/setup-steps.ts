@@ -84,6 +84,7 @@ export async function applyServiceSettings(
     }
     const existing = resolveConfigValue(field.envKey, env, db);
     if (!existing) {
+      if (field.optional) continue;
       return { ok: false, error: `${field.label} est requis` };
     }
     resolved[field.envKey] = existing;
@@ -94,6 +95,7 @@ export async function applyServiceSettings(
 
   for (const field of fields) {
     if (env[field.envKey]) continue;
+    if (resolved[field.envKey] === undefined) continue;
     setSetting(db, field.envKey, resolved[field.envKey]);
   }
   return { ok: true, error: null };

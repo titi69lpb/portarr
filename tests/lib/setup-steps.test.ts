@@ -58,6 +58,20 @@ describe('applyServiceSettings', () => {
     expect(getSetting(db, 'PUBLIC_BASE_URL')).toBe('https://portarr.example.com');
   });
 
+  it('optional fields can be omitted without rejecting the step, and nothing is persisted for them', async () => {
+    const db = getDb(':memory:');
+    const result = await applyServiceSettings(
+      db,
+      'publicBaseUrl',
+      { PUBLIC_BASE_URL: 'https://portarr.example.com' },
+      { NODE_ENV: 'test' as const },
+      vi.fn()
+    );
+    expect(result.ok).toBe(true);
+    expect(getSetting(db, 'PUBLIC_BASE_URL')).toBe('https://portarr.example.com');
+    expect(getSetting(db, 'PUBLIC_COMMUNITY_NAME')).toBeNull();
+  });
+
   it('a blank submitted field falls back to the existing DB value instead of rejecting — partial re-edit support', async () => {
     const db = getDb(':memory:');
     const fetchMock = vi.fn().mockResolvedValue(jsonResponse({ MediaContainer: { machineIdentifier: 'id' } }));
