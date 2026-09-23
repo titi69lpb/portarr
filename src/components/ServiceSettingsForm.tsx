@@ -18,7 +18,8 @@ export interface ServiceSettingsFormProps {
   // them here would silently have no effect, so they're locked instead.
   disabledKeys?: Set<string>;
   // When set, a "Passer cette étape" button appears next to submit — for an
-  // optional service (Jellyfin) whose step can be skipped without saving anything.
+  // optional service (Jellyfin, Jellystat, and — since Plex/Tautulli became optional as a pair — Plex and Tautulli too)
+  // whose step can be skipped without saving anything.
   onSkip?: () => void;
 }
 

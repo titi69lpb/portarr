@@ -9,8 +9,8 @@ const STEPS: ServiceKey[] = ['publicBaseUrl', 'plex', 'tautulli', 'jellyfin', 'j
 
 const STEP_TITLES: Record<ServiceKey, string> = {
   publicBaseUrl: 'URL publique',
-  plex: 'Plex',
-  tautulli: 'Tautulli',
+  plex: 'Plex (optionnel si Jellyfin)',
+  tautulli: 'Tautulli (requis avec Plex)',
   jellyfin: 'Jellyfin (optionnel)',
   jellystat: 'Jellystat (optionnel)',
   jellyfinActivitySource: "Source d'activité Jellyfin",

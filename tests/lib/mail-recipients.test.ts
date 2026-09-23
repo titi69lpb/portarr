@@ -71,15 +71,30 @@ describe('resolveRecipients', () => {
     expect(result.map((r) => r.username).sort()).toEqual(['bob', 'carol']);
   });
 
-  it('a member whose provider has no active source is treated as never active', async () => {
+  it("a member whose provider has no active source, or whose source can't report lastSeen, is excluded from both group filters", async () => {
     const db = getDb(':memory:');
     const insert = db.prepare(
       "INSERT INTO users (provider, external_id, email, username, last_login) VALUES ('jellyfin', 'j1', 'dana@example.com', 'dana', '')"
     );
     insert.run();
     // Only a plex source is active — the jellyfin member has no matching ActivitySource.
-    const result = await resolveRecipients(db, { mode: 'group', filter: { type: 'neverActive' } }, [fakeSource('plex')]);
-    expect(result.map((r) => r.username)).toEqual(['dana']);
+    const neverActive = await resolveRecipients(db, { mode: 'group', filter: { type: 'neverActive' } }, [fakeSource('plex')]);
+    const activeSince = await resolveRecipients(db, { mode: 'group', filter: { type: 'activeSince', days: 30 } }, [fakeSource('plex')]);
+    expect(neverActive.map((r) => r.username)).toEqual([]);
+    expect(activeSince.map((r) => r.username)).toEqual([]);
+  });
+
+  it('a member on a source that cannot report lastSeen at all (native Jellyfin) is excluded from both group filters, not silently counted as never active', async () => {
+    const db = getDb(':memory:');
+    const insert = db.prepare(
+      "INSERT INTO users (provider, external_id, email, username, last_login) VALUES ('jellyfin', 'j1', 'eve@example.com', 'eve', '')"
+    );
+    insert.run();
+    const source = fakeSource('jellyfin', { supportsLastSeen: false, lastSeen: async () => null });
+    const neverActive = await resolveRecipients(db, { mode: 'group', filter: { type: 'neverActive' } }, [source]);
+    const activeSince = await resolveRecipients(db, { mode: 'group', filter: { type: 'activeSince', days: 30 } }, [source]);
+    expect(neverActive.map((r) => r.username)).toEqual([]);
+    expect(activeSince.map((r) => r.username)).toEqual([]);
   });
 });
 

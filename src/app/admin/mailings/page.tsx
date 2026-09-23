@@ -34,7 +34,7 @@ export default async function AdminMailingsPage() {
   const mailLog = listMailLog(db);
   // A plain DB read (no Tautulli round-trip) is all the target picker needs —
   // see listUsers() in lib/members.ts, extracted from getMemberOverview for
-  // exactly this: a mailing send doesn't need the Tautulli-cross-referenced
+  // exactly this: a mailing send doesn't need the provider-cross-referenced
   // activity data /admin/members displays.
   const users = listUsers(db);
 

@@ -80,6 +80,8 @@ export interface ActivityMember {
 
 export interface ActivitySource {
   readonly id: ProviderId;
+  /** False when lastSeen() structurally can never report real data (e.g. native Jellyfin's /Sessions-only mode) — not "this particular member happens to be unknown," but "this whole source has no way to know." Callers doing membership/never-active-style filtering must treat this distinctly from a per-member null. */
+  readonly supportsLastSeen: boolean;
   nowPlaying(): Promise<ActiveSession[]>;
   /** ISO timestamp of the member's last seen activity, or null if never seen / unknown. */
   lastSeen(member: ActivityMember): Promise<string | null>;

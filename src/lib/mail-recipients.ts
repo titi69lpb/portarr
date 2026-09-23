@@ -49,20 +49,31 @@ async function selectRecipients(
   }
 
   // Group filter: resolve each member's last-seen activity through whichever
-  // source matches their own provider — a member whose provider has no active
-  // source (shouldn't happen once every configured provider has at least a
-  // degraded activity source) is treated as never active, same as a real "no
-  // record" result would be.
+  // source matches their own provider. Two distinct cases produce no usable
+  // signal, and both are excluded from BOTH group filters rather than being
+  // folded into "never active": a member whose provider has no active source
+  // at all (shouldn't happen once every configured provider has at least a
+  // degraded activity source), and a member whose matching source exists but
+  // structurally can't report lastSeen (native Jellyfin's /Sessions-only mode).
   const withLastSeen = await Promise.all(
     allUsers.map(async (u) => {
       const source = getActivitySourceFor(sources, u.provider);
-      const lastSeenAt = source ? await source.lastSeen(u) : null;
-      return { user: u, lastSeenAt };
+      // A source that structurally can't report lastSeen (native Jellyfin) gives no
+      // usable signal at all — distinct from a real "no data for this member"
+      // null, which a source that DOES support lastSeen can still return.
+      // Excluding these members from both group filters avoids silently
+      // classifying an unknowable member as "never active."
+      if (!source || !source.supportsLastSeen) {
+        return { user: u, lastSeenAt: null, hasSignal: false };
+      }
+      const lastSeenAt = await source.lastSeen(u);
+      return { user: u, lastSeenAt, hasSignal: true };
     })
   );
 
   return withLastSeen
-    .filter(({ lastSeenAt }) => {
+    .filter(({ lastSeenAt, hasSignal }) => {
+      if (!hasSignal) return false;
       if (params.filter.type === 'neverActive') return lastSeenAt === null;
       if (lastSeenAt === null) return false;
       const cutoff = Date.now() - params.filter.days * 24 * 60 * 60 * 1000;
