@@ -106,10 +106,10 @@ Next.js 14 (App Router, TypeScript) · SQLite (`better-sqlite3`) · Docker
 
 ## Prérequis
 
-- Un serveur Plex Media Server, avec un token API pour un compte pouvant voir votre bibliothèque et vos utilisateurs partagés.
+- Un serveur Plex *(optionnel si Jellyfin est configuré)* Media Server, avec un token API pour un compte pouvant voir votre bibliothèque et vos utilisateurs partagés.
 - Des instances Sonarr et Radarr (pour le calendrier des sorties).
-- Tautulli (pour la lecture en cours et les stats).
-- Jellyfin *(optionnel)* — une clé API administrateur (Tableau de bord > Clés API). Plex et Tautulli restent requis dans cette version.
+- Tautulli *(optionnel si Jellyfin est configuré)* — nécessaire uniquement si vous utilisez Plex (pour la lecture en cours et les stats).
+- Jellyfin *(optionnel)* — une clé API administrateur (Tableau de bord > Clés API). Portarr fonctionne avec Plex+Tautulli, Jellyfin seul, ou les deux à la fois.
 - Overseerr (pour le suivi des demandes).
 - Un compte SMTP (pour le mailing/newsletter/notifications).
 - Node.js 20+ (pour le dev local) ou Docker (pour le déploiement).
@@ -340,10 +340,10 @@ Next.js 14 (App Router, TypeScript) · SQLite (`better-sqlite3`) · Docker
 
 ## Requirements
 
-- A Plex Media Server, with an API token for an account that can see your library and shared users.
+- A Plex Media Server *(optional if Jellyfin is configured)*, with an API token for an account that can see your library and shared users.
 - Sonarr and Radarr instances (used for the upcoming-releases calendar).
-- Tautulli (used for now-playing and stats).
-- Jellyfin *(optional)* — an administrator API key (Dashboard > API Keys). Plex and Tautulli are still required in this version.
+- Tautulli *(optional if Jellyfin is configured)* — only needed if you use Plex (used for now-playing and stats).
+- Jellyfin *(optional)* — an administrator API key (Dashboard > API Keys). Portarr works with Plex+Tautulli, Jellyfin alone, or both together.
 - Overseerr (used for request tracking).
 - An SMTP account (used for mailing/newsletter/notifications).
 - Node.js 20+ (for local dev) or Docker (for deployment).
