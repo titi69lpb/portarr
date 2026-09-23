@@ -62,7 +62,7 @@ export async function POST(request: NextRequest) {
       }
 
       const subject = `${item.title} est maintenant disponible !`;
-      const markdownBody = `# ${item.title} est disponible !\n\nBonjour ${item.requesterUsername},\n\nVotre demande **${item.title}** est maintenant disponible sur ${config.plex.serverName}. Bon visionnage !`;
+      const markdownBody = `# ${item.title} est disponible !\n\nBonjour ${item.requesterUsername},\n\nVotre demande **${item.title}** est maintenant disponible sur ${config.communityName}. Bon visionnage !`;
       const html = renderEmailShell(renderMarkdown(markdownBody), config.publicBaseUrl);
 
       try {
