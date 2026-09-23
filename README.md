@@ -88,7 +88,8 @@ Des modèles de mail réutilisables, un historique d'envoi, et la newsletter aut
 
 - **Connexion Plex SSO** — flux OAuth PIN, pas de système de comptes séparé. L'accès est réservé aux comptes que votre serveur Plex partage réellement.
 - **Connexion Jellyfin** *(optionnel)* — identifiant et mot de passe vérifiés par votre serveur Jellyfin (jamais stockés), avec limitation de débit par IP et par utilisateur. Les membres Jellyfin apparaissent dans la liste des membres, leurs derniers ajouts et la recherche s'affichent avec ceux de Plex.
-- **Dashboard** — carrousel des derniers ajouts, calendrier des sorties, lecture en cours, demandes en attente, stats Tautulli globales et personnelles, historique de visionnage perso, widget stockage optionnel.
+- **Activité Jellyfin** *(optionnel)* — lecture en cours native, ou stats/historique/Box Office complets côté Jellyfin en connectant [Jellystat](https://github.com/CyferShepard/Jellystat), au choix.
+- **Dashboard** — carrousel des derniers ajouts, calendrier des sorties, lecture en cours, demandes en attente, stats globales et personnelles (Tautulli pour Plex, Jellystat ou natif pour Jellyfin), historique de visionnage perso, widget stockage optionnel.
 - **Recherche globale** — recherche dans vos bibliothèques Plex et Jellyfin, liens directs vers Plex Web ou Jellyfin.
 - **Explorateur de fichiers** *(optionnel)* — navigation en lecture seule dans un dossier, téléchargements signés et reprenables ; sert les fichiers directement ou redirige vers un service proxy séparé.
 - **Test de vitesse** — débit et latence entre l'utilisateur et ce serveur, paliers adaptatifs jusqu'à 100 Mo, jauge animée.
@@ -320,7 +321,8 @@ Reusable mail templates, a send history, and the automated newsletter, all in on
 
 - **Plex SSO login** — OAuth PIN flow, no separate account system. Access is restricted to accounts your Plex server actually shares with.
 - **Jellyfin login** *(optional)* — username and password checked by your Jellyfin server (never stored), rate-limited per IP and per username. Jellyfin members show up in the members list, and their recently-added items and search results appear next to Plex's.
-- **Dashboard** — recently-added carousel, release calendar, now-playing, pending requests, server-wide and personal Tautulli stats, personal watch history, optional storage widget.
+- **Jellyfin activity** *(optional)* — native now-playing, or full Jellyfin stats/history/Box Office by connecting [Jellystat](https://github.com/CyferShepard/Jellystat), your choice.
+- **Dashboard** — recently-added carousel, release calendar, now-playing, pending requests, server-wide and personal stats (Tautulli for Plex, Jellystat or native for Jellyfin), personal watch history, optional storage widget.
 - **Global search** — searches your Plex and Jellyfin libraries, links straight into Plex Web or Jellyfin.
 - **File browser** *(optional)* — read-only directory browsing with signed, resumable downloads; serves files directly or redirects to a separate proxy service.
 - **Speed test** — throughput and latency between the user and this server, adaptive staging up to 100 MB, animated gauge.
