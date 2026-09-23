@@ -35,7 +35,7 @@ export default async function AdminSettingsPage() {
   const initialValues: Record<string, string> = {};
   for (const fields of Object.values(SERVICE_FIELDS)) {
     for (const field of fields) {
-      if (field.type !== 'text') continue;
+      if (field.type !== 'text' && field.type !== 'select') continue;
       const value = resolveConfigValue(field.envKey, process.env, db);
       if (value) initialValues[field.envKey] = value;
     }

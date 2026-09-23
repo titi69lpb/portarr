@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import type { PersonalStats, PersonalStatsByType, RecentHistoryItem } from '@/lib/tautulli';
+import type { PersonalStats, PersonalStatsByType, RecentHistoryItem } from '@/lib/activity/tautulli-source';
 
 function RecentHistoryStrip({ items }: { items: RecentHistoryItem[] }) {
   if (items.length === 0) return null;

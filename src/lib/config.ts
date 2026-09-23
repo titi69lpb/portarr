@@ -65,6 +65,10 @@ export interface JellyfinConfig {
   url: string;
   apiKey: string;
 }
+export interface JellystatConfig {
+  url: string;
+  apiKey: string;
+}
 export interface SonarrConfig {
   url: string;
   apiKey: string;
@@ -92,6 +96,8 @@ export interface AppConfig {
   plex: PlexConfig | null;
   tautulli: TautulliConfig | null;
   jellyfin: JellyfinConfig | null;
+  jellystat: JellystatConfig | null;
+  jellyfinActivitySource: 'jellystat' | 'native';
   sonarr: SonarrConfig | null;
   radarr: RadarrConfig | null;
   overseerr: OverseerrConfig | null;
@@ -129,6 +135,14 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env, db: Database.Da
   // A trailing slash would produce `//System/Info` style URLs.
   const jellyfin: JellyfinConfig | null =
     jellyfinUrl && jellyfinApiKey ? { url: jellyfinUrl.replace(/\/+$/, ''), apiKey: jellyfinApiKey } : null;
+
+  const jellystatUrl = v('JELLYSTAT_URL');
+  const jellystatApiKey = v('JELLYSTAT_API_KEY');
+  const jellystat: JellystatConfig | null =
+    jellystatUrl && jellystatApiKey ? { url: jellystatUrl.replace(/\/+$/, ''), apiKey: jellystatApiKey } : null;
+
+  const rawActivitySource = v('JELLYFIN_ACTIVITY_SOURCE');
+  const jellyfinActivitySource: 'jellystat' | 'native' = rawActivitySource === 'jellystat' ? 'jellystat' : 'native';
 
   const sonarrUrl = v('SONARR_URL');
   const sonarrApiKey = v('SONARR_API_KEY');
@@ -174,6 +188,8 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env, db: Database.Da
     plex,
     tautulli,
     jellyfin,
+    jellystat,
+    jellyfinActivitySource,
     sonarr,
     radarr,
     overseerr,
@@ -241,6 +257,9 @@ const CONFIGURABLE_KEYS = [
   'TAUTULLI_API_KEY',
   'JELLYFIN_URL',
   'JELLYFIN_API_KEY',
+  'JELLYSTAT_URL',
+  'JELLYSTAT_API_KEY',
+  'JELLYFIN_ACTIVITY_SOURCE',
   'SONARR_URL',
   'SONARR_API_KEY',
   'RADARR_URL',

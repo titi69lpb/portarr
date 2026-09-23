@@ -3,6 +3,7 @@ import { getDb, resetDbForTests } from '../../src/lib/db';
 import { setSubscribed } from '../../src/lib/newsletter-subscriptions';
 import { getMemberOverview, listUsers } from '../../src/lib/members';
 import { resetTtlCacheForTests } from '../../src/lib/ttl-cache';
+import { getActivitySources } from '../../src/lib/activity/registry';
 
 function jsonResponse(body: unknown, ok = true) {
   return { ok, status: ok ? 200 : 500, json: async () => body } as Response;
@@ -38,7 +39,10 @@ describe('getMemberOverview', () => {
     );
     vi.spyOn(global, 'fetch').mockImplementation(fetchMock);
 
-    const result = await getMemberOverview(db, 'https://tautulli.example.com', 'apikey');
+    const result = await getMemberOverview(
+      db,
+      getActivitySources({ tautulli: { url: 'https://tautulli.example.com', apiKey: 'apikey' }, jellyfin: null })
+    );
 
     // Ordered by last_login DESC — bob first
     expect(result[0]).toEqual({
@@ -46,7 +50,7 @@ describe('getMemberOverview', () => {
       username: 'bob',
       email: 'bob@b.com',
       portalLastLogin: '2026-08-25T10:00:00.000Z',
-      tautulliLastSeen: null,
+      lastSeen: null,
       newsletterOptedIn: false,
     });
     expect(result[1]).toEqual({
@@ -54,7 +58,7 @@ describe('getMemberOverview', () => {
       username: 'alice',
       email: 'alice@b.com',
       portalLastLogin: '2026-08-20T10:00:00.000Z',
-      tautulliLastSeen: new Date(1788035871 * 1000).toISOString(),
+      lastSeen: new Date(1788035871 * 1000).toISOString(),
       newsletterOptedIn: true,
     });
   });
@@ -66,14 +70,17 @@ describe('getMemberOverview', () => {
     );
     vi.spyOn(global, 'fetch').mockResolvedValue(jsonResponse({}, false));
 
-    const result = await getMemberOverview(db, 'https://tautulli.example.com', 'apikey');
+    const result = await getMemberOverview(
+      db,
+      getActivitySources({ tautulli: { url: 'https://tautulli.example.com', apiKey: 'apikey' }, jellyfin: null })
+    );
     expect(result).toEqual([
       {
         provider: 'plex', userId: 'p1',
         username: 'alice',
         email: 'alice@b.com',
         portalLastLogin: '2026-08-20T10:00:00.000Z',
-        tautulliLastSeen: null,
+        lastSeen: null,
         newsletterOptedIn: true,
       },
     ]);
@@ -82,7 +89,12 @@ describe('getMemberOverview', () => {
   it('returns an empty array when no one has ever logged into the portal', async () => {
     const db = getDb(':memory:');
     vi.spyOn(global, 'fetch').mockResolvedValue(jsonResponse({ response: { data: { data: [] } } }));
-    expect(await getMemberOverview(db, 'https://tautulli.example.com', 'apikey')).toEqual([]);
+    expect(
+      await getMemberOverview(
+        db,
+        getActivitySources({ tautulli: { url: 'https://tautulli.example.com', apiKey: 'apikey' }, jellyfin: null })
+      )
+    ).toEqual([]);
   });
 });
 

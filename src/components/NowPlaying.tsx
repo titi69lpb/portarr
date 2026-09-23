@@ -1,6 +1,6 @@
 'use client';
 
-import type { ActiveSession } from '@/lib/activity';
+import type { ActiveSession } from '@/lib/activity/tautulli-source';
 import { formatTimeLeft, calculateProgress } from '@/lib/now-playing-format';
 
 function formatBandwidth(kbps: number): string {

@@ -229,3 +229,81 @@ export function jellyfinWebUrl(baseUrl: string, itemId: string, serverId: string
   const server = serverId ? `&serverId=${serverId}` : '';
   return `${baseUrl}/web/index.html#/details?id=${itemId}${server}`;
 }
+
+export interface JellyfinSession {
+  userName: string;
+  deviceName: string;
+  item: {
+    id: string;
+    name: string;
+    type: string;
+    seriesName: string | null;
+    seasonId: string | null;
+    seasonNumber: number | null;
+    episodeNumber: number | null;
+    runTimeTicks: number | null;
+    productionYear: number | null;
+  };
+  isPaused: boolean;
+  positionTicks: number;
+  playMethod: string | null;
+  transcodingBitrate: number | null;
+}
+
+interface RawSessionItem {
+  Id: string;
+  Name?: string;
+  Type?: string;
+  SeriesName?: string;
+  SeasonId?: string;
+  ParentIndexNumber?: number;
+  IndexNumber?: number;
+  RunTimeTicks?: number;
+  ProductionYear?: number;
+}
+
+interface RawSession {
+  UserName?: string | null;
+  DeviceName?: string;
+  NowPlayingItem?: RawSessionItem;
+  PlayState?: { IsPaused?: boolean; PositionTicks?: number; PlayMethod?: string };
+  TranscodingInfo?: { Bitrate?: number } | null;
+}
+
+// Jellyfin's /Sessions lists every open connection, including ones nobody is
+// watching on (e.g. the server's own loopback session) — only entries with a
+// NowPlayingItem represent real playback. Exported (not folded into
+// getSessions) so Jellystat's proxy of this same raw JSON (verified 2026-09-22
+// to be a pass-through, not Jellystat's own shape) can reuse it without a
+// second HTTP round-trip through this module.
+export function normalizeJellyfinSessions(raw: unknown[]): JellyfinSession[] {
+  return (raw as RawSession[])
+    .filter((s): s is RawSession & { NowPlayingItem: RawSessionItem } => s.NowPlayingItem != null)
+    .map((s) => ({
+      userName: s.UserName ?? '',
+      deviceName: s.DeviceName ?? '',
+      item: {
+        id: s.NowPlayingItem.Id,
+        name: s.NowPlayingItem.Name ?? '',
+        type: s.NowPlayingItem.Type ?? '',
+        seriesName: s.NowPlayingItem.SeriesName ?? null,
+        seasonId: s.NowPlayingItem.SeasonId ?? null,
+        seasonNumber: s.NowPlayingItem.ParentIndexNumber ?? null,
+        episodeNumber: s.NowPlayingItem.IndexNumber ?? null,
+        runTimeTicks: s.NowPlayingItem.RunTimeTicks ?? null,
+        productionYear: s.NowPlayingItem.ProductionYear ?? null,
+      },
+      isPaused: s.PlayState?.IsPaused === true,
+      positionTicks: s.PlayState?.PositionTicks ?? 0,
+      playMethod: s.PlayState?.PlayMethod ?? null,
+      transcodingBitrate: s.TranscodingInfo?.Bitrate ?? null,
+    }));
+}
+
+// Not exercised against a real playing session (verified 2026-09-22 with nothing
+// playing) — the field mapping follows Jellyfin's documented SessionInfo shape,
+// not confirmed live. Treat a mapping bug here as plausible until proven otherwise.
+export async function getSessions(cfg: JellyfinProviderConfig, fetchFn: typeof fetch = fetch): Promise<JellyfinSession[]> {
+  const raw = await jfGet<unknown[]>(cfg, '/Sessions', fetchFn);
+  return normalizeJellyfinSessions(raw);
+}

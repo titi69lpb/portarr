@@ -1,16 +1,9 @@
-import { timeoutSignal } from './fetch-timeout';
-import { withTtlCache, DEFAULT_CACHE_TTL_MS } from './ttl-cache';
-
-export interface GlobalStat {
-  title: string;
-  value: number;
-  posterPath?: string;
-}
-
-export interface PersonalStats {
-  plays: number;
-  totalDurationSeconds: number;
-}
+import { timeoutSignal } from '../fetch-timeout';
+import { withTtlCache, DEFAULT_CACHE_TTL_MS } from '../ttl-cache';
+import { ACTIVITY_TIMEOUT_MS } from './types';
+import type { ActiveSession, ActivityMember, ActivitySource, GlobalStat, PersonalStats, PersonalStatsByType, RecentHistoryItem, StatCategory, WatchHistoryPage } from './types';
+export { ACTIVITY_TIMEOUT_MS } from './types';
+export type { ActiveSession, GlobalStat, PersonalStats, PersonalStatsByType, RecentHistoryItem, StatCategory, WatchHistoryPage } from './types';
 
 interface UserTableRow {
   email?: string;
@@ -86,16 +79,6 @@ export async function getUserActivity(
       lastSeenAt: row.last_seen ? new Date(row.last_seen * 1000) : null,
     }));
 }
-
-export type StatCategory =
-  | 'topMovies'
-  | 'popularMovies'
-  | 'topTv'
-  | 'popularTv'
-  | 'topLibraries'
-  | 'topUsers'
-  | 'topPlatforms'
-  | 'mostConcurrent';
 
 interface ExtendedStatRow {
   title?: string;
@@ -195,11 +178,6 @@ export async function getExtendedStats(
   });
 }
 
-export interface PersonalStatsByType {
-  movies: { count: number; hours: number };
-  episodes: { count: number; hours: number };
-}
-
 interface HistoryRow {
   duration?: number;
 }
@@ -252,13 +230,6 @@ export async function getPersonalStatsByType(
     fetchMediaTypeStats(tautulliUrl, apiKey, userId, 'episode', fetchFn),
   ]);
   return { movies, episodes };
-}
-
-export interface RecentHistoryItem {
-  title: string;
-  type: 'movie' | 'episode';
-  thumbPath: string;
-  watchedAt: string;
 }
 
 interface RecentHistoryRow {
@@ -351,11 +322,6 @@ export async function getRecentWatchHistory(
   }
 }
 
-export interface WatchHistoryPage {
-  items: RecentHistoryItem[];
-  total: number;
-}
-
 // Full paginated history for the dedicated /history page — getRecentWatchHistory
 // above stays fixed at a small `limit` for the dashboard's "Vu récemment" strip
 // and is unaffected by this. Not TTL-cached: this page is opened specifically to
@@ -383,4 +349,91 @@ export async function getWatchHistoryPage(
     .filter((row) => (row.media_type === 'movie' || row.media_type === 'episode') && row.thumb)
     .map(rowToHistoryItem);
   return { items, total: data.response.data.recordsFiltered };
+}
+
+interface TautulliSession {
+  title: string;
+  grandparent_title: string;
+  parent_media_index: string;
+  media_index: string;
+  year: string;
+  media_type: string;
+  user: string;
+  player: string;
+  bandwidth: string;
+  transcode_decision: string;
+  view_offset: string;
+  duration: string;
+  state: string;
+  thumb: string;
+  grandparent_thumb: string;
+}
+
+export async function getActiveSessions(
+  tautulliUrl: string,
+  apiKey: string,
+  fetchFn: typeof fetch = fetch
+): Promise<ActiveSession[]> {
+  const res = await fetchFn(`${tautulliUrl}/api/v2?apikey=${apiKey}&cmd=get_activity`, {
+    signal: timeoutSignal(ACTIVITY_TIMEOUT_MS),
+    cache: 'no-store',
+  });
+  if (!res.ok) {
+    throw new Error(`Tautulli API request failed: ${res.status} ${res.statusText}`);
+  }
+  const data = (await res.json()) as { response: { data: { sessions: TautulliSession[] } } };
+
+  return data.response.data.sessions.map((s) => {
+    const isEpisode = s.media_type === 'episode' && s.grandparent_title !== '';
+    return {
+      title: isEpisode ? s.grandparent_title : s.title,
+      showTitle: isEpisode ? s.title : null,
+      seasonNumber: isEpisode ? Number(s.parent_media_index) : null,
+      episodeNumber: isEpisode ? Number(s.media_index) : null,
+      year: s.year,
+      mediaType: (['movie', 'episode', 'track'].includes(s.media_type)
+        ? s.media_type
+        : 'other') as ActiveSession['mediaType'],
+      user: s.user,
+      player: s.player,
+      bandwidthKbps: Number(s.bandwidth),
+      transcodeDecision: s.transcode_decision as ActiveSession['transcodeDecision'],
+      viewOffsetMs: Number(s.view_offset),
+      durationMs: Number(s.duration),
+      state: s.state as ActiveSession['state'],
+      posterPath: isEpisode ? s.grandparent_thumb : s.thumb,
+    };
+  });
+}
+
+export function createTautulliActivitySource(
+  cfg: { url: string; apiKey: string },
+  fetchFn: typeof fetch = fetch
+): ActivitySource {
+  return {
+    id: 'plex',
+    nowPlaying: () => getActiveSessions(cfg.url, cfg.apiKey, fetchFn),
+    async lastSeen(member) {
+      const activity = await getUserActivity(cfg.url, cfg.apiKey, fetchFn);
+      const match = activity.find((a) => a.email === member.email.toLowerCase());
+      return match?.lastSeenAt ? match.lastSeenAt.toISOString() : null;
+    },
+    personalStats: (member) => getPersonalStats(cfg.url, cfg.apiKey, member.email, fetchFn),
+    async personalStatsByType(member) {
+      const userId = await getUserIdByEmail(cfg.url, cfg.apiKey, member.email, fetchFn);
+      if (userId === null) return { movies: { count: 0, hours: 0 }, episodes: { count: 0, hours: 0 } };
+      return getPersonalStatsByType(cfg.url, cfg.apiKey, userId, fetchFn);
+    },
+    async recentHistory(member, limit) {
+      const userId = await getUserIdByEmail(cfg.url, cfg.apiKey, member.email, fetchFn);
+      if (userId === null) return [];
+      return getRecentWatchHistory(cfg.url, cfg.apiKey, userId, limit, fetchFn);
+    },
+    async historyPage(member, offset, limit) {
+      const userId = await getUserIdByEmail(cfg.url, cfg.apiKey, member.email, fetchFn);
+      if (userId === null) return { items: [], total: 0 };
+      return getWatchHistoryPage(cfg.url, cfg.apiKey, userId, offset, limit, fetchFn);
+    },
+    globalStats: () => getExtendedStats(cfg.url, cfg.apiKey, fetchFn),
+  };
 }

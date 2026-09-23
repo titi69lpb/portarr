@@ -14,24 +14,15 @@ import { DashboardSections } from '@/components/DashboardSections';
 import { redirect } from 'next/navigation';
 import { verifySession, SESSION_COOKIE_NAME, type SessionUser } from '@/lib/session';
 import { loadConfig, isSetupComplete, assertConfigured, type ConfiguredAppConfig } from '@/lib/config';
-import { getActiveSessions, type ActiveSession } from '@/lib/activity';
+import { nowPlayingAll, globalStatsAll } from '@/lib/activity/aggregate';
+import { getActivitySources, getActivitySourceFor } from '@/lib/activity/registry';
 import { getActiveProviders } from '@/lib/media/registry';
 import { recentlyAddedSplitAll } from '@/lib/media/aggregate';
 import type { RecentlyAddedSplit } from '@/lib/media/types';
 import { getUpcomingReleases, type CalendarItem } from '@/lib/calendar';
 import { getPendingRequests, type PendingRequest } from '@/lib/overseerr';
-import {
-  getPersonalStats,
-  getExtendedStats,
-  getPersonalStatsByType,
-  getUserIdByEmail,
-  getRecentWatchHistory,
-  type GlobalStat,
-  type PersonalStats,
-  type PersonalStatsByType,
-  type RecentHistoryItem,
-  type StatCategory,
-} from '@/lib/tautulli';
+import type { ActiveSession, GlobalStat, PersonalStats, PersonalStatsByType, RecentHistoryItem, StatCategory } from '@/lib/activity/types';
+import { EMPTY_GLOBAL_STATS } from '@/lib/activity/types';
 import { getDb } from '@/lib/db';
 import { getActiveAnnouncement } from '@/lib/announcements';
 import { renderMarkdown } from '@/lib/markdown';
@@ -62,32 +53,23 @@ async function safe<T>(label: string, fallback: T, fn: () => Promise<T>): Promis
   }
 }
 
-const EMPTY_EXTENDED_STATS: Record<StatCategory, GlobalStat[]> = {
-  topMovies: [],
-  popularMovies: [],
-  topTv: [],
-  popularTv: [],
-  topLibraries: [],
-  topUsers: [],
-  topPlatforms: [],
-  mostConcurrent: [],
-};
-
 async function loadStats(sessionUser: SessionUser | null, config: ConfiguredAppConfig) {
-  const extended = await getExtendedStats(config.tautulli.url, config.tautulli.apiKey);
-  const personal = sessionUser
-    ? await getPersonalStats(config.tautulli.url, config.tautulli.apiKey, sessionUser.email)
-    : null;
+  const sources = getActivitySources(config);
+  const extended = await globalStatsAll(sources);
 
+  let personal: PersonalStats | null = null;
   let personalByType: PersonalStatsByType | null = null;
   let recentHistory: RecentHistoryItem[] = [];
   if (sessionUser) {
-    const userId = await getUserIdByEmail(config.tautulli.url, config.tautulli.apiKey, sessionUser.email);
-    if (userId !== null) {
-      [personalByType, recentHistory] = await Promise.all([
-        getPersonalStatsByType(config.tautulli.url, config.tautulli.apiKey, userId),
-        getRecentWatchHistory(config.tautulli.url, config.tautulli.apiKey, userId),
-      ]);
+    const source = getActivitySourceFor(sources, sessionUser.provider);
+    if (source) {
+      personal = await source.personalStats(sessionUser);
+      if (personal !== null) {
+        [personalByType, recentHistory] = await Promise.all([
+          source.personalStatsByType(sessionUser),
+          source.recentHistory(sessionUser, 8),
+        ]);
+      }
     }
   }
 
@@ -110,9 +92,7 @@ export default async function DashboardPage() {
   calendarEnd.setDate(calendarEnd.getDate() + 14);
 
   const [nowPlaying, recentlyAdded, calendar, pendingRequests, stats, announcement, kumaStatus] = await Promise.all([
-    safe<ActiveSession[]>('now-playing', [], () =>
-      getActiveSessions(config.tautulli.url, config.tautulli.apiKey)
-    ),
+    safe<ActiveSession[]>('now-playing', [], () => nowPlayingAll(getActivitySources(config))),
     safe<RecentlyAddedSplit>('recently-added', { movies: [], episodes: [] }, () =>
       recentlyAddedSplitAll(getActiveProviders(config), 15)
     ),
@@ -127,7 +107,7 @@ export default async function DashboardPage() {
       'stats',
       {
         personal: null as PersonalStats | null,
-        extended: EMPTY_EXTENDED_STATS,
+        extended: EMPTY_GLOBAL_STATS,
         personalByType: null as PersonalStatsByType | null,
         recentHistory: [] as RecentHistoryItem[],
       },

@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation';
 import { verifySession, SESSION_COOKIE_NAME } from '@/lib/session';
 import { loadConfig, isSetupComplete, assertConfigured } from '@/lib/config';
 import { getDb } from '@/lib/db';
-import { getUserIdByEmail, getWatchHistoryPage } from '@/lib/tautulli';
+import { getActivitySources, getActivitySourceFor } from '@/lib/activity/registry';
 import { AppSidebarServer } from '@/components/AppSidebarServer';
 import { HistoryLoadMore } from '@/components/HistoryLoadMore';
 
@@ -24,12 +24,12 @@ export default async function HistoryPage() {
   }
   const config = assertConfigured(rawConfig);
 
-  let items: Awaited<ReturnType<typeof getWatchHistoryPage>>['items'] = [];
+  let items: { title: string; type: 'movie' | 'episode'; thumbPath: string; watchedAt: string }[] = [];
   let total = 0;
   try {
-    const userId = await getUserIdByEmail(config.tautulli.url, config.tautulli.apiKey, sessionUser.email);
-    if (userId !== null) {
-      const page = await getWatchHistoryPage(config.tautulli.url, config.tautulli.apiKey, userId, 0, PAGE_SIZE);
+    const source = getActivitySourceFor(getActivitySources(config), sessionUser.provider);
+    if (source) {
+      const page = await source.historyPage(sessionUser, 0, PAGE_SIZE);
       items = page.items;
       total = page.total;
     }

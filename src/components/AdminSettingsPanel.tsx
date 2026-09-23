@@ -10,13 +10,15 @@ const SERVICE_TITLES: Record<ServiceKey, string> = {
   plex: 'Plex',
   tautulli: 'Tautulli',
   jellyfin: 'Jellyfin',
+  jellystat: 'Jellystat',
+  jellyfinActivitySource: "Source d'activité Jellyfin",
   sonarr: 'Sonarr',
   radarr: 'Radarr',
   overseerr: 'Overseerr',
   smtp: 'SMTP',
 };
 
-const SERVICES: ServiceKey[] = ['publicBaseUrl', 'plex', 'tautulli', 'jellyfin', 'sonarr', 'radarr', 'overseerr', 'smtp'];
+const SERVICES: ServiceKey[] = ['publicBaseUrl', 'plex', 'tautulli', 'jellyfin', 'jellystat', 'jellyfinActivitySource', 'sonarr', 'radarr', 'overseerr', 'smtp'];
 
 export function AdminSettingsPanel({
   sources,
@@ -52,7 +54,7 @@ export function AdminSettingsPanel({
             <h2 className="mb-3 font-display text-xl text-plexcrew-screen">{SERVICE_TITLES[service]}</h2>
             <ServiceSettingsForm
               fields={fields}
-              testable={service !== 'publicBaseUrl'}
+              testable={service !== 'publicBaseUrl' && service !== 'jellyfinActivitySource'}
               disabledKeys={disabledKeys}
               configuredKeys={configuredKeys}
               initialValues={initialValues}

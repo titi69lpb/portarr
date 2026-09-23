@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { verifySession, SESSION_COOKIE_NAME } from '@/lib/session';
 import { loadConfig, isSetupComplete, assertConfigured } from '@/lib/config';
 import { getDb } from '@/lib/db';
-import { getUserIdByEmail, getWatchHistoryPage } from '@/lib/tautulli';
+import { getActivitySources, getActivitySourceFor } from '@/lib/activity/registry';
 
 export const dynamic = 'force-dynamic';
 
@@ -24,18 +24,12 @@ export async function GET(request: NextRequest) {
     const rawOffset = Number(request.nextUrl.searchParams.get('offset') ?? '0');
     const offset = Number.isFinite(rawOffset) && rawOffset >= 0 ? Math.floor(rawOffset) : 0;
 
-    const userId = await getUserIdByEmail(config.tautulli.url, config.tautulli.apiKey, sessionUser.email);
-    if (userId === null) {
+    const source = getActivitySourceFor(getActivitySources(config), sessionUser.provider);
+    if (!source) {
       return NextResponse.json({ items: [], total: 0 });
     }
 
-    const page = await getWatchHistoryPage(
-      config.tautulli.url,
-      config.tautulli.apiKey,
-      userId,
-      offset,
-      PAGE_SIZE
-    );
+    const page = await source.historyPage(sessionUser, offset, PAGE_SIZE);
     return NextResponse.json(page);
   } catch (err) {
     console.error('Failed to fetch watch history page:', err);

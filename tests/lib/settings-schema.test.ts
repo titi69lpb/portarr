@@ -2,12 +2,6 @@ import { describe, it, expect } from 'vitest';
 import { SERVICE_FIELDS } from '../../src/lib/settings-schema';
 
 describe('SERVICE_FIELDS', () => {
-  it('covers exactly the 8 configurable groups', () => {
-    expect(Object.keys(SERVICE_FIELDS).sort()).toEqual(
-      ['jellyfin', 'overseerr', 'plex', 'publicBaseUrl', 'radarr', 'smtp', 'sonarr', 'tautulli'].sort()
-    );
-  });
-
   it('jellyfin needs a url (text) and an api key (password)', () => {
     expect(SERVICE_FIELDS.jellyfin.map((f) => [f.envKey, f.type])).toEqual([
       ['JELLYFIN_URL', 'text'],
@@ -41,5 +35,32 @@ describe('SERVICE_FIELDS', () => {
     expect(SERVICE_FIELDS.plex.find((f) => f.envKey === 'PLEX_SERVER_TOKEN')?.type).toBe('password');
     expect(SERVICE_FIELDS.plex.find((f) => f.envKey === 'PLEX_URL')?.type).toBe('text');
     expect(SERVICE_FIELDS.smtp.find((f) => f.envKey === 'SMTP_PASS')?.type).toBe('password');
+  });
+
+  it('covers exactly the 10 configurable groups', () => {
+    expect(Object.keys(SERVICE_FIELDS).sort()).toEqual(
+      ['jellyfin', 'jellyfinActivitySource', 'jellystat', 'overseerr', 'plex', 'publicBaseUrl', 'radarr', 'smtp', 'sonarr', 'tautulli'].sort()
+    );
+  });
+
+  it('jellystat needs a url (text) and an api key (password)', () => {
+    expect(SERVICE_FIELDS.jellystat.map((f) => [f.envKey, f.type])).toEqual([
+      ['JELLYSTAT_URL', 'text'],
+      ['JELLYSTAT_API_KEY', 'password'],
+    ]);
+  });
+
+  it('jellyfinActivitySource is a select with native and jellystat options', () => {
+    expect(SERVICE_FIELDS.jellyfinActivitySource).toEqual([
+      {
+        envKey: 'JELLYFIN_ACTIVITY_SOURCE',
+        label: "Source d'activité Jellyfin",
+        type: 'select',
+        options: [
+          { value: 'native', label: 'Natif (lecture en cours uniquement)' },
+          { value: 'jellystat', label: 'Jellystat (statistiques et historique complets)' },
+        ],
+      },
+    ]);
   });
 });

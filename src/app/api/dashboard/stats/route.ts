@@ -1,12 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import {
-  getPersonalStats,
-  getExtendedStats,
-  getPersonalStatsByType,
-  getUserIdByEmail,
-  getRecentWatchHistory,
-  type PersonalStatsByType,
-} from '@/lib/tautulli';
+import { globalStatsAll } from '@/lib/activity/aggregate';
+import { getActivitySources, getActivitySourceFor } from '@/lib/activity/registry';
+import type { PersonalStatsByType } from '@/lib/activity/types';
 import { verifySession, SESSION_COOKIE_NAME } from '@/lib/session';
 import { loadConfig, isSetupComplete, assertConfigured } from '@/lib/config';
 import { getDb } from '@/lib/db';
@@ -23,20 +18,22 @@ export async function GET(request: NextRequest) {
   const sessionUser = token ? await verifySession(token, config.session.secret) : null;
 
   try {
-    const extended = await getExtendedStats(config.tautulli.url, config.tautulli.apiKey);
-    const personal = sessionUser
-      ? await getPersonalStats(config.tautulli.url, config.tautulli.apiKey, sessionUser.email)
-      : null;
+    const sources = getActivitySources(config);
+    const extended = await globalStatsAll(sources);
 
+    let personal = null;
     let personalByType: PersonalStatsByType | null = null;
-    let recentHistory: Awaited<ReturnType<typeof getRecentWatchHistory>> = [];
+    let recentHistory: Awaited<ReturnType<(typeof sources)[number]['recentHistory']>> = [];
     if (sessionUser) {
-      const userId = await getUserIdByEmail(config.tautulli.url, config.tautulli.apiKey, sessionUser.email);
-      if (userId !== null) {
-        [personalByType, recentHistory] = await Promise.all([
-          getPersonalStatsByType(config.tautulli.url, config.tautulli.apiKey, userId),
-          getRecentWatchHistory(config.tautulli.url, config.tautulli.apiKey, userId),
-        ]);
+      const source = getActivitySourceFor(sources, sessionUser.provider);
+      if (source) {
+        personal = await source.personalStats(sessionUser);
+        if (personal !== null) {
+          [personalByType, recentHistory] = await Promise.all([
+            source.personalStatsByType(sessionUser),
+            source.recentHistory(sessionUser, 8),
+          ]);
+        }
       }
     }
 
