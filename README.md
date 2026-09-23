@@ -136,8 +136,9 @@ Deux façons de configurer Portarr, au choix :
 | `OVERSEERR_URL`, `OVERSEERR_API_KEY` | assistant ou env | Demandes en attente, notifications de disponibilité |
 | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `MAIL_FROM_ADDRESS`, `MAIL_FROM_NAME` | assistant ou env | Mailing, newsletter, notifications de disponibilité |
 | `PUBLIC_BASE_URL` | assistant ou env | Liens absolus dans les emails sortants + URL affichée dans le lien de configuration |
+| `PUBLIC_COMMUNITY_NAME` | assistant ou env (optionnel) | Nom affiché dans le sujet de la newsletter et les notifications de disponibilité — sinon le nom du serveur Plex, ou « Portarr » |
 | `PLEX_CLIENT_IDENTIFIER`, `NEWSLETTER_CRON_SECRET`, `DOWNLOAD_SIGNING_SECRET` | auto-générées (base de données), jamais dans l'assistant | Identifiant client Plex, auth cron, signature des liens de téléchargement |
-| `SHORTCUT_<NOM>_URL` / `SHORTCUT_<NOM>_ICON_URL` (×6 : `PLEX`, `OVERSEERR`, `TAUTULLI`, `WIZARR`, `POSTERR`, `PLEX_REWIND`) | optionnel | Un raccourci dans la sidebar, un par paire définie. Les deux variables doivent être définies pour afficher une icône ; un raccourci avec seulement `_URL` s'affiche en lien texte seul. Totalement absent = ce raccourci n'apparaît pas. |
+| `SHORTCUT_<NOM>_URL` / `SHORTCUT_<NOM>_ICON_URL` (×8 : `PLEX`, `OVERSEERR`, `TAUTULLI`, `JELLYFIN`, `JELLYSTAT`, `WIZARR`, `POSTERR`, `PLEX_REWIND`) | optionnel | Un raccourci dans la sidebar, un par paire définie. Les deux variables doivent être définies pour afficher une icône ; un raccourci avec seulement `_URL` s'affiche en lien texte seul. Totalement absent = ce raccourci n'apparaît pas. |
 | `FILES_ROOT_PATH` | optionnel | La page `/files`, le lien sidebar "Fichiers", et la route de téléchargement |
 | `FS_TIMEOUT_MS` | optionnel | Timeout (ms) pour les appels filesystem sur le montage — défaut `5000` |
 | `DOWNLOAD_SIGNING_SECRET` | optionnel | Requis seulement avec `DOWNLOAD_PROXY_URL` — signe les URLs de redirection |
@@ -369,8 +370,9 @@ Two ways to configure Portarr, your choice:
 | `OVERSEERR_URL`, `OVERSEERR_API_KEY` | wizard or env | Pending requests, availability notifications |
 | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `MAIL_FROM_ADDRESS`, `MAIL_FROM_NAME` | wizard or env | Mailing, newsletter, availability notifications |
 | `PUBLIC_BASE_URL` | wizard or env | Absolute links in outgoing emails + the URL shown in the setup link |
+| `PUBLIC_COMMUNITY_NAME` | wizard or env (optional) | Name shown in the newsletter subject and availability-notification emails — otherwise the Plex server name, or "Portarr" |
 | `PLEX_CLIENT_IDENTIFIER`, `NEWSLETTER_CRON_SECRET`, `DOWNLOAD_SIGNING_SECRET` | auto-generated (database), never in the wizard | Plex client identifier, cron auth, download link signing |
-| `SHORTCUT_<NAME>_URL` / `SHORTCUT_<NAME>_ICON_URL` (×6: `PLEX`, `OVERSEERR`, `TAUTULLI`, `WIZARR`, `POSTERR`, `PLEX_REWIND`) | optional | A sidebar shortcut link, one per pair set. Both vars must be set for an icon to show; a shortcut with only `_URL` renders as a text-only link. Absent entirely = that shortcut just isn't in the sidebar. |
+| `SHORTCUT_<NAME>_URL` / `SHORTCUT_<NAME>_ICON_URL` (×8: `PLEX`, `OVERSEERR`, `TAUTULLI`, `JELLYFIN`, `JELLYSTAT`, `WIZARR`, `POSTERR`, `PLEX_REWIND`) | optional | A sidebar shortcut link, one per pair set. Both vars must be set for an icon to show; a shortcut with only `_URL` renders as a text-only link. Absent entirely = that shortcut just isn't in the sidebar. |
 | `FILES_ROOT_PATH` | optional | The `/files` page, the sidebar "Files" link, and the download route |
 | `FS_TIMEOUT_MS` | optional | Timeout (ms) for filesystem calls against the mount — defaults to `5000` |
 | `DOWNLOAD_SIGNING_SECRET` | optional | Required only alongside `DOWNLOAD_PROXY_URL` — signs redirect URLs |
