@@ -7,7 +7,8 @@ import { renderMarkdown } from '@/lib/markdown';
 import { renderEmailShell } from '@/lib/email-template';
 import { createTransport, sendMail } from '@/lib/mailer';
 import { insertMailLog } from '@/lib/mail-log';
-import { resolveRecipients, defaultRecipientDeps, type RecipientParams } from '@/lib/mail-recipients';
+import { resolveRecipients, type RecipientParams } from '@/lib/mail-recipients';
+import { getActivitySources } from '@/lib/activity/registry';
 import { requireOwner } from '@/lib/route-auth';
 
 export const dynamic = 'force-dynamic';
@@ -38,10 +39,7 @@ export async function POST(request: NextRequest) {
     }
 
     const target = body.target as RecipientParams;
-    const recipients = await resolveRecipients(db, target, defaultRecipientDeps, {
-      url: config.tautulli.url,
-      apiKey: config.tautulli.apiKey,
-    });
+    const recipients = await resolveRecipients(db, target, getActivitySources(config));
 
     const transport = createTransport(config.smtp);
     const from = `"${config.smtp.fromName}" <${config.smtp.fromAddress}>`;
