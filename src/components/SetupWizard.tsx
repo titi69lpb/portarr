@@ -9,8 +9,8 @@ const STEPS: ServiceKey[] = ['publicBaseUrl', 'plex', 'tautulli', 'jellyfin', 'j
 
 const STEP_TITLES: Record<ServiceKey, string> = {
   publicBaseUrl: 'URL publique',
-  plex: 'Plex',
-  tautulli: 'Tautulli',
+  plex: 'Plex (optionnel si Jellyfin)',
+  tautulli: 'Tautulli (requis avec Plex)',
   jellyfin: 'Jellyfin (optionnel)',
   jellystat: 'Jellystat (optionnel)',
   jellyfinActivitySource: "Source d'activité Jellyfin",
@@ -99,7 +99,11 @@ export function SetupWizard({ token, sources }: { token: string; sources: Record
         disabledKeys={disabledKeys}
         configuredKeys={configuredKeys}
         onSubmit={handleStepSubmit}
-        onSkip={step === 'jellyfin' || step === 'jellystat' ? () => setStepIndex(stepIndex + 1) : undefined}
+        onSkip={
+          step === 'plex' || step === 'tautulli' || step === 'jellyfin' || step === 'jellystat'
+            ? () => setStepIndex(stepIndex + 1)
+            : undefined
+        }
       />
       {completing && <p className="text-sm text-plexcrew-ash">Finalisation…</p>}
       {completeError && <p className="text-sm text-plexcrew-amber">{completeError}</p>}

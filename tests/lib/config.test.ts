@@ -77,7 +77,7 @@ describe('loadConfig — fully configured via env (backwards compat)', () => {
   it('assertConfigured does not throw and narrows every service to non-null', () => {
     const db = getDb(':memory:');
     const config = assertConfigured(loadConfig(FULL_ENV, db));
-    expect(config.plex.url).toBe('https://plex.example.com');
+    expect(config.plex?.url).toBe('https://plex.example.com');
   });
 
   it('auto-generates PLEX_CLIENT_IDENTIFIER/NEWSLETTER_CRON_SECRET/DOWNLOAD_SIGNING_SECRET when absent from env, and they are stable across two loadConfig calls', () => {
@@ -99,6 +99,78 @@ describe('loadConfig — fully configured via env (backwards compat)', () => {
     const db = getDb(':memory:');
     const { SESSION_SECRET, ...envWithoutSecret } = FULL_ENV;
     expect(() => loadConfig(envWithoutSecret, db)).toThrow(/SESSION_SECRET/);
+  });
+});
+
+const JELLYFIN_ONLY_ENV = {
+  NODE_ENV: 'test' as const,
+  DATABASE_PATH: ':memory:',
+  SESSION_SECRET: 'test-secret-at-least-32-characters-long',
+  PUBLIC_BASE_URL: 'https://portal.example.com',
+  JELLYFIN_URL: 'https://jellyfin.example.com',
+  JELLYFIN_API_KEY: 'jfkey',
+  SONARR_URL: 'https://sonarr.example.com',
+  SONARR_API_KEY: 'skey',
+  RADARR_URL: 'https://radarr.example.com',
+  RADARR_API_KEY: 'rkey',
+  OVERSEERR_URL: 'https://overseerr.example.com',
+  OVERSEERR_API_KEY: 'overseerr-key',
+  SMTP_HOST: 'mail.example.com',
+  SMTP_PORT: '465',
+  SMTP_USER: 'smtpuser',
+  SMTP_PASS: 'smtppass',
+  MAIL_FROM_ADDRESS: 'admin@example.com',
+  MAIL_FROM_NAME: 'Portarr',
+};
+
+describe('isSetupComplete — Jellyfin-only installs (sub-project 3b)', () => {
+  beforeEach(() => {
+    resetDbForTests();
+  });
+
+  it('is true with only Jellyfin configured, no Plex, no Tautulli', () => {
+    const config = loadConfig(JELLYFIN_ONLY_ENV, getDb(':memory:'));
+    expect(config.plex).toBeNull();
+    expect(config.tautulli).toBeNull();
+    expect(isSetupComplete(config)).toBe(true);
+  });
+
+  it('is false with neither Plex+Tautulli nor Jellyfin configured', () => {
+    const { JELLYFIN_URL, JELLYFIN_API_KEY, ...rest } = JELLYFIN_ONLY_ENV;
+    const config = loadConfig(rest, getDb(':memory:'));
+    expect(isSetupComplete(config)).toBe(false);
+  });
+
+  it('is still true with only Plex+Tautulli configured (backwards compat, no Jellyfin)', () => {
+    const config = loadConfig(FULL_ENV, getDb(':memory:'));
+    expect(isSetupComplete(config)).toBe(true);
+  });
+
+  it('assertConfigured no longer throws for a Jellyfin-only install, and plex/tautulli stay null', () => {
+    const config = assertConfigured(loadConfig(JELLYFIN_ONLY_ENV, getDb(':memory:')));
+    expect(config.plex).toBeNull();
+    expect(config.tautulli).toBeNull();
+  });
+});
+
+describe('communityName', () => {
+  beforeEach(() => {
+    resetDbForTests();
+  });
+
+  it('uses PUBLIC_COMMUNITY_NAME when set', () => {
+    const config = loadConfig({ ...FULL_ENV, PUBLIC_COMMUNITY_NAME: 'The Crew' }, getDb(':memory:'));
+    expect(config.communityName).toBe('The Crew');
+  });
+
+  it('falls back to PLEX_SERVER_NAME when PUBLIC_COMMUNITY_NAME is unset', () => {
+    const config = loadConfig(FULL_ENV, getDb(':memory:'));
+    expect(config.communityName).toBe('My Plex Server');
+  });
+
+  it('falls back to "Portarr" when neither is set', () => {
+    const config = loadConfig(JELLYFIN_ONLY_ENV, getDb(':memory:'));
+    expect(config.communityName).toBe('Portarr');
   });
 });
 
@@ -197,25 +269,30 @@ describe('isSetupComplete — a media provider must be active', () => {
     expect(isSetupComplete(loadConfig(FULL_ENV, getDb(':memory:')))).toBe(true);
   });
 
-  it('is false for a Jellyfin-only install without Plex (assertConfigured would hand out a null plex)', () => {
+  // Jellyfin stands on its own as an active provider (sub-project 3b relaxed isSetupComplete
+  // to drop the hard Plex+Tautulli requirement), so these two are now true rather than false —
+  // updated in Task 1 of sub-project 3b alongside the isSetupComplete/ConfiguredAppConfig change
+  // that makes them true. Covered in more depth by the dedicated
+  // "isSetupComplete — Jellyfin-only installs (sub-project 3b)" describe block above.
+  it('is true for a Jellyfin-only install without Plex (assertConfigured hands out a null plex)', () => {
     const { PLEX_URL: _url, ...env } = FULL_ENV;
     const config = loadConfig(
       { ...env, JELLYFIN_URL: 'http://j.local:8096', JELLYFIN_API_KEY: 'jkey' },
       getDb(':memory:')
     );
     expect(config.jellyfin).not.toBeNull();
-    expect(isSetupComplete(config)).toBe(false);
-    expect(() => assertConfigured(config)).toThrow();
+    expect(isSetupComplete(config)).toBe(true);
+    expect(() => assertConfigured(config)).not.toThrow();
   });
 
-  it('is false for Jellyfin + Plex without Tautulli', () => {
+  it('is true for Jellyfin + Plex without Tautulli (Jellyfin alone is enough)', () => {
     const { TAUTULLI_URL: _url, ...env } = FULL_ENV;
     const config = loadConfig(
       { ...env, JELLYFIN_URL: 'http://j.local:8096', JELLYFIN_API_KEY: 'jkey' },
       getDb(':memory:')
     );
     expect(config.jellyfin).not.toBeNull();
-    expect(isSetupComplete(config)).toBe(false);
+    expect(isSetupComplete(config)).toBe(true);
   });
 });
 

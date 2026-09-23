@@ -17,6 +17,7 @@ const normalizeId = (id: string) => id.toLowerCase().replace(/-/g, '');
 export function createJellystatActivitySource(cfg: JellystatConfig, fetchFn: typeof fetch = fetch): ActivitySource {
   return {
     id: 'jellyfin',
+    supportsLastSeen: true,
     async nowPlaying() {
       const raw = await getJellystatSessionsRaw(cfg, fetchFn);
       return normalizeJellyfinSessions(raw).map(mapJellyfinSessionToActiveSession);

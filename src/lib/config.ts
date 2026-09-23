@@ -104,6 +104,7 @@ export interface AppConfig {
   radarr: RadarrConfig | null;
   overseerr: OverseerrConfig | null;
   smtp: SmtpConfig | null;
+  communityName: string;
   newsletterCronSecret: string;
   publicBaseUrl: string | null;
   filesRootPath: string | null;
@@ -170,6 +171,8 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env, db: Database.Da
       ? { host: smtpHost, port: smtpPort, user: smtpUser, pass: smtpPass, fromAddress: mailFromAddress, fromName: mailFromName }
       : null;
 
+  const communityName = v('PUBLIC_COMMUNITY_NAME') ?? plexServerName ?? 'Portarr';
+
   const publicBaseUrl = v('PUBLIC_BASE_URL');
 
   // Unlike the other three auto-secrets below, SESSION_SECRET is never
@@ -196,6 +199,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env, db: Database.Da
     radarr,
     overseerr,
     smtp,
+    communityName,
     newsletterCronSecret: ensureAutoSecret(db, 'NEWSLETTER_CRON_SECRET', env.NEWSLETTER_CRON_SECRET),
     publicBaseUrl,
     filesRootPath: env.FILES_ROOT_PATH ?? null,
@@ -210,10 +214,9 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env, db: Database.Da
 
 export function isSetupComplete(config: AppConfig): boolean {
   return (
-    // Jellyfin runs alongside Plex + Tautulli in this sub-project, so both stay required: this is what
-    // makes assertConfigured's cast sound. Sub-project 3 relaxes it (Jellyfin-only, Tautulli optional).
-    config.plex !== null &&
-    config.tautulli !== null &&
+    // At least one media provider must be fully active. getActiveProviders already encodes
+    // the right per-provider rule: Plex only counts when Tautulli is also configured (it has
+    // no native activity source), Jellyfin counts on its own (native or Jellystat activity).
     getActiveProviders(config).length > 0 &&
     config.sonarr !== null &&
     config.radarr !== null &&
@@ -223,10 +226,7 @@ export function isSetupComplete(config: AppConfig): boolean {
   );
 }
 
-// plex/tautulli stay non-null here because isSetupComplete still requires them; sub-project 3 (Jellyfin-only installs) relaxes this.
 export interface ConfiguredAppConfig extends AppConfig {
-  plex: PlexConfig;
-  tautulli: TautulliConfig;
   sonarr: SonarrConfig;
   radarr: RadarrConfig;
   overseerr: OverseerrConfig;
@@ -252,6 +252,7 @@ export type ConfigSource = 'env' | 'db' | 'unset';
 
 const CONFIGURABLE_KEYS = [
   'PUBLIC_BASE_URL',
+  'PUBLIC_COMMUNITY_NAME',
   'PLEX_URL',
   'PLEX_SERVER_TOKEN',
   'PLEX_SERVER_NAME',

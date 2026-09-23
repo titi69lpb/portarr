@@ -15,11 +15,18 @@ export interface FieldDef {
   label: string;
   type: 'text' | 'password' | 'select';
   options?: { value: string; label: string }[];
+  optional?: boolean;
 }
 
 export const SERVICE_FIELDS: Record<ServiceKey, FieldDef[]> = {
   publicBaseUrl: [
     { envKey: 'PUBLIC_BASE_URL', label: 'URL publique de Portarr (ex. https://portarr.example.com)', type: 'text' },
+    {
+      envKey: 'PUBLIC_COMMUNITY_NAME',
+      label: 'Nom affiché dans la newsletter et les notifications (optionnel, sinon le nom du serveur Plex, ou « Portarr »)',
+      type: 'text',
+      optional: true,
+    },
   ],
   plex: [
     { envKey: 'PLEX_URL', label: 'URL du serveur Plex', type: 'text' },

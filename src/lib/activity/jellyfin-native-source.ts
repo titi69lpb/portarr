@@ -36,6 +36,7 @@ export function createJellyfinNativeActivitySource(
 ): ActivitySource {
   return {
     id: 'jellyfin',
+    supportsLastSeen: false,
     async nowPlaying() {
       const sessions = await getSessions(cfg, fetchFn);
       return sessions.map(mapJellyfinSessionToActiveSession);

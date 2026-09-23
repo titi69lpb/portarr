@@ -38,7 +38,7 @@ export async function GET(request: NextRequest) {
       return placeholderPosterResponse();
     }
 
-    // Pre-setup (or Plex not configured), assertConfigured throws — caught
+    // Pre-setup (or no media provider configured), assertConfigured throws — caught
     // below and degraded to the same placeholder as any other upstream
     // failure, which is exactly the right behavior for this route.
     const config = assertConfigured(loadConfig(process.env, getDb()));

@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
 
     const endDate = new Date().toLocaleDateString('fr-FR');
     const posterBaseUrl = `${config.publicBaseUrl}/api/newsletter/poster`;
-    const subject = `Les Nouveautés ${config.plex.serverName}! (${endDate})`;
+    const subject = `Les Nouveautés ${config.communityName}! (${endDate})`;
     const templateName = `Newsletter ${endDate}`;
 
     const db = getDb();
@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
     // view), and it never gets its own "view in browser" link.
     const archiveHtml = renderNewsletterHtml(
       items,
-      config.plex.serverName,
+      config.communityName,
       endDate,
       posterBaseUrl,
       `${config.publicBaseUrl}/`,
@@ -84,7 +84,7 @@ export async function POST(request: NextRequest) {
       const unsubscribeUrl = `${config.publicBaseUrl}/api/newsletter/unsubscribe?token=${unsubscribeToken}`;
       const html = renderNewsletterHtml(
         items,
-        config.plex.serverName,
+        config.communityName,
         endDate,
         posterBaseUrl,
         unsubscribeUrl,

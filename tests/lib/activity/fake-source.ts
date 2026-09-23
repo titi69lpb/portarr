@@ -5,6 +5,7 @@ import type { ProviderId } from '../../../src/lib/media/types';
 export function fakeSource(id: ProviderId, overrides: Partial<ActivitySource> = {}): ActivitySource {
   return {
     id,
+    supportsLastSeen: true,
     nowPlaying: async () => [],
     lastSeen: async () => null,
     personalStats: async () => null,

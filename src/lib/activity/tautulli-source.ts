@@ -412,6 +412,7 @@ export function createTautulliActivitySource(
 ): ActivitySource {
   return {
     id: 'plex',
+    supportsLastSeen: true,
     nowPlaying: () => getActiveSessions(cfg.url, cfg.apiKey, fetchFn),
     async lastSeen(member) {
       const activity = await getUserActivity(cfg.url, cfg.apiKey, fetchFn);
