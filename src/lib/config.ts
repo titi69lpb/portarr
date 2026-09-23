@@ -14,6 +14,8 @@ const SHORTCUT_DEFS: { envKey: string; name: string }[] = [
   { envKey: 'PLEX', name: 'Plex' },
   { envKey: 'OVERSEERR', name: 'Overseerr' },
   { envKey: 'TAUTULLI', name: 'Tautulli' },
+  { envKey: 'JELLYFIN', name: 'Jellyfin' },
+  { envKey: 'JELLYSTAT', name: 'Jellystat' },
   { envKey: 'WIZARR', name: 'Wizarr' },
   { envKey: 'POSTERR', name: 'Posterr' },
   { envKey: 'PLEX_REWIND', name: 'Plex Rewind' },
