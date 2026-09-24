@@ -46,6 +46,6 @@ describe('KumaStatusBadge', () => {
 
   it('never leaks per-monitor detail — only a plain count, per explicit scope', () => {
     const text = collectText(KumaStatusBadge({ status: { total: 5, down: 2 }, locale: 'fr' }));
-    expect(text).not.toMatch(/monitor|http|plex\.bricefeniello/i);
+    expect(text).not.toMatch(/monitor|http|plex\.example/i);
   });
 });

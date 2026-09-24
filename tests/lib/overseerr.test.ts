@@ -192,7 +192,7 @@ describe('getAvailableRequests', () => {
                 type: 'movie',
                 createdAt: '2025-09-09T07:31:37.000Z',
                 media: { tmdbId: 87513, status: 5 },
-                requestedBy: { username: 'Andaril', displayName: 'Andaril', email: 'admin@b.com' },
+                requestedBy: { username: 'Alice', displayName: 'Alice', email: 'admin@b.com' },
               },
             ],
           })
@@ -207,7 +207,7 @@ describe('getAvailableRequests', () => {
         title: 'Some Movie',
         type: 'movie',
         requesterEmail: 'admin@b.com',
-        requesterUsername: 'Andaril',
+        requesterUsername: 'Alice',
       },
     ]);
   });

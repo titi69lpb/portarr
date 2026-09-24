@@ -764,10 +764,10 @@ npm run typecheck 2>&1 | tail -10
 npx vitest run 2>&1 | tail -15
 SESSION_SECRET=verify-secret-0123456789abcdef0123456789 npm run build 2>&1 | tail -20
 grep -rn "config\.plex\.\|config\.tautulli\." src --include="*.ts" --include="*.tsx" | grep -v "media/registry.ts\|src/lib/config.ts"
-git diff main..HEAD | grep -inE "bricefeniello|172\.18|/home/media|andaril" | grep -v "jellystat\.local:3000\|jelly\.bricefeniello\.tech"
+git diff main..HEAD | grep -inE "example-domain|172\.18|/home/media|example-user" | grep -v "jellystat\.local:3000\|jelly\.example-domain\.tech"
 ```
 
-Expected: typecheck clean; whole suite green except the one documented pre-existing failure; `next build` succeeds; the `config.plex.`/`config.tautulli.` grep prints nothing (every non-null-assuming access outside the two files that are allowed to have it — `media/registry.ts`'s own null checks, and `config.ts`'s own `loadConfig` construction — is gone); the secrets/PII scan prints nothing (this is a public repo — same rule as every previous sub-project). Note: the second grep's exclusions are for hostnames that are intentionally public in this repo already (`jelly.bricefeniello.tech`/`jellystat.bricefeniello.tech` appear nowhere in this branch's diff in practice, this exclusion just future-proofs the check the same way sub-project 3a's did for its own test fixture host — if the grep does find a real match, stop and report it rather than assuming it's fine).
+Expected: typecheck clean; whole suite green except the one documented pre-existing failure; `next build` succeeds; the `config.plex.`/`config.tautulli.` grep prints nothing (every non-null-assuming access outside the two files that are allowed to have it — `media/registry.ts`'s own null checks, and `config.ts`'s own `loadConfig` construction — is gone); the secrets/PII scan prints nothing (this is a public repo — same rule as every previous sub-project). Note: the second grep's exclusions are for hostnames that are intentionally public in this repo already (`jelly.example-domain.tech`/`jellystat.example-domain.tech` appear nowhere in this branch's diff in practice, this exclusion just future-proofs the check the same way sub-project 3a's did for its own test fixture host — if the grep does find a real match, stop and report it rather than assuming it's fine).
 
 - [ ] **Step 4: Commit**
 

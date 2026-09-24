@@ -2327,7 +2327,7 @@ npm run typecheck 2>&1 | tail -10
 npx vitest run 2>&1 | tail -15
 SESSION_SECRET=verify-secret-0123456789abcdef0123456789 npm run build 2>&1 | tail -20
 grep -rn "lib/tautulli'\|lib/activity'\|tautulliLastSeen\|EMPTY_EXTENDED_STATS" src tests
-git diff main..HEAD | grep -inE "bricefeniello|172\.18|/home/media|andaril|jellystat\.local|BEGIN (RSA|PRIVATE)" | grep -v "jellystat.local:3000"
+git diff main..HEAD | grep -inE "example-domain|172\.18|/home/media|example-user|jellystat\.local|BEGIN (RSA|PRIVATE)" | grep -v "jellystat.local:3000"
 ```
 
 Expected: typecheck clean; whole suite green except the pre-existing `dashboard-stats` failure; `next build` succeeds; the first grep prints nothing (every old name and path is gone); the second grep (secrets/PII scan, excluding the intentionally-fictional `jellystat.local:3000` test host) prints nothing.

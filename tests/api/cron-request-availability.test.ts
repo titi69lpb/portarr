@@ -73,8 +73,8 @@ function availableRequestResponse(overrides: Partial<{ id: number; tmdbId: numbe
           createdAt: '2025-09-09T07:31:37.000Z',
           media: { tmdbId: overrides.tmdbId ?? 87513, status: 5 },
           requestedBy: {
-            username: 'Andaril',
-            displayName: 'Andaril',
+            username: 'Alice',
+            displayName: 'Alice',
             email: overrides.email ?? 'admin@b.com',
           },
         },
@@ -163,7 +163,7 @@ describe('POST /api/cron/request-availability', () => {
     db.prepare("INSERT INTO users (provider, external_id, email, username, last_login, locale) VALUES ('plex', 'p1', 'admin@b.com', 'a', ?, 'en')").run(new Date().toISOString());
     const call = await runAvailability();
     expect(call[3]).toBe('Some Movie is now available!');
-    expect(call[4]).toContain('Hi Andaril');
+    expect(call[4]).toContain('Hi Alice');
     expect(call[4]).toContain('<html lang="en">');
   });
 

@@ -2763,7 +2763,7 @@ npx vitest run 2>&1 | tail -15
 SESSION_SECRET=verify-secret-0123456789abcdef0123456789 npm run build 2>&1 | tail -20
 git diff --stat main..HEAD 2>/dev/null | tail -1
 grep -rn "JELLYFIN_API_KEY\|jf-key\|key123" src | grep -v "process.env\|env\.JELLYFIN\|envKey\|// " | head
-git diff feat/media-server-abstraction..HEAD | grep -inE "tapi_|sk-[a-z0-9]{6}|trr_pub|uk13_|BEGIN (RSA|PRIVATE)" | head
+git diff feat/media-server-abstraction..HEAD | grep -inE "example-key-prefix_|sk-[a-z0-9]{6}|trr_pub|uk13_|BEGIN (RSA|PRIVATE)" | head
 ```
 
 Expected: typecheck clean; vitest green except the pre-existing `dashboard-stats` failure; `next build` succeeds (Edge middleware compiles with the Jellyfin modules); the last two greps print nothing.
