@@ -189,7 +189,7 @@ describe('provider-keyed migration', () => {
     const path = join(dir, 'fresh.db');
     const db = getDb(path);
     const cols = (db.prepare('PRAGMA table_info(users)').all() as { name: string }[]).map((c) => c.name);
-    expect(cols).toEqual(['provider', 'external_id', 'email', 'username', 'last_login']);
+    expect(cols).toEqual(['provider', 'external_id', 'email', 'username', 'last_login', 'locale']);
     expect(existsSync(`${path}${LEGACY_BACKUP_SUFFIX}`)).toBe(false);
   });
 
@@ -201,5 +201,27 @@ describe('provider-keyed migration', () => {
     insert.run('plex', '7', 'a@b.com', 'a', '');
     insert.run('jellyfin', '7', 'a@b.com', 'a', '');
     expect(() => insert.run('plex', '7', 'x@y.com', 'x', '')).toThrow();
+  });
+});
+
+describe('users.locale migration on a provider-keyed DB without locale', () => {
+  it('adds the column without data loss', () => {
+    const path = join(dir, 'portal.db');
+    const old = new Database(path);
+    old.exec(`
+      CREATE TABLE users (
+        provider TEXT NOT NULL, external_id TEXT NOT NULL, email TEXT NOT NULL,
+        username TEXT NOT NULL, last_login TEXT NOT NULL,
+        PRIMARY KEY (provider, external_id)
+      );
+      INSERT INTO users VALUES ('plex','p1','a@example.com','alice','2026-01-01');
+    `);
+    old.close();
+    const db = getDb(path);
+    const cols = db.prepare('PRAGMA table_info(users)').all() as { name: string }[];
+    expect(cols.some((c) => c.name === 'locale')).toBe(true);
+    expect(db.prepare('SELECT email, username, locale FROM users').get()).toEqual({
+      email: 'a@example.com', username: 'alice', locale: null,
+    });
   });
 });

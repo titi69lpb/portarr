@@ -82,3 +82,13 @@ describe('getDb', () => {
     }
   });
 });
+
+describe('users.locale column', () => {
+  it('exists on a fresh database and is nullable', () => {
+    const db = getDb(':memory:');
+    const cols = db.prepare('PRAGMA table_info(users)').all() as { name: string; notnull: number }[];
+    const c = cols.find((x) => x.name === 'locale');
+    expect(c).toBeDefined();
+    expect(c!.notnull).toBe(0);
+  });
+});

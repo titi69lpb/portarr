@@ -12,6 +12,7 @@ CREATE TABLE IF NOT EXISTS users (
   email TEXT NOT NULL,
   username TEXT NOT NULL,
   last_login TEXT NOT NULL,
+  locale TEXT,
   PRIMARY KEY (provider, external_id)
 );
 
@@ -68,6 +69,15 @@ CREATE TABLE IF NOT EXISTS settings (
   value TEXT NOT NULL
 );
 `;
+
+// Databases created before i18n have a `users` table without `locale`;
+// CREATE TABLE IF NOT EXISTS will not add it, so ALTER in place (idempotent).
+function migrateUsersLocaleColumn(db: Database.Database): void {
+  const columns = db.prepare('PRAGMA table_info(users)').all() as { name: string }[];
+  if (!columns.some((c) => c.name === 'locale')) {
+    db.exec('ALTER TABLE users ADD COLUMN locale TEXT');
+  }
+}
 
 export const LEGACY_BACKUP_SUFFIX = '.pre-provider-migration';
 
@@ -172,6 +182,7 @@ export function getDb(dbPath?: string): Database.Database {
     throw err;
   }
   instance.exec(SCHEMA);
+  migrateUsersLocaleColumn(instance);
   instancePath = resolvedPath;
   return instance;
 }
