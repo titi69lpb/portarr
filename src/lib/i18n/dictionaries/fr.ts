@@ -147,6 +147,12 @@ export const fr = {
     subscribed: 'Newsletter : abonné',
     unsubscribed: 'Newsletter : désabonné',
     unsubscribeTitle: 'Se désabonner de la newsletter',
+    unsubscribeConfirm: 'Se désabonner de la newsletter Portarr ?',
+    unsubscribeButton: 'Se désabonner',
+    unsubscribeDone: 'Vous avez été désabonné de la newsletter.',
+    unsubscribeInvalidLink: 'Lien invalide.',
+    unsubscribeExpired: 'Lien invalide ou expiré.',
+    unsubscribeError: 'Une erreur est survenue.',
     subscribeTitle: "S'abonner à la newsletter",
   },
   dashboardSections: {

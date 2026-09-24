@@ -151,6 +151,12 @@ export const en: Dictionary<typeof fr> = {
     subscribed: 'Newsletter: subscribed',
     unsubscribed: 'Newsletter: unsubscribed',
     unsubscribeTitle: 'Unsubscribe from the newsletter',
+    unsubscribeConfirm: 'Unsubscribe from the Portarr newsletter?',
+    unsubscribeButton: 'Unsubscribe',
+    unsubscribeDone: 'You have been unsubscribed from the newsletter.',
+    unsubscribeInvalidLink: 'Invalid link.',
+    unsubscribeExpired: 'Invalid or expired link.',
+    unsubscribeError: 'Something went wrong.',
     subscribeTitle: 'Subscribe to the newsletter',
   },
   dashboardSections: {
