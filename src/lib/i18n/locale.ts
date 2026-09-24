@@ -32,7 +32,7 @@ export function getLocale(
 // recent login with a personal locale wins when the email spans providers.
 export function getLocaleByEmail(email: string, db: Database.Database): Locale {
   const row = db
-    .prepare('SELECT locale FROM users WHERE lower(email) = lower(?) AND locale IS NOT NULL ORDER BY last_login DESC LIMIT 1')
+    .prepare('SELECT locale FROM users WHERE lower(email) = lower(?) AND locale IS NOT NULL ORDER BY last_login DESC, rowid DESC LIMIT 1')
     .get(email) as { locale: string | null } | undefined;
   if (row && isLocale(row.locale)) return row.locale;
   return getInstanceLocale(db);

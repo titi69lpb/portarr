@@ -24,8 +24,8 @@ function resolveLocale(request: NextRequest, ref: { provider: string; userId: st
 
 function htmlPage(locale: Locale, body: string, status: number = 200): NextResponse {
   return new NextResponse(
-    `<!DOCTYPE html><html lang="${locale}"><body style="font-family:sans-serif;text-align:center;padding:40px;">${body}</body></html>`,
-    { status, headers: { 'Content-Type': 'text/html' } }
+    `<!DOCTYPE html><html lang="${locale}"><head><meta charset="utf-8"></head><body style="font-family:sans-serif;text-align:center;padding:40px;">${body}</body></html>`,
+    { status, headers: { 'Content-Type': 'text/html; charset=utf-8' } }
   );
 }
 

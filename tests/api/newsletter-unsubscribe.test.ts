@@ -186,4 +186,13 @@ describe('unsubscribe pages are localized', () => {
     const res = await GET(new NextRequest('http://localhost/api/newsletter/unsubscribe'));
     expect(await res.text()).toContain('Invalid link.');
   });
+
+  it('declares utf-8 in the header and the document', async () => {
+    seedUser(null);
+    const token = await signUnsubscribeToken({ provider: 'plex', userId: 'plex-1' }, SECRET);
+    const { GET } = await import('../../src/app/api/newsletter/unsubscribe/route');
+    const res = await GET(new NextRequest(`http://localhost/api/newsletter/unsubscribe?token=${token}`));
+    expect(res.headers.get('content-type')).toBe('text/html; charset=utf-8');
+    expect(await res.text()).toContain('<meta charset="utf-8">');
+  });
 });
