@@ -74,6 +74,7 @@ describe('shouldAllow', () => {
 
   it('allows /api/setup/* routes with no session', () => {
     expect(shouldAllow('/api/setup/step', null)).toBe(true);
+    expect(shouldAllow('/api/setup/locale', null)).toBe(true);
   });
 });
 

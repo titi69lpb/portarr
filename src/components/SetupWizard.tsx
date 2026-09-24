@@ -5,12 +5,29 @@ import { ServiceSettingsForm } from './ServiceSettingsForm';
 import { SERVICE_FIELDS, type ServiceKey } from '@/lib/settings-schema';
 import type { ConfigSource } from '@/lib/config';
 import type { Locale } from '@/lib/i18n/dictionaries';
+import { LOCALES } from '@/lib/i18n/dictionaries';
 import { t } from '@/lib/i18n/translate';
 import { resolveStepError } from '@/lib/settings-error';
 
 const STEPS: ServiceKey[] = ['publicBaseUrl', 'plex', 'tautulli', 'jellyfin', 'jellystat', 'jellyfinActivitySource', 'sonarr', 'radarr', 'overseerr', 'smtp'];
 
-export function SetupWizard({ token, sources, locale }: { token: string; sources: Record<string, ConfigSource>; locale: Locale }) {
+export function SetupWizard({
+  token,
+  sources,
+  locale: initialLocale,
+  showLanguageStep = true,
+}: {
+  token: string;
+  sources: Record<string, ConfigSource>;
+  locale: Locale;
+  showLanguageStep?: boolean;
+}) {
+  // Wizard-local locale: switching language re-renders the whole wizard at
+  // once without a reload, so step progress is never lost.
+  const [locale, setLocale] = useState<Locale>(initialLocale);
+  const [languageDone, setLanguageDone] = useState(!showLanguageStep);
+  const [languageSaving, setLanguageSaving] = useState(false);
+  const [languageError, setLanguageError] = useState(false);
   const [stepIndex, setStepIndex] = useState(0);
   const [done, setDone] = useState(false);
   const [completing, setCompleting] = useState(false);
@@ -57,6 +74,69 @@ export function SetupWizard({ token, sources, locale }: { token: string; sources
       return;
     }
     setDone(true);
+  }
+
+  async function saveLanguage(next: Locale): Promise<boolean> {
+    setLanguageSaving(true);
+    setLanguageError(false);
+    try {
+      const res = await fetch('/api/setup/locale', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ locale: next }),
+      });
+      if (!res.ok) {
+        setLanguageError(true);
+        return false;
+      }
+      setLocale(next);
+      return true;
+    } catch {
+      setLanguageError(true);
+      return false;
+    } finally {
+      setLanguageSaving(false);
+    }
+  }
+
+  if (!languageDone) {
+    return (
+      <main className="mx-auto flex min-h-screen max-w-lg flex-col justify-center gap-6 p-6">
+        <h1 className="font-display text-2xl text-plexcrew-screen">{t(locale, 'setup.languageTitle')}</h1>
+        <p className="text-sm text-plexcrew-ash">{t(locale, 'setup.languageHint')}</p>
+        <div className="flex items-center gap-2 text-sm">
+          {LOCALES.map((l) => (
+            <button
+              key={l}
+              type="button"
+              disabled={languageSaving}
+              onClick={() => void saveLanguage(l)}
+              aria-pressed={locale === l}
+              className={
+                locale === l
+                  ? 'rounded bg-plexcrew-amber px-4 py-2 font-semibold text-plexcrew-ink'
+                  : 'rounded px-4 py-2 text-plexcrew-ash hover:text-plexcrew-screen'
+              }
+            >
+              {l.toUpperCase()}
+            </button>
+          ))}
+        </div>
+        <div>
+          <button
+            type="button"
+            disabled={languageSaving}
+            onClick={async () => {
+              if (await saveLanguage(locale)) setLanguageDone(true);
+            }}
+            className="rounded-full bg-plexcrew-teal px-4 py-2 text-sm font-semibold text-plexcrew-ink disabled:opacity-50"
+          >
+            {t(locale, 'setup.languageContinue')}
+          </button>
+        </div>
+        {languageError && <p className="text-sm text-plexcrew-amber">{t(locale, 'setup.languageError')}</p>}
+      </main>
+    );
   }
 
   if (done) {
