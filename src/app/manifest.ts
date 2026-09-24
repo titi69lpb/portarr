@@ -11,7 +11,7 @@ export default function manifest(): MetadataRoute.Manifest {
   return {
     name: 'Portarr',
     short_name: 'Portarr',
-    description: 'Portail Portarr — dashboard, demandes, explorateur de fichiers, historique',
+    description: 'Portarr: a self-hosted portal with a dashboard, media requests, a file browser and watch history.',
     start_url: '/',
     display: 'standalone',
     background_color: '#14110F',

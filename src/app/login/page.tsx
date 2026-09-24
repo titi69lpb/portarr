@@ -6,7 +6,7 @@ import { PlexLoginButton } from '@/components/PlexLoginButton';
 import { JellyfinLoginForm } from '@/components/JellyfinLoginForm';
 import { getRequestLocale } from '@/lib/i18n/request-locale';
 import { t } from '@/lib/i18n/translate';
-import type { Locale } from '@/lib/i18n/dictionaries';
+import { DEFAULT_LOCALE, type Locale } from '@/lib/i18n/dictionaries';
 
 // Reads the config at request time (which providers are active), so it can
 // never be prerendered.
@@ -15,7 +15,7 @@ export const dynamic = 'force-dynamic';
 export default function LoginPage() {
   // Before setup completes no provider is active; keep offering the Plex button, as this page always did.
   let active: ProviderId[] = ['plex'];
-  let locale: Locale = 'fr';
+  let locale: Locale = DEFAULT_LOCALE;
   try {
     const db = getDb();
     const config = loadConfig(process.env, db);

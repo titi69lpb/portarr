@@ -88,6 +88,8 @@ const MOVIE_HISTORY_RESPONSE = {
   },
 };
 
+const EMPTY_HISTORY_RESPONSE = { response: { data: { recordsFiltered: 0, data: [] } } };
+
 const EPISODE_HISTORY_RESPONSE = {
   response: {
     data: {
@@ -171,14 +173,17 @@ describe('GET /api/dashboard/stats', () => {
       if (url.includes('cmd=get_users_table')) {
         return new Response(JSON.stringify(USERS_TABLE_RESPONSE), { status: 200 });
       }
+      // getRecentWatchHistory queries each media type separately with
+      // order_column=date; match those calls before the per-type stats calls.
+      if (url.includes('cmd=get_history') && url.includes('order_column=date')) {
+        const data = url.includes('media_type=movie') ? RECENT_HISTORY_RESPONSE : EMPTY_HISTORY_RESPONSE;
+        return new Response(JSON.stringify(data), { status: 200 });
+      }
       if (url.includes('cmd=get_history') && url.includes('media_type=movie')) {
         return new Response(JSON.stringify(MOVIE_HISTORY_RESPONSE), { status: 200 });
       }
       if (url.includes('cmd=get_history') && url.includes('media_type=episode')) {
         return new Response(JSON.stringify(EPISODE_HISTORY_RESPONSE), { status: 200 });
-      }
-      if (url.includes('cmd=get_history')) {
-        return new Response(JSON.stringify(RECENT_HISTORY_RESPONSE), { status: 200 });
       }
       return new Response(JSON.stringify(HOME_STATS_RESPONSE), { status: 200 });
     });
