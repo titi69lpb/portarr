@@ -3,13 +3,17 @@
 import Link from 'next/link';
 import { GlobalSearch } from '@/components/GlobalSearch';
 import type { ShortcutConfig } from '@/lib/config';
+import type { Locale } from '@/lib/i18n/dictionaries';
+import { t } from '@/lib/i18n/translate';
 
 export function AppSidebar({
   shortcuts,
   filesEnabled,
+  locale,
 }: {
   shortcuts: ShortcutConfig[];
   filesEnabled: boolean;
+  locale: Locale;
 }) {
   return (
     <aside className="pc-glass-surface-strong fixed left-0 top-0 flex h-screen w-16 flex-col items-center gap-4 border-r border-plexcrew-teal/15 py-6 sm:w-40 sm:items-stretch sm:px-3">
@@ -21,9 +25,9 @@ export function AppSidebar({
           <path d="M3 10.5 12 3l9 7.5" />
           <path d="M5 9.5V20a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V9.5" />
         </svg>
-        <span className="hidden truncate text-xs font-medium sm:inline">Portail</span>
+        <span className="hidden truncate text-xs font-medium sm:inline">{t(locale, 'sidebar.portal')}</span>
       </Link>
-      <GlobalSearch />
+      <GlobalSearch locale={locale} />
       <div className="mb-2 w-full border-b border-plexcrew-teal/15 sm:mx-2 sm:w-auto" />
 
       {shortcuts.map((s) => (
@@ -57,7 +61,7 @@ export function AppSidebar({
             <path d="M12 8v4l3 3" />
             <circle cx="12" cy="12" r="9" />
           </svg>
-          <span className="hidden truncate text-xs font-medium sm:inline">Historique</span>
+          <span className="hidden truncate text-xs font-medium sm:inline">{t(locale, 'sidebar.history')}</span>
         </Link>
         {filesEnabled && (
           <Link
@@ -67,7 +71,7 @@ export function AppSidebar({
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="h-5 w-5 flex-none">
               <path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7Z" />
             </svg>
-            <span className="hidden truncate text-xs font-medium sm:inline">Fichiers</span>
+            <span className="hidden truncate text-xs font-medium sm:inline">{t(locale, 'sidebar.files')}</span>
           </Link>
         )}
         <Link
@@ -79,7 +83,7 @@ export function AppSidebar({
             <path d="M12 12 16 8" />
             <circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none" />
           </svg>
-          <span className="hidden truncate text-xs font-medium sm:inline">Vitesse</span>
+          <span className="hidden truncate text-xs font-medium sm:inline">{t(locale, 'sidebar.speedTest')}</span>
         </Link>
       </div>
     </aside>

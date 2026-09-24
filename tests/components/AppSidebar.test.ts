@@ -46,34 +46,34 @@ function shortcut(overrides: Partial<ShortcutConfig> = {}): ShortcutConfig {
 
 describe('AppSidebar', () => {
   it('renders one link per passed-in shortcut, none when the list is empty', () => {
-    const tree = AppSidebar({ shortcuts: [], filesEnabled: true });
+    const tree = AppSidebar({ shortcuts: [], filesEnabled: true, locale: 'fr' });
     expect(collectText(tree)).not.toContain('Plex');
   });
 
   it('renders a shortcut link for each entry, using the given name', () => {
-    const tree = AppSidebar({ shortcuts: [shortcut()], filesEnabled: true });
+    const tree = AppSidebar({ shortcuts: [shortcut()], filesEnabled: true, locale: 'fr' });
     const links = findAll(tree, (el) => el.type === 'a' && collectText(el.props.children).includes('Plex'));
     expect(links).toHaveLength(1);
     expect(links[0].props.href).toBe('https://plex.example.com');
   });
 
   it('does not render an <img> for a shortcut with a null iconUrl', () => {
-    const tree = AppSidebar({ shortcuts: [shortcut({ iconUrl: null })], filesEnabled: true });
+    const tree = AppSidebar({ shortcuts: [shortcut({ iconUrl: null })], filesEnabled: true, locale: 'fr' });
     expect(findAll(tree, (el) => el.type === 'img')).toHaveLength(0);
   });
 
   it('shows the Fichiers link when filesEnabled is true', () => {
-    const tree = AppSidebar({ shortcuts: [], filesEnabled: true });
+    const tree = AppSidebar({ shortcuts: [], filesEnabled: true, locale: 'fr' });
     expect(collectText(tree)).toContain('Fichiers');
   });
 
   it('hides the Fichiers link when filesEnabled is false', () => {
-    const tree = AppSidebar({ shortcuts: [], filesEnabled: false });
+    const tree = AppSidebar({ shortcuts: [], filesEnabled: false, locale: 'fr' });
     expect(collectText(tree)).not.toContain('Fichiers');
   });
 
   it('renders the Speed Test link after Fichiers, even when filesEnabled is false', () => {
-    const enabledTree = AppSidebar({ shortcuts: [], filesEnabled: true });
+    const enabledTree = AppSidebar({ shortcuts: [], filesEnabled: true, locale: 'fr' });
     const enabledLinks = findAll(
       enabledTree,
       (el) => typeof el.props === 'object' && el.props !== null && 'href' in el.props
@@ -82,11 +82,18 @@ describe('AppSidebar', () => {
     expect(hrefs.indexOf('/files')).toBeGreaterThanOrEqual(0);
     expect(hrefs.indexOf('/files')).toBeLessThan(hrefs.indexOf('/speedtest'));
 
-    const disabledTree = AppSidebar({ shortcuts: [], filesEnabled: false });
+    const disabledTree = AppSidebar({ shortcuts: [], filesEnabled: false, locale: 'fr' });
     const disabledLinks = findAll(
       disabledTree,
       (el) => typeof el.props === 'object' && el.props !== null && 'href' in el.props
     ) as unknown as { props: { href: string } }[];
     expect(disabledLinks.map((l) => l.props.href)).toContain('/speedtest');
+  });
+
+  it('renders English labels when locale is en', () => {
+    const text = collectText(AppSidebar({ shortcuts: [], filesEnabled: true, locale: 'en' }));
+    expect(text).toContain('Files');
+    expect(text).toContain('History');
+    expect(text).not.toContain('Fichiers');
   });
 });

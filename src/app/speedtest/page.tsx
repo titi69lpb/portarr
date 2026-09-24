@@ -1,8 +1,9 @@
-import { cookies } from 'next/headers';
+import { cookies, headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { verifySession, SESSION_COOKIE_NAME } from '@/lib/session';
 import { loadConfig, isSetupComplete } from '@/lib/config';
 import { getDb } from '@/lib/db';
+import { getLocale } from '@/lib/i18n/locale';
 import { AppSidebarServer } from '@/components/AppSidebarServer';
 import { SpeedTestRunner } from '@/components/SpeedTestRunner';
 
@@ -22,7 +23,7 @@ export default async function SpeedTestPage() {
 
   return (
     <>
-      <AppSidebarServer />
+      <AppSidebarServer locale={getLocale(sessionUser, getDb(), headers().get('accept-language'))} />
       <main className="mx-auto max-w-3xl space-y-8 p-6 ml-16 sm:ml-40 sm:p-8">
         <header className="pc-glass-surface-strong sticky top-0 z-10 -mx-6 -mt-6 flex items-center justify-between gap-4 border-b border-plexcrew-teal/20 px-6 py-4 sm:-mx-8 sm:-mt-8 sm:px-8">
           <h1 className="font-display text-3xl leading-none tracking-[0.1em] text-plexcrew-screen">

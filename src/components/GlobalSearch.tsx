@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
+import type { Locale } from '@/lib/i18n/dictionaries';
+import { t } from '@/lib/i18n/translate';
 
 interface SearchResultItem {
   title: string;
@@ -13,7 +15,7 @@ interface SearchResultItem {
 
 const DEBOUNCE_MS = 300;
 
-export function GlobalSearch() {
+export function GlobalSearch({ locale }: { locale: Locale }) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<SearchResultItem[]>([]);
@@ -88,7 +90,7 @@ export function GlobalSearch() {
           <circle cx="11" cy="11" r="7" />
           <path d="m20 20-3.5-3.5" />
         </svg>
-        <span className="hidden truncate text-xs font-medium sm:inline">Rechercher</span>
+        <span className="hidden truncate text-xs font-medium sm:inline">{t(locale, 'search.button')}</span>
       </button>
 
       {open &&
@@ -116,10 +118,10 @@ export function GlobalSearch() {
                 ref={inputRef}
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="Chercher un film, une série…"
+                placeholder={t(locale, 'search.placeholder')}
                 className="flex-1 bg-transparent text-sm text-plexcrew-screen outline-none placeholder:text-plexcrew-ash"
               />
-              <button onClick={closeModal} className="text-plexcrew-ash hover:text-plexcrew-screen" aria-label="Fermer">
+              <button onClick={closeModal} className="text-plexcrew-ash hover:text-plexcrew-screen" aria-label={t(locale, 'common.close')}>
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="h-4 w-4">
                   <path d="M6 6l12 12M18 6 6 18" />
                 </svg>
@@ -127,12 +129,12 @@ export function GlobalSearch() {
             </div>
 
             <div className="max-h-[55vh] overflow-y-auto p-3">
-              {loading && <p className="px-2 py-4 text-center text-xs text-plexcrew-ash">Recherche…</p>}
+              {loading && <p className="px-2 py-4 text-center text-xs text-plexcrew-ash">{t(locale, 'search.searching')}</p>}
               {!loading && error && (
-                <p className="px-2 py-4 text-center text-xs text-red-400">Échec de la recherche, réessayez.</p>
+                <p className="px-2 py-4 text-center text-xs text-red-400">{t(locale, 'search.error')}</p>
               )}
               {!loading && !error && query.trim() && results.length === 0 && (
-                <p className="px-2 py-4 text-center text-xs text-plexcrew-ash">Aucun résultat.</p>
+                <p className="px-2 py-4 text-center text-xs text-plexcrew-ash">{t(locale, 'search.noResults')}</p>
               )}
               {!loading && !error && results.length > 0 && (
                 <div className="grid grid-cols-3 gap-3 sm:grid-cols-4">
@@ -152,7 +154,7 @@ export function GlobalSearch() {
                       <>
                         <p className="mt-1.5 truncate text-[11px] text-plexcrew-screen/80">{r.title}</p>
                         <p className="text-[10px] text-plexcrew-ash">
-                          {r.type === 'movie' ? 'Film' : 'Série'}
+                          {r.type === 'movie' ? t(locale, 'common.movieLabel') : t(locale, 'common.showLabel')}
                           {r.year ? ` · ${r.year}` : ''}
                         </p>
                       </>
