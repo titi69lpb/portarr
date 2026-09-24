@@ -54,7 +54,7 @@ Modified: `src/lib/session.ts`, `src/lib/newsletter-token.ts`, `src/lib/db.ts`, 
 - [ ] **Step 1: Set up the clone and record the baseline**
 
 ```bash
-git config user.name "titi69lpb" && git config user.email "titi69lpb@gmail.com"
+git config user.name "titi69lpb" && git config user.email "user@example.com"
 git checkout feat/media-server-abstraction
 npm ci
 npm run typecheck 2>&1 | tail -5

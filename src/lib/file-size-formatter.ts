@@ -1,3 +1,6 @@
+// Split out of file-explorer.ts: that file imports fs/promises, so pulling
+// formatFileSize from it directly into a client component ('use client')
+// breaks the client bundle. This file has no such dependency.
 import { type Locale, DEFAULT_LOCALE } from './i18n/dictionaries';
 
 const SIZE_UNITS: Record<Locale, string[]> = {

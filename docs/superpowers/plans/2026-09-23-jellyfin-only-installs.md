@@ -18,7 +18,7 @@
 - **Edge runtime:** none of this plan's touched files are imported by `src/middleware.ts` — no Edge constraint applies here, same as sub-project 3a.
 - **Known pre-existing failure:** `tests/api/dashboard-stats.test.ts` (`recentHistory` empty) fails on `main` before any change in this plan. Do not fix it, do not count it as a regression.
 - **Commits:** end every commit message with a second `-m "Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>"`. Work only on branch `feat/jellyfin-only-installs` (already checked out, based directly on `main` — sub-projects 1–3a are merged and released through v1.6.1, no stacking needed); never push and never touch `main` unless the user asks.
-- **Working directory:** the repo root of the feature-branch clone (the directory containing `package.json`), currently `/tmp/claude-0/-root/portarr-work/portarr`. All paths below are relative to it.
+- **Working directory:** the repo root of the feature-branch clone (the directory containing `package.json`), currently a local path. All paths below are relative to it.
 - **No version bump, no tag, no GitHub Release, no wiki update** as part of this plan — those happen only when the user explicitly asks, same as every previous sub-project.
 
 ## File Structure
