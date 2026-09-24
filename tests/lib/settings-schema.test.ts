@@ -54,11 +54,11 @@ describe('SERVICE_FIELDS', () => {
     expect(SERVICE_FIELDS.jellyfinActivitySource).toEqual([
       {
         envKey: 'JELLYFIN_ACTIVITY_SOURCE',
-        label: "Source d'activité Jellyfin",
+        label: 'settings.fields.JELLYFIN_ACTIVITY_SOURCE',
         type: 'select',
         options: [
-          { value: 'native', label: 'Natif (lecture en cours uniquement)' },
-          { value: 'jellystat', label: 'Jellystat (statistiques et historique complets)' },
+          { value: 'native', label: 'settings.options.native' },
+          { value: 'jellystat', label: 'settings.options.jellystat' },
         ],
       },
     ]);

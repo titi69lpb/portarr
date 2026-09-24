@@ -75,7 +75,7 @@ export function AdminStorageBars({
     <div className="space-y-3">
       <DriveBar
         {...combined}
-        name={t(locale, 'admin.storageLibraries', { names: 'Cube-SYNO + TFS-SYNO' })}
+        name={t(locale, 'admin.storageLibraries')}
         emphasized
         locale={locale}
       />

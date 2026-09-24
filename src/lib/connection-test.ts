@@ -1,14 +1,30 @@
 import { timeoutSignal } from './fetch-timeout';
 import { createTransport } from './mailer';
 import { jellyfinTokenAuth } from './media/jellyfin';
+import { t } from './i18n/translate';
+import { DEFAULT_LOCALE } from './i18n/dictionaries';
 
+// `error` is a ready-to-display fallback (default locale). When the message is
+// one of ours (not a raw upstream/network message) `errorKey` + `errorVars`
+// carry the stable i18n key so the UI can re-render it in the viewer's locale.
 export interface ConnectionTestResult {
   ok: boolean;
   error: string | null;
+  errorKey?: string;
+  errorVars?: Record<string, string | number>;
 }
 
-function messageFromError(err: unknown): string {
-  return err instanceof Error ? err.message : 'Erreur réseau inconnue';
+function fail(key: string, vars?: Record<string, string | number>): ConnectionTestResult {
+  return { ok: false, error: t(DEFAULT_LOCALE, key, vars), errorKey: key, errorVars: vars };
+}
+
+function statusFail(service: string, res: { status: number; statusText: string }): ConnectionTestResult {
+  return fail('settings.errors.serviceStatus', { service, status: res.status, statusText: res.statusText });
+}
+
+function messageFromError(err: unknown): ConnectionTestResult {
+  if (err instanceof Error) return { ok: false, error: err.message };
+  return fail('settings.errors.network');
 }
 
 export async function testPlexConnection(
@@ -22,14 +38,14 @@ export async function testPlexConnection(
       signal: timeoutSignal(),
       cache: 'no-store',
     });
-    if (!res.ok) return { ok: false, error: `Plex a répondu ${res.status} ${res.statusText}` };
+    if (!res.ok) return statusFail('Plex', res);
     const data = (await res.json()) as { MediaContainer?: { machineIdentifier?: string } };
     if (!data.MediaContainer?.machineIdentifier) {
-      return { ok: false, error: 'Réponse Plex inattendue (pas de machineIdentifier)' };
+      return fail('settings.errors.plexUnexpected');
     }
     return { ok: true, error: null };
   } catch (err) {
-    return { ok: false, error: messageFromError(err) };
+    return messageFromError(err);
   }
 }
 
@@ -43,14 +59,16 @@ export async function testTautulliConnection(
       signal: timeoutSignal(),
       cache: 'no-store',
     });
-    if (!res.ok) return { ok: false, error: `Tautulli a répondu ${res.status} ${res.statusText}` };
+    if (!res.ok) return statusFail('Tautulli', res);
     const data = (await res.json()) as { response?: { result?: string; message?: string } };
     if (data.response?.result !== 'success') {
-      return { ok: false, error: data.response?.message ?? 'Réponse Tautulli inattendue' };
+      return data.response?.message
+        ? { ok: false, error: data.response.message }
+        : fail('settings.errors.tautulliUnexpected');
     }
     return { ok: true, error: null };
   } catch (err) {
-    return { ok: false, error: messageFromError(err) };
+    return messageFromError(err);
   }
 }
 
@@ -65,14 +83,14 @@ export async function testJellyfinConnection(
       signal: timeoutSignal(),
       cache: 'no-store',
     });
-    if (!res.ok) return { ok: false, error: `Jellyfin a répondu ${res.status} ${res.statusText}` };
+    if (!res.ok) return statusFail('Jellyfin', res);
     const data = (await res.json()) as { Id?: string };
     if (!data.Id) {
-      return { ok: false, error: "Réponse Jellyfin inattendue (pas d'identifiant serveur)" };
+      return fail('settings.errors.jellyfinUnexpected');
     }
     return { ok: true, error: null };
   } catch (err) {
-    return { ok: false, error: messageFromError(err) };
+    return messageFromError(err);
   }
 }
 
@@ -87,10 +105,10 @@ export async function testJellystatConnection(
       signal: timeoutSignal(),
       cache: 'no-store',
     });
-    if (!res.ok) return { ok: false, error: `Jellystat a répondu ${res.status} ${res.statusText}` };
+    if (!res.ok) return statusFail('Jellystat', res);
     return { ok: true, error: null };
   } catch (err) {
-    return { ok: false, error: messageFromError(err) };
+    return messageFromError(err);
   }
 }
 
@@ -106,10 +124,10 @@ async function testArrConnection(
       signal: timeoutSignal(),
       cache: 'no-store',
     });
-    if (!res.ok) return { ok: false, error: `${serviceName} a répondu ${res.status} ${res.statusText}` };
+    if (!res.ok) return statusFail(serviceName, res);
     return { ok: true, error: null };
   } catch (err) {
-    return { ok: false, error: messageFromError(err) };
+    return messageFromError(err);
   }
 }
 
@@ -140,10 +158,10 @@ export async function testOverseerrConnection(
       signal: timeoutSignal(),
       cache: 'no-store',
     });
-    if (!res.ok) return { ok: false, error: `Overseerr a répondu ${res.status} ${res.statusText}` };
+    if (!res.ok) return statusFail('Overseerr', res);
     return { ok: true, error: null };
   } catch (err) {
-    return { ok: false, error: messageFromError(err) };
+    return messageFromError(err);
   }
 }
 
@@ -161,6 +179,6 @@ export async function testSmtpConnection(
     });
     return { ok: true, error: null };
   } catch (err) {
-    return { ok: false, error: messageFromError(err) };
+    return messageFromError(err);
   }
 }

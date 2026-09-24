@@ -8,20 +8,20 @@ function fakeStatsFs(blocks: number, bavail: number, bsize: number = 4096): Stat
 
 describe('getVolumeStats', () => {
   it('computes total and free bytes from block counts', async () => {
-    const volumes: VolumeConfig[] = [{ name: 'Cube-SYNO', path: '/mnt/cube-syno' }];
+    const volumes: VolumeConfig[] = [{ name: 'Volume-A', path: '/mnt/volume-a' }];
     const statFn = vi.fn().mockResolvedValue(fakeStatsFs(1_000_000, 400_000, 4096));
 
     const result = await getVolumeStats(volumes, 5000, statFn);
 
     expect(result).toEqual([
-      { name: 'Cube-SYNO', totalBytes: 1_000_000 * 4096, freeBytes: 400_000 * 4096 },
+      { name: 'Volume-A', totalBytes: 1_000_000 * 4096, freeBytes: 400_000 * 4096 },
     ]);
   });
 
   it('reports one entry per configured volume', async () => {
     const volumes: VolumeConfig[] = [
-      { name: 'Cube-SYNO', path: '/mnt/cube-syno' },
-      { name: 'TFS-SYNO', path: '/mnt/tfs-syno' },
+      { name: 'Volume-A', path: '/mnt/volume-a' },
+      { name: 'Volume-B', path: '/mnt/volume-b' },
     ];
     const statFn = vi
       .fn()
@@ -30,24 +30,24 @@ describe('getVolumeStats', () => {
 
     const result = await getVolumeStats(volumes, 5000, statFn);
 
-    expect(result.map((v) => v.name)).toEqual(['Cube-SYNO', 'TFS-SYNO']);
-    expect(statFn).toHaveBeenCalledWith('/mnt/cube-syno');
-    expect(statFn).toHaveBeenCalledWith('/mnt/tfs-syno');
+    expect(result.map((v) => v.name)).toEqual(['Volume-A', 'Volume-B']);
+    expect(statFn).toHaveBeenCalledWith('/mnt/volume-a');
+    expect(statFn).toHaveBeenCalledWith('/mnt/volume-b');
   });
 
   it('returns zeroed stats for a volume that fails to stat, instead of throwing', async () => {
-    const volumes: VolumeConfig[] = [{ name: 'Cube-SYNO', path: '/mnt/cube-syno' }];
+    const volumes: VolumeConfig[] = [{ name: 'Volume-A', path: '/mnt/volume-a' }];
     const statFn = vi.fn().mockRejectedValue(new Error('ENOENT: mount not present'));
 
     const result = await getVolumeStats(volumes, 5000, statFn);
 
-    expect(result).toEqual([{ name: 'Cube-SYNO', totalBytes: 0, freeBytes: 0 }]);
+    expect(result).toEqual([{ name: 'Volume-A', totalBytes: 0, freeBytes: 0 }]);
   });
 
   it('isolates a single failing volume — one bad mount does not blank out the others', async () => {
     const volumes: VolumeConfig[] = [
-      { name: 'Cube-SYNO', path: '/mnt/cube-syno' },
-      { name: 'TFS-SYNO', path: '/mnt/tfs-syno' },
+      { name: 'Volume-A', path: '/mnt/volume-a' },
+      { name: 'Volume-B', path: '/mnt/volume-b' },
     ];
     const statFn = vi
       .fn()
@@ -56,18 +56,18 @@ describe('getVolumeStats', () => {
 
     const result = await getVolumeStats(volumes, 5000, statFn);
 
-    expect(result[0]).toEqual({ name: 'Cube-SYNO', totalBytes: 0, freeBytes: 0 });
+    expect(result[0]).toEqual({ name: 'Volume-A', totalBytes: 0, freeBytes: 0 });
     expect(result[1].totalBytes).toBeGreaterThan(0);
   });
 
   it('returns zeroed stats instead of hanging when a mount is dead (timeout)', async () => {
-    const volumes: VolumeConfig[] = [{ name: 'Cube-SYNO', path: '/mnt/cube-syno' }];
+    const volumes: VolumeConfig[] = [{ name: 'Volume-A', path: '/mnt/volume-a' }];
     const neverSettles = new Promise<StatsFs>(() => {});
     const statFn = vi.fn().mockReturnValue(neverSettles);
 
     const result = await getVolumeStats(volumes, 50, statFn);
 
-    expect(result).toEqual([{ name: 'Cube-SYNO', totalBytes: 0, freeBytes: 0 }]);
+    expect(result).toEqual([{ name: 'Volume-A', totalBytes: 0, freeBytes: 0 }]);
   });
 
   it('does not let one dead mount delay the others (concurrent, not sequential)', async () => {
@@ -93,8 +93,8 @@ describe('getVolumeStats', () => {
 describe('combineVolumeStats', () => {
   it('sums total and free bytes across volumes', () => {
     const combined = combineVolumeStats([
-      { name: 'Cube-SYNO', totalBytes: 5_000, freeBytes: 4_000 },
-      { name: 'TFS-SYNO', totalBytes: 11_000, freeBytes: 2_000 },
+      { name: 'Volume-A', totalBytes: 5_000, freeBytes: 4_000 },
+      { name: 'Volume-B', totalBytes: 11_000, freeBytes: 2_000 },
     ]);
     expect(combined.totalBytes).toBe(16_000);
     expect(combined.freeBytes).toBe(6_000);

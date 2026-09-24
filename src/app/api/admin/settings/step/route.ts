@@ -31,7 +31,10 @@ export async function POST(request: NextRequest) {
 
   const result = await applyServiceSettings(db, body.service as ServiceKey, body.values);
   if (!result.ok) {
-    return NextResponse.json({ error: result.error }, { status: 422 });
+    return NextResponse.json(
+      { error: result.error, errorKey: result.errorKey, errorVars: result.errorVars },
+      { status: 422 }
+    );
   }
   return NextResponse.json({ ok: true });
 }
