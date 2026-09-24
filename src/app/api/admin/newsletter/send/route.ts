@@ -12,6 +12,9 @@ import { signUnsubscribeToken } from '@/lib/newsletter-token';
 import { insertNewsletterArchive } from '@/lib/newsletter-archive';
 import { pickNewsletterRecipients, type NewsletterRow } from '@/lib/newsletter-recipients';
 import { getActiveProviders } from '@/lib/media/registry';
+import { getInstanceLocale, getLocaleByEmail } from '@/lib/i18n/locale';
+import { dictionaries } from '@/lib/i18n/dictionaries';
+import { t } from '@/lib/i18n/translate';
 
 export const dynamic = 'force-dynamic';
 
@@ -47,12 +50,19 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ sent: 0, failed: 0, total: 0, skipped: true });
     }
 
-    const endDate = new Date().toLocaleDateString('fr-FR');
-    const posterBaseUrl = `${config.publicBaseUrl}/api/newsletter/poster`;
-    const subject = `Les Nouveautés ${config.communityName}! (${endDate})`;
-    const templateName = `Newsletter ${endDate}`;
-
     const db = getDb();
+    // Instance default locale only for the mail_log label and the archive copy
+    // (a shared "view in browser" page, not tied to one recipient); each sent
+    // email below uses its recipient's own locale.
+    const instanceLocale = getInstanceLocale(db);
+    const instanceEndDate = new Date().toLocaleDateString(dictionaries[instanceLocale].email.localeCode);
+    const posterBaseUrl = `${config.publicBaseUrl}/api/newsletter/poster`;
+    const archiveSubject = t(instanceLocale, 'email.newsletterSubject', {
+      server: config.communityName,
+      date: instanceEndDate,
+    });
+    const templateName = `Newsletter ${instanceEndDate}`;
+
     const allUsers = db
       .prepare('SELECT provider, external_id, email, username FROM users WHERE email != \'\'')
       .all() as NewsletterRow[];
@@ -66,12 +76,13 @@ export async function POST(request: NextRequest) {
     const archiveHtml = renderNewsletterHtml(
       items,
       config.communityName,
-      endDate,
+      instanceEndDate,
       posterBaseUrl,
       `${config.publicBaseUrl}/`,
-      config.publicBaseUrl
+      config.publicBaseUrl,
+      instanceLocale
     );
-    const archive = insertNewsletterArchive(db, { subject, html: archiveHtml });
+    const archive = insertNewsletterArchive(db, { subject: archiveSubject, html: archiveHtml });
     const archiveUrl = `${config.publicBaseUrl}/api/newsletter/archive/${archive.id}`;
 
     const transport = createTransport(config.smtp);
@@ -80,15 +91,22 @@ export async function POST(request: NextRequest) {
     let sent = 0;
     let failed = 0;
     for (const recipient of recipients) {
+      const recipientLocale = getLocaleByEmail(recipient.email, db);
+      const recipientEndDate = new Date().toLocaleDateString(dictionaries[recipientLocale].email.localeCode);
+      const subject = t(recipientLocale, 'email.newsletterSubject', {
+        server: config.communityName,
+        date: recipientEndDate,
+      });
       const unsubscribeToken = await signUnsubscribeToken({ provider: recipient.provider, userId: recipient.external_id }, config.session.secret);
       const unsubscribeUrl = `${config.publicBaseUrl}/api/newsletter/unsubscribe?token=${unsubscribeToken}`;
       const html = renderNewsletterHtml(
         items,
         config.communityName,
-        endDate,
+        recipientEndDate,
         posterBaseUrl,
         unsubscribeUrl,
         config.publicBaseUrl,
+        recipientLocale,
         archiveUrl
       );
       try {

@@ -1,6 +1,8 @@
 import type { NewsletterItems } from './newsletter';
 import type { RecentlyAddedItem } from './media/types';
 import { renderEmailShell } from './email-template';
+import type { Locale } from './i18n/dictionaries';
+import { t } from './i18n/translate';
 
 function escapeHtml(text: string): string {
   return text
@@ -39,35 +41,38 @@ export function renderNewsletterHtml(
   posterBaseUrl: string,
   unsubscribeUrl: string,
   publicBaseUrl: string,
+  locale: Locale,
   archiveUrl?: string
 ): string {
   const sections: string[] = [
-    `<h1 style="font-family:Georgia, 'Times New Roman', serif;color:#EFE9DF;font-size:22px;margin:0 0 4px;">Les Nouveautés ${escapeHtml(serverName)} !</h1>`,
+    `<h1 style="font-family:Georgia, 'Times New Roman', serif;color:#EFE9DF;font-size:22px;margin:0 0 4px;">${escapeHtml(
+      t(locale, 'email.newsletterTitle', { server: serverName })
+    )}</h1>`,
     `<p style="color:#8C8378;font-size:12px;text-transform:uppercase;letter-spacing:0.08em;margin:0 0 24px;">${escapeHtml(endDate)}` +
       (archiveUrl
-        ? ` &middot; <a href="${archiveUrl}" style="color:#8C8378;text-transform:none;letter-spacing:normal;">Voir dans le navigateur</a>`
+        ? ` &middot; <a href="${archiveUrl}" style="color:#8C8378;text-transform:none;letter-spacing:normal;">${t(locale, 'email.viewInBrowser')}</a>`
         : '') +
       `</p>`,
   ];
 
   if (items.movies.length > 0) {
     sections.push(
-      `<h2 style="color:#E2A33B;font-family:Georgia, 'Times New Roman', serif;font-size:16px;text-transform:uppercase;letter-spacing:0.06em;border-bottom:1px solid #2F6E63;padding-bottom:6px;margin:0 0 12px;">🎬 Films</h2>`,
+      `<h2 style="color:#E2A33B;font-family:Georgia, 'Times New Roman', serif;font-size:16px;text-transform:uppercase;letter-spacing:0.06em;border-bottom:1px solid #2F6E63;padding-bottom:6px;margin:0 0 12px;">🎬 ${t(locale, 'email.moviesSection')}</h2>`,
       renderGrid(items.movies, posterBaseUrl)
     );
   }
 
   if (items.episodes.length > 0) {
     sections.push(
-      `<h2 style="color:#E2A33B;font-family:Georgia, 'Times New Roman', serif;font-size:16px;text-transform:uppercase;letter-spacing:0.06em;border-bottom:1px solid #2F6E63;padding-bottom:6px;margin:24px 0 12px;">📺 Séries</h2>`,
+      `<h2 style="color:#E2A33B;font-family:Georgia, 'Times New Roman', serif;font-size:16px;text-transform:uppercase;letter-spacing:0.06em;border-bottom:1px solid #2F6E63;padding-bottom:6px;margin:24px 0 12px;">📺 ${t(locale, 'email.showsSection')}</h2>`,
       renderGrid(items.episodes, posterBaseUrl)
     );
   }
 
   sections.push(
     `<p style="font-size:11px;color:#8C8378;margin-top:28px;border-top:1px solid #2F6E63;padding-top:16px;">` +
-      `<a href="${unsubscribeUrl}" style="color:#8C8378;">Se désabonner de cette newsletter</a></p>`
+      `<a href="${unsubscribeUrl}" style="color:#8C8378;">${t(locale, 'email.unsubscribe')}</a></p>`
   );
 
-  return renderEmailShell(sections.join(''), publicBaseUrl);
+  return renderEmailShell(sections.join(''), publicBaseUrl, locale);
 }

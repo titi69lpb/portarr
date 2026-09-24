@@ -2,7 +2,8 @@ import type Database from 'better-sqlite3';
 import { getSetting, setSetting } from './settings';
 import { SERVICE_FIELDS, fieldLabel, type ServiceKey } from './settings-schema';
 import { t } from './i18n/translate';
-import { DEFAULT_LOCALE } from './i18n/dictionaries';
+import { DEFAULT_LOCALE, type Locale } from './i18n/dictionaries';
+import { getInstanceLocale } from './i18n/locale';
 import { resolveConfigValue } from './config';
 import {
   testPlexConnection,
@@ -26,7 +27,8 @@ export interface StepResult {
 async function runConnectionTest(
   service: ServiceKey,
   resolved: Record<string, string>,
-  fetchFn: typeof fetch
+  fetchFn: typeof fetch,
+  locale: Locale
 ): Promise<StepResult> {
   switch (service) {
     case 'publicBaseUrl':
@@ -52,14 +54,18 @@ async function runConnectionTest(
       // fetch override (SMTP goes over nodemailer, not HTTP) — unlike the other
       // five test* functions. Call it with just the config so it uses the real
       // createTransport; there is no fetchFn-shaped hook to inject here.
-      return testSmtpConnection({
-        host: resolved.SMTP_HOST,
-        port: resolved.SMTP_PORT,
-        user: resolved.SMTP_USER,
-        pass: resolved.SMTP_PASS,
-        fromAddress: resolved.MAIL_FROM_ADDRESS,
-        fromName: resolved.MAIL_FROM_NAME,
-      });
+      return testSmtpConnection(
+        {
+          host: resolved.SMTP_HOST,
+          port: resolved.SMTP_PORT,
+          user: resolved.SMTP_USER,
+          pass: resolved.SMTP_PASS,
+          fromAddress: resolved.MAIL_FROM_ADDRESS,
+          fromName: resolved.MAIL_FROM_NAME,
+        },
+        undefined,
+        locale
+      );
   }
 }
 
@@ -101,7 +107,7 @@ export async function applyServiceSettings(
     resolved[field.envKey] = existing;
   }
 
-  const testResult = await runConnectionTest(service, resolved, fetchFn);
+  const testResult = await runConnectionTest(service, resolved, fetchFn, getInstanceLocale(db));
   if (!testResult.ok) return testResult;
 
   for (const field of fields) {

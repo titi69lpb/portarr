@@ -15,7 +15,7 @@ function item(overrides: Partial<RecentlyAddedItem>): RecentlyAddedItem {
 
 describe('renderNewsletterHtml', () => {
   it('includes the server name and end date', () => {
-    const html = renderNewsletterHtml({ movies: [], episodes: [] }, 'My Plex Server', '05/09/2026', 'https://portal.example.com/api/newsletter/poster', 'https://portal.example.com/api/newsletter/unsubscribe?token=abc', 'https://portal.example.com');
+    const html = renderNewsletterHtml({ movies: [], episodes: [] }, 'My Plex Server', '05/09/2026', 'https://portal.example.com/api/newsletter/poster', 'https://portal.example.com/api/newsletter/unsubscribe?token=abc', 'https://portal.example.com', 'fr');
     expect(html).toContain('My Plex Server');
     expect(html).toContain('05/09/2026');
   });
@@ -27,7 +27,8 @@ describe('renderNewsletterHtml', () => {
       '05/09/2026',
       'https://portal.example.com/api/newsletter/poster',
       'https://portal.example.com/api/newsletter/unsubscribe?token=abc',
-      'https://portal.example.com'
+      'https://portal.example.com',
+      'fr'
     );
     expect(html).toContain('A Movie');
     expect(html).toContain('An Episode');
@@ -40,7 +41,8 @@ describe('renderNewsletterHtml', () => {
       '05/09/2026',
       'https://portal.example.com/api/newsletter/poster',
       'https://portal.example.com/api/newsletter/unsubscribe?token=abc',
-      'https://portal.example.com'
+      'https://portal.example.com',
+      'fr'
     );
     expect(html).not.toContain('<script>');
     expect(html).toContain('&lt;script&gt;');
@@ -53,7 +55,8 @@ describe('renderNewsletterHtml', () => {
       '05/09/2026',
       'https://portal.example.com/api/newsletter/poster',
       'https://portal.example.com/api/newsletter/unsubscribe?token=abc',
-      'https://portal.example.com'
+      'https://portal.example.com',
+      'fr'
     );
     expect(html).toContain('https://portal.example.com/api/newsletter/poster?path=%2Flibrary%2Fmetadata%2F1%2Fthumb%2F1');
     expect(html).not.toContain('X-Plex-Token');
@@ -66,7 +69,8 @@ describe('renderNewsletterHtml', () => {
       '05/09/2026',
       'https://portal.example.com/api/newsletter/poster',
       'https://portal.example.com/api/newsletter/unsubscribe?token=abc',
-      'https://portal.example.com'
+      'https://portal.example.com',
+      'fr'
     );
     expect(html).toContain('<!DOCTYPE html>');
     expect(html).toContain('Portarr');
@@ -81,6 +85,7 @@ describe('renderNewsletterHtml', () => {
       'https://portal.example.com/api/newsletter/poster',
       'https://portal.example.com/api/newsletter/unsubscribe?token=abc',
       'https://portal.example.com',
+      'fr',
       'https://portal.example.com/api/newsletter/archive/7'
     );
     expect(withArchive).toContain('https://portal.example.com/api/newsletter/archive/7');
@@ -92,7 +97,8 @@ describe('renderNewsletterHtml', () => {
       '05/09/2026',
       'https://portal.example.com/api/newsletter/poster',
       'https://portal.example.com/api/newsletter/unsubscribe?token=abc',
-      'https://portal.example.com'
+      'https://portal.example.com',
+      'fr'
     );
     expect(withoutArchive).not.toContain('Voir dans le navigateur');
   });
@@ -104,8 +110,32 @@ describe('renderNewsletterHtml', () => {
       '05/09/2026',
       'https://portal.example.com/api/newsletter/poster',
       'https://portal.example.com/api/newsletter/unsubscribe?token=abc',
-      'https://portal.example.com'
+      'https://portal.example.com',
+      'fr'
     );
     expect(html).toContain('https://portal.example.com/api/newsletter/unsubscribe?token=abc');
+  });
+
+  const args = ['My Plex Server', '05/09/2026', 'https://p.example.com/poster', 'https://p.example.com/unsub', 'https://p.example.com'] as const;
+  const items = { movies: [item({ title: 'A Movie' })], episodes: [item({ title: 'An Episode', type: 'episode' })] };
+
+  it('renders the English shell for locale en', () => {
+    const html = renderNewsletterHtml(items, ...args, 'en', 'https://p.example.com/archive/1');
+    expect(html).toContain('<html lang="en">');
+    expect(html).toContain('New on My Plex Server!');
+    expect(html).toContain('Movies');
+    expect(html).toContain('Shows');
+    expect(html).toContain('View in browser');
+    expect(html).toContain('Unsubscribe from this newsletter');
+    expect(html).not.toContain('Voir dans le navigateur');
+  });
+
+  it('renders the French shell for locale fr', () => {
+    const html = renderNewsletterHtml(items, ...args, 'fr', 'https://p.example.com/archive/1');
+    expect(html).toContain('<html lang="fr">');
+    expect(html).toContain('Les Nouveautés My Plex Server !');
+    expect(html).toContain('Films');
+    expect(html).toContain('Séries');
+    expect(html).toContain('Se désabonner de cette newsletter');
   });
 });

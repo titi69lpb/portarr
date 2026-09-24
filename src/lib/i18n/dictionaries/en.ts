@@ -368,4 +368,21 @@ export const en: Dictionary<typeof fr> = {
     connecting: 'Signing in…',
     connectJellyfin: 'Sign in with Jellyfin',
   },
+  email: {
+    localeCode: 'en-US',
+    footerTagline: 'Portarr, community portal',
+    newsletterTitle: "What's New on {{server}}!",
+    newsletterSubject: "What's New on {{server}}! ({{date}})",
+    viewInBrowser: 'View in browser',
+    moviesSection: 'Movies',
+    showsSection: 'Shows',
+    unsubscribe: 'Unsubscribe from this newsletter',
+    availabilitySubject: '{{title}} is now available!',
+    availabilityHeading: '{{title}} is available!',
+    availabilityMarkdownBody:
+      'Hi {{username}},\n\nYour request **{{title}}** is now available on {{server}}. Enjoy!',
+    availabilityLogName: 'Request available',
+    smtpTestSubject: 'Portarr: SMTP configuration test',
+    smtpTestBody: 'This message confirms that the Portarr SMTP configuration works.',
+  },
 };

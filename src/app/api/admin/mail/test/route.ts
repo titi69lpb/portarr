@@ -8,6 +8,7 @@ import { renderEmailShell } from '@/lib/email-template';
 import { createTransport, sendMail } from '@/lib/mailer';
 import { insertMailLog } from '@/lib/mail-log';
 import { requireOwnerUser } from '@/lib/route-auth';
+import { getLocale } from '@/lib/i18n/locale';
 
 export const dynamic = 'force-dynamic';
 
@@ -32,7 +33,8 @@ export async function POST(request: NextRequest) {
     const hash = hashContent(template.subject, template.bodyMarkdown);
     const transport = createTransport(config.smtp);
     const from = `"${config.smtp.fromName}" <${config.smtp.fromAddress}>`;
-    const html = renderEmailShell(renderMarkdown(template.bodyMarkdown), config.publicBaseUrl);
+    const locale = getLocale(sessionUser, db);
+    const html = renderEmailShell(renderMarkdown(template.bodyMarkdown), config.publicBaseUrl, locale);
 
     await sendMail(transport, from, sessionUser.email, template.subject, html);
     insertMailLog(db, {

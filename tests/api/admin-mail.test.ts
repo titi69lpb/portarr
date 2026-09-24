@@ -157,6 +157,36 @@ describe('POST /api/admin/mail/send', () => {
     expect(body).toEqual({ sent: 2, failed: 0, total: 2 });
   });
 
+  it('renders the shell in each recipient locale and leaves the body untouched', async () => {
+    const created = createMailTemplate(getDb(), 'A', 'Sujet', 'Corps libre');
+    const db = getDb();
+    const ins = db.prepare(
+      "INSERT INTO users (provider, external_id, email, username, last_login, locale) VALUES ('plex', ?, ?, ?, ?, ?)"
+    );
+    ins.run('1', 'en@b.com', 'en', new Date().toISOString(), 'en');
+    ins.run('2', 'fr@b.com', 'fr', new Date().toISOString(), 'fr');
+    const mailerModule = await import('../../src/lib/mailer');
+    const sendMailMock = vi.mocked(mailerModule.sendMail);
+    sendMailMock.mockClear();
+
+    const { POST } = await import('../../src/app/api/admin/mail/send/route');
+    const request = await ownerRequest('http://localhost/api/admin/mail/send', {
+      method: 'POST',
+      body: JSON.stringify({
+        templateId: created.id,
+        testedHash: hashContent('Sujet', 'Corps libre'),
+        target: { mode: 'broadcast' },
+      }),
+    });
+    expect((await POST(request)).status).toBe(200);
+    const htmlFor = (to: string) => sendMailMock.mock.calls.find((c) => c[2] === to)![4] as string;
+    expect(htmlFor('en@b.com')).toContain('<html lang="en">');
+    expect(htmlFor('en@b.com')).toContain('community portal');
+    expect(htmlFor('en@b.com')).toContain('Corps libre');
+    expect(htmlFor('fr@b.com')).toContain('<html lang="fr">');
+    expect(htmlFor('fr@b.com')).toContain('portail communautaire');
+  });
+
   it('returns 404 for a non-existent template', async () => {
     const { POST } = await import('../../src/app/api/admin/mail/send/route');
     const request = await ownerRequest('http://localhost/api/admin/mail/send', {

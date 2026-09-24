@@ -168,4 +168,31 @@ describe('POST /api/admin/newsletter/send', () => {
     expect(archived?.subject).toContain('Les Nouveautés');
     expect(archived?.html).toContain('A Movie');
   });
+
+  it('mails each recipient in their own locale and archives in the instance locale', async () => {
+    const recentAddedAt = Math.floor((Date.now() - 1 * 24 * 60 * 60 * 1000) / 1000);
+    vi.spyOn(global, 'fetch').mockImplementation(
+      hubFetchMock([{ title: 'A Movie', thumb: '/library/metadata/1/thumb/1', addedAt: recentAddedAt, type: 'movie' }])
+    );
+    const db = getDb();
+    const ins = db.prepare("INSERT INTO users (provider, external_id, email, username, last_login, locale) VALUES ('plex', ?, ?, ?, ?, ?)");
+    ins.run('plex-en', 'en@b.com', 'en', new Date().toISOString(), 'en');
+    ins.run('plex-fr', 'fr@b.com', 'fr', new Date().toISOString(), 'fr');
+    ins.run('plex-none', 'none@b.com', 'none', new Date().toISOString(), null);
+    const { setSetting } = await import('../../src/lib/settings');
+    setSetting(db, 'default_locale', 'en');
+
+    const request = await ownerRequest({ method: 'POST' });
+    const { POST } = await import('../../src/app/api/admin/newsletter/send/route');
+    const body = await (await POST(request)).json();
+    expect(body.sent).toBe(3);
+
+    const calls = (await mockedSendMail()).mock.calls;
+    const byTo = (to: string) => calls.find((c) => c[2] === to)!;
+    expect(byTo('en@b.com')[3]).toContain("What's New on");
+    expect(byTo('en@b.com')[4]).toContain('<html lang="en">');
+    expect(byTo('fr@b.com')[3]).toContain('Les Nouveautés');
+    expect(byTo('fr@b.com')[4]).toContain('<html lang="fr">');
+    expect(byTo('none@b.com')[3]).toContain("What's New on");
+  });
 });

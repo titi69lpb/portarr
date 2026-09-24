@@ -163,6 +163,16 @@ describe('testSmtpConnection', () => {
     );
   });
 
+  it('sends the test mail in English when the locale is en', async () => {
+    const sendMail = vi.fn().mockResolvedValue({ messageId: 'abc' });
+    const createTransportFn = vi.fn().mockReturnValue({ sendMail } as MailTransport);
+    await testSmtpConnection(SMTP_CONFIG, createTransportFn, 'en');
+    const arg = sendMail.mock.calls[0][0];
+    expect(arg.subject).toContain('SMTP configuration test');
+    expect(arg.html).toContain('SMTP configuration');
+    expect(arg.html).not.toContain('Ce message');
+  });
+
   it('fails with the SMTP error message when sendMail rejects', async () => {
     const sendMail = vi.fn().mockRejectedValue(new Error('535 Authentication failed'));
     const createTransportFn = vi.fn().mockReturnValue({ sendMail } as MailTransport);

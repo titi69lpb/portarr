@@ -8,6 +8,8 @@ import { renderEmailShell } from '@/lib/email-template';
 import { renderMarkdown } from '@/lib/markdown';
 import { insertMailLog } from '@/lib/mail-log';
 import { secureCompare } from '@/lib/secure-compare';
+import { getLocaleByEmail, getInstanceLocale } from '@/lib/i18n/locale';
+import { t } from '@/lib/i18n/translate';
 
 export const dynamic = 'force-dynamic';
 
@@ -52,6 +54,8 @@ export async function POST(request: NextRequest) {
     const transport = createTransport(config.smtp);
     const from = `"${config.smtp.fromName}" <${config.smtp.fromAddress}>`;
 
+    // Internal mail_log label: instance default locale (admin-facing).
+    const logName = t(getInstanceLocale(db), 'email.availabilityLogName');
     let notified = 0;
     for (const item of toNotify) {
       if (!item.requesterEmail) {
@@ -61,15 +65,22 @@ export async function POST(request: NextRequest) {
         continue;
       }
 
-      const subject = `${item.title} est maintenant disponible !`;
-      const markdownBody = `# ${item.title} est disponible !\n\nBonjour ${item.requesterUsername},\n\nVotre demande **${item.title}** est maintenant disponible sur ${config.communityName}. Bon visionnage !`;
-      const html = renderEmailShell(renderMarkdown(markdownBody), config.publicBaseUrl);
+      const locale = getLocaleByEmail(item.requesterEmail, db);
+      const subject = t(locale, 'email.availabilitySubject', { title: item.title });
+      const markdownBody =
+        `# ${t(locale, 'email.availabilityHeading', { title: item.title })}\n\n` +
+        t(locale, 'email.availabilityMarkdownBody', {
+          username: item.requesterUsername,
+          title: item.title,
+          server: config.communityName,
+        });
+      const html = renderEmailShell(renderMarkdown(markdownBody), config.publicBaseUrl, locale);
 
       try {
         await sendMail(transport, from, item.requesterEmail, subject, html);
         insertMailLog(db, {
           templateId: null,
-          templateName: 'Demande disponible',
+          templateName: logName,
           recipientEmail: item.requesterEmail,
           recipientUsername: item.requesterUsername,
           status: 'sent',
@@ -80,7 +91,7 @@ export async function POST(request: NextRequest) {
         console.error(`Failed to send availability notification for request ${item.requestId}:`, err);
         insertMailLog(db, {
           templateId: null,
-          templateName: 'Demande disponible',
+          templateName: logName,
           recipientEmail: item.requesterEmail,
           recipientUsername: item.requesterUsername,
           status: 'failed',

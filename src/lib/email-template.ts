@@ -1,3 +1,6 @@
+import { type Locale } from './i18n/dictionaries';
+import { t } from './i18n/translate';
+
 // Shared HTML email shell — brings the portal's "Marquee" theme (dark ink/charcoal,
 // amber accent, serif display masthead) into outbound mail. Email clients don't
 // reliably support external fonts, flexbox, or CSS backgrounds on arbitrary
@@ -6,9 +9,11 @@
 // in <head> is used only for the caller-supplied body content (Markdown-rendered
 // HTML, or a poster grid), which targets a small, known, modern-client audience
 // (Gmail/Apple Mail/Outlook web) rather than legacy desktop Outlook.
-export function renderEmailShell(bodyHtml: string, publicBaseUrl: string): string {
+// `locale` picks the footer tagline and <html lang>. It never touches `bodyHtml`
+// (an admin mailing's Markdown body is free text and is never auto-translated).
+export function renderEmailShell(bodyHtml: string, publicBaseUrl: string, locale: Locale): string {
   return `<!DOCTYPE html>
-<html lang="fr">
+<html lang="${locale}">
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -62,7 +67,7 @@ export function renderEmailShell(bodyHtml: string, publicBaseUrl: string): strin
         </tr>
         <tr>
           <td style="background-color:#14110F;padding:16px 32px;text-align:center;">
-            <span style="color:#8C8378;font-family:Arial, Helvetica, sans-serif;font-size:11px;">Portarr — portail communautaire</span>
+            <span style="color:#8C8378;font-family:Arial, Helvetica, sans-serif;font-size:11px;">${t(locale, 'email.footerTagline')}</span>
           </td>
         </tr>
       </table>

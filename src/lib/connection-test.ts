@@ -2,7 +2,7 @@ import { timeoutSignal } from './fetch-timeout';
 import { createTransport } from './mailer';
 import { jellyfinTokenAuth } from './media/jellyfin';
 import { t } from './i18n/translate';
-import { DEFAULT_LOCALE } from './i18n/dictionaries';
+import { DEFAULT_LOCALE, type Locale } from './i18n/dictionaries';
 
 // `error` is a ready-to-display fallback (default locale). When the message is
 // one of ours (not a raw upstream/network message) `errorKey` + `errorVars`
@@ -167,15 +167,16 @@ export async function testOverseerrConnection(
 
 export async function testSmtpConnection(
   config: { host: string; port: string; user: string; pass: string; fromAddress: string; fromName: string },
-  createTransportFn: typeof createTransport = createTransport
+  createTransportFn: typeof createTransport = createTransport,
+  locale: Locale = DEFAULT_LOCALE
 ): Promise<ConnectionTestResult> {
   try {
     const transport = createTransportFn({ host: config.host, port: config.port, user: config.user, pass: config.pass });
     await transport.sendMail({
       from: `${config.fromName} <${config.fromAddress}>`,
       to: config.fromAddress,
-      subject: 'Portarr — test de configuration SMTP',
-      html: '<p>Ce message confirme que la configuration SMTP de Portarr fonctionne.</p>',
+      subject: t(locale, 'email.smtpTestSubject'),
+      html: `<p>${t(locale, 'email.smtpTestBody')}</p>`,
     });
     return { ok: true, error: null };
   } catch (err) {

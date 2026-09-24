@@ -364,4 +364,21 @@ export const fr = {
     connecting: 'Connexion…',
     connectJellyfin: 'Se connecter avec Jellyfin',
   },
+  email: {
+    localeCode: 'fr-FR',
+    footerTagline: 'Portarr — portail communautaire',
+    newsletterTitle: 'Les Nouveautés {{server}} !',
+    newsletterSubject: 'Les Nouveautés {{server}} ! ({{date}})',
+    viewInBrowser: 'Voir dans le navigateur',
+    moviesSection: 'Films',
+    showsSection: 'Séries',
+    unsubscribe: 'Se désabonner de cette newsletter',
+    availabilitySubject: '{{title}} est maintenant disponible !',
+    availabilityHeading: '{{title}} est disponible !',
+    availabilityMarkdownBody:
+      'Bonjour {{username}},\n\nVotre demande **{{title}}** est maintenant disponible sur {{server}}. Bon visionnage !',
+    availabilityLogName: 'Demande disponible',
+    smtpTestSubject: 'Portarr — test de configuration SMTP',
+    smtpTestBody: 'Ce message confirme que la configuration SMTP de Portarr fonctionne.',
+  },
 };

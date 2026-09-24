@@ -133,6 +133,47 @@ describe('POST /api/cron/request-availability', () => {
     );
   });
 
+  async function runAvailability() {
+    vi.spyOn(global, 'fetch').mockImplementation(async (input) => {
+      const url = typeof input === 'string' ? input : input.toString();
+      if (url.includes('/api/v1/request')) return availableRequestResponse();
+      return titleDetailResponse();
+    });
+    const { POST } = await import('../../src/app/api/cron/request-availability/route');
+    const request = new NextRequest('http://localhost/api/cron/request-availability', {
+      method: 'POST',
+      headers: { 'x-cron-secret': CRON_SECRET },
+    });
+    expect((await POST(request)).status).toBe(200);
+    const mailer = await import('../../src/lib/mailer');
+    return vi.mocked(mailer.sendMail).mock.calls[0];
+  }
+
+  it('sends the availability mail in French by default', async () => {
+    const call = await runAvailability();
+    expect(call[3]).toBe('Some Movie est maintenant disponible !');
+    expect(call[4]).toContain('Bonjour');
+    expect(call[4]).toContain('<html lang="fr">');
+  });
+
+  it('sends the availability mail in the requester locale (personal beats instance default)', async () => {
+    const { setSetting } = await import('../../src/lib/settings');
+    const db = getDb();
+    setSetting(db, 'default_locale', 'fr');
+    db.prepare("INSERT INTO users (provider, external_id, email, username, last_login, locale) VALUES ('plex', 'p1', 'admin@b.com', 'a', ?, 'en')").run(new Date().toISOString());
+    const call = await runAvailability();
+    expect(call[3]).toBe('Some Movie is now available!');
+    expect(call[4]).toContain('Hi Andaril');
+    expect(call[4]).toContain('<html lang="en">');
+  });
+
+  it('falls back to the instance default locale for unknown requesters', async () => {
+    const { setSetting } = await import('../../src/lib/settings');
+    setSetting(getDb(), 'default_locale', 'en');
+    const call = await runAvailability();
+    expect(call[3]).toBe('Some Movie is now available!');
+  });
+
   it('does not re-notify a request that was already notified on a previous run', async () => {
     const db = getDb();
     const { markNotified } = await import('../../src/lib/request-notifications');
