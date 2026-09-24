@@ -1,8 +1,11 @@
+import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { getDb } from '@/lib/db';
 import { loadConfig, isSetupComplete, getConfigSources } from '@/lib/config';
 import { verifySetupToken } from '@/lib/setup';
 import { SetupWizard } from '@/components/SetupWizard';
+import { getLocale } from '@/lib/i18n/locale';
+import { t } from '@/lib/i18n/translate';
 
 export const dynamic = 'force-dynamic';
 
@@ -14,17 +17,22 @@ export default function SetupPage({ searchParams }: { searchParams: { token?: st
     redirect('/admin/settings');
   }
 
+  // Unauthenticated: no session, so instance default / browser language / FR.
+  const locale = getLocale(null, db, headers().get('accept-language'));
+
   const queryToken = searchParams.token;
   if (queryToken && verifySetupToken(db, queryToken)) {
     const sources = getConfigSources(process.env, db);
-    return <SetupWizard token={queryToken} sources={sources} />;
+    return <SetupWizard token={queryToken} sources={sources} locale={locale} />;
   }
 
   return (
     <main className="mx-auto flex min-h-screen max-w-md flex-col items-center justify-center gap-4 p-6 text-center">
-      <h1 className="font-display text-2xl text-plexcrew-screen">Configuration requise</h1>
+      <h1 className="font-display text-2xl text-plexcrew-screen">{t(locale, 'setup.requiredTitle')}</h1>
       <p className="text-sm text-plexcrew-ash">
-        Consultez les logs du conteneur (<code>docker logs portarr</code>) pour trouver le lien de configuration initiale.
+        {t(locale, 'setup.requiredHintBefore')}
+        <code>docker logs portarr</code>
+        {t(locale, 'setup.requiredHintAfter')}
       </p>
     </main>
   );

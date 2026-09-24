@@ -4,23 +4,13 @@ import { useState } from 'react';
 import { ServiceSettingsForm } from './ServiceSettingsForm';
 import { SERVICE_FIELDS, type ServiceKey } from '@/lib/settings-schema';
 import type { ConfigSource } from '@/lib/config';
+import type { Locale } from '@/lib/i18n/dictionaries';
+import { t } from '@/lib/i18n/translate';
+import { resolveStepError } from '@/lib/settings-error';
 
 const STEPS: ServiceKey[] = ['publicBaseUrl', 'plex', 'tautulli', 'jellyfin', 'jellystat', 'jellyfinActivitySource', 'sonarr', 'radarr', 'overseerr', 'smtp'];
 
-const STEP_TITLES: Record<ServiceKey, string> = {
-  publicBaseUrl: 'URL publique',
-  plex: 'Plex (optionnel si Jellyfin)',
-  tautulli: 'Tautulli (requis avec Plex)',
-  jellyfin: 'Jellyfin (optionnel)',
-  jellystat: 'Jellystat (optionnel)',
-  jellyfinActivitySource: "Source d'activité Jellyfin",
-  sonarr: 'Sonarr',
-  radarr: 'Radarr',
-  overseerr: 'Overseerr',
-  smtp: 'SMTP',
-};
-
-export function SetupWizard({ token, sources }: { token: string; sources: Record<string, ConfigSource> }) {
+export function SetupWizard({ token, sources, locale }: { token: string; sources: Record<string, ConfigSource>; locale: Locale }) {
   const [stepIndex, setStepIndex] = useState(0);
   const [done, setDone] = useState(false);
   const [completing, setCompleting] = useState(false);
@@ -41,9 +31,9 @@ export function SetupWizard({ token, sources }: { token: string; sources: Record
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
       body: JSON.stringify({ service: step, values }),
     });
-    const data = (await res.json()) as { ok?: boolean; error?: string };
+    const data = (await res.json()) as { ok?: boolean; error?: string; errorKey?: string; errorVars?: Record<string, string | number> };
     if (!res.ok || !data.ok) {
-      return { ok: false, error: data.error ?? 'Erreur inconnue' };
+      return { ok: false, error: resolveStepError(locale, data) };
     }
     if (stepIndex === STEPS.length - 1) {
       await completeSetup();
@@ -60,9 +50,9 @@ export function SetupWizard({ token, sources }: { token: string; sources: Record
       method: 'POST',
       headers: { Authorization: `Bearer ${token}` },
     });
-    const data = (await res.json()) as { ok?: boolean; error?: string };
+    const data = (await res.json()) as { ok?: boolean; error?: string; errorKey?: string; errorVars?: Record<string, string | number> };
     if (!res.ok || !data.ok) {
-      setCompleteError(data.error ?? 'Erreur inconnue');
+      setCompleteError(resolveStepError(locale, data));
       setCompleting(false);
       return;
     }
@@ -72,9 +62,9 @@ export function SetupWizard({ token, sources }: { token: string; sources: Record
   if (done) {
     return (
       <main className="mx-auto flex min-h-screen max-w-md flex-col items-center justify-center gap-4 p-6 text-center">
-        <h1 className="font-display text-2xl text-plexcrew-screen">Configuration terminée</h1>
+        <h1 className="font-display text-2xl text-plexcrew-screen">{t(locale, 'setup.done')}</h1>
         <a href="/login" className="text-plexcrew-teal underline">
-          Aller à la connexion →
+          {t(locale, 'setup.goToLogin')}
         </a>
       </main>
     );
@@ -83,7 +73,7 @@ export function SetupWizard({ token, sources }: { token: string; sources: Record
   return (
     <main className="mx-auto flex min-h-screen max-w-lg flex-col justify-center gap-6 p-6">
       <div className="flex items-center justify-between">
-        <h1 className="font-display text-2xl text-plexcrew-screen">{STEP_TITLES[step]}</h1>
+        <h1 className="font-display text-2xl text-plexcrew-screen">{t(locale, `setup.steps.${step}`)}</h1>
         <span className="text-xs text-plexcrew-ash">
           {stepIndex + 1} / {STEPS.length}
         </span>
@@ -94,6 +84,7 @@ export function SetupWizard({ token, sources }: { token: string; sources: Record
           previous step's fields would leak into (or be missing for) the new step. */}
       <ServiceSettingsForm
         key={step}
+        locale={locale}
         fields={stepFields}
         testable={step !== 'publicBaseUrl' && step !== 'jellyfinActivitySource'}
         disabledKeys={disabledKeys}
@@ -105,7 +96,7 @@ export function SetupWizard({ token, sources }: { token: string; sources: Record
             : undefined
         }
       />
-      {completing && <p className="text-sm text-plexcrew-ash">Finalisation…</p>}
+      {completing && <p className="text-sm text-plexcrew-ash">{t(locale, 'setup.finalizing')}</p>}
       {completeError && <p className="text-sm text-plexcrew-amber">{completeError}</p>}
     </main>
   );

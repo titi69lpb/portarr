@@ -1,9 +1,12 @@
 'use client';
 
 import { useState, type FormEvent } from 'react';
-import type { FieldDef } from '@/lib/settings-schema';
+import { fieldLabel, optionLabel, type FieldDef } from '@/lib/settings-schema';
+import type { Locale } from '@/lib/i18n/dictionaries';
+import { t } from '@/lib/i18n/translate';
 
 export interface ServiceSettingsFormProps {
+  locale: Locale;
   fields: FieldDef[];
   testable: boolean;
   onSubmit: (values: Record<string, string>) => Promise<{ ok: boolean; error: string | null }>;
@@ -17,13 +20,14 @@ export interface ServiceSettingsFormProps {
   // Fields currently sourced from an env var — always env-priority, editing
   // them here would silently have no effect, so they're locked instead.
   disabledKeys?: Set<string>;
-  // When set, a "Passer cette étape" button appears next to submit — for an
+  // When set, a "Skip this step" button appears next to submit — for an
   // optional service (Jellyfin, Jellystat, and — since Plex/Tautulli became optional as a pair — Plex and Tautulli too)
   // whose step can be skipped without saving anything.
   onSkip?: () => void;
 }
 
 export function ServiceSettingsForm({
+  locale,
   fields,
   testable,
   onSubmit,
@@ -51,7 +55,7 @@ export function ServiceSettingsForm({
       const result = await onSubmit(values);
       if (!result.ok) setError(result.error);
     } catch (err) {
-      setError('Erreur réseau inconnue');
+      setError(t(locale, 'settings.errors.network'));
     } finally {
       setSubmitting(false);
     }
@@ -64,7 +68,7 @@ export function ServiceSettingsForm({
         const alreadyConfigured = field.type === 'password' && (configuredKeys?.has(field.envKey) ?? false);
         return (
           <label key={field.envKey} className="flex flex-col gap-1 text-sm text-plexcrew-ash">
-            {field.label}
+            {fieldLabel(locale, field)}
             {field.type === 'select' ? (
               <select
                 value={values[field.envKey]}
@@ -73,7 +77,7 @@ export function ServiceSettingsForm({
               >
                 {field.options!.map((opt) => (
                   <option key={opt.value} value={opt.value}>
-                    {opt.label}
+                    {optionLabel(locale, opt)}
                   </option>
                 ))}
               </select>
@@ -84,9 +88,9 @@ export function ServiceSettingsForm({
                 value={values[field.envKey]}
                 placeholder={
                   disabled
-                    ? "Défini via variable d'environnement"
+                    ? t(locale, 'settings.envPlaceholder')
                     : alreadyConfigured
-                      ? '•••••••• (laisser vide pour ne pas changer)'
+                      ? t(locale, 'settings.keepPlaceholder')
                       : undefined
                 }
                 onChange={(e) => setValues({ ...values, [field.envKey]: e.target.value })}
@@ -103,7 +107,9 @@ export function ServiceSettingsForm({
           disabled={submitting}
           className="rounded-full bg-plexcrew-teal px-4 py-2 text-sm font-semibold text-plexcrew-ink disabled:opacity-50"
         >
-          {submitting ? (testable ? 'Test en cours…' : 'Enregistrement…') : testable ? 'Tester et enregistrer' : 'Enregistrer'}
+          {submitting
+            ? t(locale, testable ? 'settings.testing' : 'settings.saving')
+            : t(locale, testable ? 'settings.testAndSave' : 'settings.save')}
         </button>
         {onSkip && (
           <button
@@ -112,7 +118,7 @@ export function ServiceSettingsForm({
             disabled={submitting}
             className="rounded-full border border-plexcrew-teal/30 px-4 py-2 text-sm font-medium text-plexcrew-screen disabled:opacity-50"
           >
-            Passer cette étape
+            {t(locale, 'settings.skip')}
           </button>
         )}
       </div>

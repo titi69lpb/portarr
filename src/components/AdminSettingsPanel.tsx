@@ -4,28 +4,20 @@ import { useState } from 'react';
 import { ServiceSettingsForm } from './ServiceSettingsForm';
 import { SERVICE_FIELDS, type ServiceKey } from '@/lib/settings-schema';
 import type { ConfigSource } from '@/lib/config';
-
-const SERVICE_TITLES: Record<ServiceKey, string> = {
-  publicBaseUrl: 'URL publique',
-  plex: 'Plex',
-  tautulli: 'Tautulli',
-  jellyfin: 'Jellyfin',
-  jellystat: 'Jellystat',
-  jellyfinActivitySource: "Source d'activité Jellyfin",
-  sonarr: 'Sonarr',
-  radarr: 'Radarr',
-  overseerr: 'Overseerr',
-  smtp: 'SMTP',
-};
+import type { Locale } from '@/lib/i18n/dictionaries';
+import { t } from '@/lib/i18n/translate';
+import { resolveStepError } from '@/lib/settings-error';
 
 const SERVICES: ServiceKey[] = ['publicBaseUrl', 'plex', 'tautulli', 'jellyfin', 'jellystat', 'jellyfinActivitySource', 'sonarr', 'radarr', 'overseerr', 'smtp'];
 
 export function AdminSettingsPanel({
   sources,
   initialValues,
+  locale,
 }: {
   sources: Record<string, ConfigSource>;
   initialValues: Record<string, string>;
+  locale: Locale;
 }) {
   const [savedNotice, setSavedNotice] = useState<ServiceKey | null>(null);
 
@@ -35,9 +27,9 @@ export function AdminSettingsPanel({
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ service, values }),
     });
-    const data = (await res.json()) as { ok?: boolean; error?: string };
+    const data = (await res.json()) as { ok?: boolean; error?: string; errorKey?: string; errorVars?: Record<string, string | number> };
     if (!res.ok || !data.ok) {
-      return { ok: false as const, error: data.error ?? 'Erreur inconnue' };
+      return { ok: false as const, error: resolveStepError(locale, data) };
     }
     setSavedNotice(service);
     return { ok: true as const, error: null };
@@ -51,8 +43,9 @@ export function AdminSettingsPanel({
         const configuredKeys = new Set(fields.filter((f) => sources[f.envKey] !== 'unset').map((f) => f.envKey));
         return (
           <section key={service} className="pc-glass-surface rounded-lg p-5 ring-1 ring-plexcrew-teal/15">
-            <h2 className="mb-3 font-display text-xl text-plexcrew-screen">{SERVICE_TITLES[service]}</h2>
+            <h2 className="mb-3 font-display text-xl text-plexcrew-screen">{t(locale, `settings.services.${service}`)}</h2>
             <ServiceSettingsForm
+              locale={locale}
               fields={fields}
               testable={service !== 'publicBaseUrl' && service !== 'jellyfinActivitySource'}
               disabledKeys={disabledKeys}
@@ -60,7 +53,7 @@ export function AdminSettingsPanel({
               initialValues={initialValues}
               onSubmit={(values) => handleSubmit(service, values)}
             />
-            {savedNotice === service && <p className="mt-2 text-sm text-plexcrew-teal">Enregistré.</p>}
+            {savedNotice === service && <p className="mt-2 text-sm text-plexcrew-teal">{t(locale, 'settings.saved')}</p>}
           </section>
         );
       })}

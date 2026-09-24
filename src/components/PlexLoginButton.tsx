@@ -1,10 +1,12 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import type { Locale } from '@/lib/i18n/dictionaries';
+import { t } from '@/lib/i18n/translate';
 
 type LoginState = 'idle' | 'waiting' | 'denied' | 'error';
 
-export function PlexLoginButton() {
+export function PlexLoginButton({ locale }: { locale: Locale }) {
   const [state, setState] = useState<LoginState>('idle');
   // Set when window.open() was blocked by the browser's popup blocker — the
   // login flow was silently stuck at "En attente…" for the full 60s timeout
@@ -92,15 +94,15 @@ export function PlexLoginButton() {
     <>
       {state === 'denied' && (
         <p className="text-sm text-red-400">
-          Ce compte Plex n&apos;a pas accès au serveur Portarr.
+          {t(locale, 'login.accessDenied')}
         </p>
       )}
-      {state === 'error' && <p className="text-sm text-red-400">Une erreur est survenue.</p>}
+      {state === 'error' && <p className="text-sm text-red-400">{t(locale, 'login.genericError')}</p>}
       {state === 'waiting' && blockedAuthUrl && (
         <p className="text-sm text-plexcrew-amber">
-          Votre navigateur a bloqué la fenêtre de connexion.{' '}
+          {t(locale, 'login.popupBlocked')}{' '}
           <a href={blockedAuthUrl} target="_blank" rel="noreferrer" className="underline hover:no-underline">
-            Cliquez ici pour continuer
+            {t(locale, 'login.clickToContinue')}
           </a>
           .
         </p>
@@ -110,7 +112,7 @@ export function PlexLoginButton() {
         disabled={state === 'waiting'}
         className="rounded-full bg-plexcrew-amber px-6 py-3 font-semibold text-plexcrew-ink transition-colors hover:bg-plexcrew-amber/90 disabled:opacity-60"
       >
-        {state === 'waiting' ? 'En attente de connexion Plex…' : 'Se connecter avec Plex'}
+        {state === 'waiting' ? t(locale, 'login.waiting') : t(locale, 'login.connect')}
       </button>
     </>
   );
