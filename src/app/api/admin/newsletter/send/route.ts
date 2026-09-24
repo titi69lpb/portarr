@@ -12,7 +12,7 @@ import { signUnsubscribeToken } from '@/lib/newsletter-token';
 import { insertNewsletterArchive } from '@/lib/newsletter-archive';
 import { pickNewsletterRecipients, type NewsletterRow } from '@/lib/newsletter-recipients';
 import { getActiveProviders } from '@/lib/media/registry';
-import { getInstanceLocale, getLocaleByEmail } from '@/lib/i18n/locale';
+import { getInstanceLocale, getLocaleByIdentity } from '@/lib/i18n/locale';
 import { dictionaries } from '@/lib/i18n/dictionaries';
 import { t } from '@/lib/i18n/translate';
 
@@ -91,7 +91,7 @@ export async function POST(request: NextRequest) {
     let sent = 0;
     let failed = 0;
     for (const recipient of recipients) {
-      const recipientLocale = getLocaleByEmail(recipient.email, db);
+      const recipientLocale = getLocaleByIdentity(recipient.provider, recipient.external_id, db);
       const recipientEndDate = new Date().toLocaleDateString(dictionaries[recipientLocale].email.localeCode);
       const subject = t(recipientLocale, 'email.newsletterSubject', {
         server: config.communityName,

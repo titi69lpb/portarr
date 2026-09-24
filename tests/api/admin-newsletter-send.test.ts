@@ -195,4 +195,29 @@ describe('POST /api/admin/newsletter/send', () => {
     expect(byTo('fr@b.com')[4]).toContain('<html lang="fr">');
     expect(byTo('none@b.com')[3]).toContain("What's New on");
   });
+
+  it('resolves locale by recipient identity, not by shared email', async () => {
+    const recentAddedAt = Math.floor((Date.now() - 1 * 24 * 60 * 60 * 1000) / 1000);
+    vi.spyOn(global, 'fetch').mockImplementation(
+      hubFetchMock([{ title: 'A Movie', thumb: '/library/metadata/1/thumb/1', addedAt: recentAddedAt, type: 'movie' }])
+    );
+    const db = getDb();
+    const ins = db.prepare("INSERT INTO users (provider, external_id, email, username, last_login, locale) VALUES (?, ?, ?, ?, ?, ?)");
+    ins.run('plex', 'p1', 'same@b.com', 'p', '2026-01-01', 'fr');
+    ins.run('jellyfin', 'j1', 'same@b.com', 'j', '2026-02-01', 'en');
+    const { setSetting } = await import('../../src/lib/settings');
+    setSetting(db, 'default_locale', 'fr');
+
+    const request = await ownerRequest({ method: 'POST' });
+    const { POST } = await import('../../src/app/api/admin/newsletter/send/route');
+    await POST(request);
+
+    const calls = (await mockedSendMail()).mock.calls.filter((c) => c[2] === 'same@b.com');
+    // Recipients sharing an email are deduplicated to one mail addressed to
+    // the first account; its own (plex, fr) locale applies, not the most
+    // recent login's (jellyfin, en) that a by-email lookup would pick.
+    expect(calls.length).toBe(1);
+    expect(calls[0][3]).toContain('Les Nouveautés');
+    expect(calls[0][4]).toContain('<html lang="fr">');
+  });
 });
