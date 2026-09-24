@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ServiceSettingsForm } from './ServiceSettingsForm';
 import { SERVICE_FIELDS, type ServiceKey } from '@/lib/settings-schema';
 import type { ConfigSource } from '@/lib/config';
@@ -25,6 +25,11 @@ export function SetupWizard({
   // Wizard-local locale: switching language re-renders the whole wizard at
   // once without a reload, so step progress is never lost.
   const [locale, setLocale] = useState<Locale>(initialLocale);
+// The root layout renders <html lang> before the admin has chosen a language,
+// so keep it in sync with the wizard's locale (screen readers, hyphenation).
+useEffect(() => {
+  document.documentElement.lang = locale;
+}, [locale]);
   const [languageDone, setLanguageDone] = useState(!showLanguageStep);
   const [languageSaving, setLanguageSaving] = useState(false);
   const [languageError, setLanguageError] = useState(false);
