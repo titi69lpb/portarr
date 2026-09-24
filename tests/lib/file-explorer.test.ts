@@ -189,4 +189,8 @@ describe('buildBreadcrumb', () => {
       { name: 'Windows', path: 'software/Windows' },
     ]);
   });
+
+  it('localizes the root crumb for the en locale', () => {
+    expect(buildBreadcrumb('', 'en')).toEqual([{ name: 'Files', path: '' }]);
+  });
 });

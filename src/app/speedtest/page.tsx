@@ -6,6 +6,7 @@ import { getDb } from '@/lib/db';
 import { getLocale } from '@/lib/i18n/locale';
 import { AppSidebarServer } from '@/components/AppSidebarServer';
 import { SpeedTestRunner } from '@/components/SpeedTestRunner';
+import { t } from '@/lib/i18n/translate';
 
 export const dynamic = 'force-dynamic';
 
@@ -21,20 +22,20 @@ export default async function SpeedTestPage() {
     redirect('/setup');
   }
 
+  const locale = getLocale(sessionUser, getDb(), headers().get('accept-language'));
+
   return (
     <>
-      <AppSidebarServer locale={getLocale(sessionUser, getDb(), headers().get('accept-language'))} />
+      <AppSidebarServer locale={locale} />
       <main className="mx-auto max-w-3xl space-y-8 p-6 ml-16 sm:ml-40 sm:p-8">
         <header className="pc-glass-surface-strong sticky top-0 z-10 -mx-6 -mt-6 flex items-center justify-between gap-4 border-b border-plexcrew-teal/20 px-6 py-4 sm:-mx-8 sm:-mt-8 sm:px-8">
           <h1 className="font-display text-3xl leading-none tracking-[0.1em] text-plexcrew-screen">
-            Test de vitesse
+            {t(locale, 'speedTest.title')}
           </h1>
         </header>
-        <p className="text-sm text-plexcrew-ash">
-          Mesurez le débit et la latence entre votre appareil et le serveur du portail.
-        </p>
+        <p className="text-sm text-plexcrew-ash">{t(locale, 'speedTest.description')}</p>
         <div className="pc-glass-surface flex flex-col items-center gap-6 rounded-lg p-8 ring-1 ring-plexcrew-teal/20">
-          <SpeedTestRunner />
+          <SpeedTestRunner locale={locale} />
         </div>
       </main>
     </>

@@ -1,7 +1,10 @@
+// src/components/SpeedTestGauge.tsx
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
 import gsap from 'gsap';
+import type { Locale } from '@/lib/i18n/dictionaries';
+import { t } from '@/lib/i18n/translate';
 import { mbpsToArcFraction, mbpsQualityTier, GAUGE_MAX_MBPS, GOOD_LATENCY_MS } from '@/lib/speedtest';
 
 const RADIUS = 100;
@@ -16,9 +19,10 @@ const ARC_PATH = `M ${CENTER_X - RADIUS} ${CENTER_Y} A ${RADIUS} ${RADIUS} 0 0 1
 export interface SpeedTestGaugeProps {
   mbps: number;
   latencyMs: number | null;
+  locale: Locale;
 }
 
-export function SpeedTestGauge({ mbps, latencyMs }: SpeedTestGaugeProps) {
+export function SpeedTestGauge({ mbps, latencyMs, locale }: SpeedTestGaugeProps) {
   const [displayMbps, setDisplayMbps] = useState(0);
   // A plain tweened object rather than tweening React state directly — gsap
   // needs a stable object to mutate every tick; onUpdate then mirrors its
@@ -45,7 +49,14 @@ export function SpeedTestGauge({ mbps, latencyMs }: SpeedTestGaugeProps) {
   // completes, displayMbps is still 0 and a "Low" verdict would be
   // misleading noise rather than a result.
   const tier = displayMbps > 0 ? mbpsQualityTier(displayMbps) : null;
-  const tierLabel = tier === 'excellent' ? 'Excellent' : tier === 'ok' ? 'Correct' : tier === 'low' ? 'Faible' : null;
+  const tierLabel =
+    tier === 'excellent'
+      ? t(locale, 'speedTest.qualityExcellent')
+      : tier === 'ok'
+        ? t(locale, 'speedTest.qualityOk')
+        : tier === 'low'
+          ? t(locale, 'speedTest.qualityLow')
+          : null;
   const tierColorClass =
     tier === 'excellent' ? 'text-plexcrew-teal' : tier === 'low' ? 'text-plexcrew-amber' : 'text-plexcrew-ash';
 
@@ -76,7 +87,7 @@ export function SpeedTestGauge({ mbps, latencyMs }: SpeedTestGaugeProps) {
           className="fill-plexcrew-ash"
           style={{ fontSize: 11, letterSpacing: '0.18em', textTransform: 'uppercase' }}
         >
-          Débit
+          {t(locale, 'speedTest.download')}
         </text>
         <text
           x={CENTER_X}
@@ -94,7 +105,7 @@ export function SpeedTestGauge({ mbps, latencyMs }: SpeedTestGaugeProps) {
           className="fill-plexcrew-amber"
           style={{ fontSize: 12, letterSpacing: '0.18em', textTransform: 'uppercase' }}
         >
-          Mbps
+          {t(locale, 'speedTest.mbps')}
         </text>
       </svg>
       {tierLabel && (
@@ -109,9 +120,9 @@ export function SpeedTestGauge({ mbps, latencyMs }: SpeedTestGaugeProps) {
               : '0 0 6px 1px rgba(226, 163, 59, 0.6)',
           }}
         />
-        <span className="text-xs text-plexcrew-ash">Latence</span>
+        <span className="text-xs text-plexcrew-ash">{t(locale, 'speedTest.latency')}</span>
         <span className="font-mono text-sm text-plexcrew-screen">
-          {latencyMs === null ? '—' : `${latencyMs} ms`}
+          {latencyMs === null ? '—' : `${latencyMs} ${t(locale, 'speedTest.ms')}`}
         </span>
       </div>
     </div>

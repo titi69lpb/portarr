@@ -1,6 +1,9 @@
+// src/components/SpeedTestRunner.tsx
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import type { Locale } from '@/lib/i18n/dictionaries';
+import { t } from '@/lib/i18n/translate';
 import { formatFileSize } from '@/lib/file-size-formatter';
 import { timeoutSignal } from '@/lib/fetch-timeout';
 import {
@@ -79,7 +82,7 @@ async function runDownloadStage(
   }
 }
 
-export function SpeedTestRunner() {
+export function SpeedTestRunner({ locale }: { locale: Locale }) {
   const [state, setState] = useState<RunState>('idle');
   const [mbps, setMbps] = useState(0);
   const [latencyMs, setLatencyMs] = useState<number | null>(null);
@@ -160,26 +163,26 @@ export function SpeedTestRunner() {
 
   return (
     <div className="flex w-full flex-col items-center gap-6">
-      <SpeedTestGauge mbps={mbps} latencyMs={latencyMs} />
+      <SpeedTestGauge mbps={mbps} latencyMs={latencyMs} locale={locale} />
 
       {state === 'testing-download' && (
         <p className="text-xs uppercase tracking-wider text-plexcrew-ash">
-          Test en cours… {formatFileSize(stageSizeBytes)}
+          {t(locale, 'speedTest.testingDownload', { size: formatFileSize(stageSizeBytes, locale) })}
         </p>
       )}
       {state === 'testing-latency' && (
-        <p className="text-xs uppercase tracking-wider text-plexcrew-ash">Mesure de la latence…</p>
+        <p className="text-xs uppercase tracking-wider text-plexcrew-ash">
+          {t(locale, 'speedTest.testingLatency')}
+        </p>
       )}
-      {state === 'error' && (
-        <p className="text-sm text-red-400">Le test a échoué. Vérifiez votre connexion et réessayez.</p>
-      )}
+      {state === 'error' && <p className="text-sm text-red-400">{t(locale, 'speedTest.error')}</p>}
 
       <button
         onClick={handleStart}
         disabled={isRunning}
         className="rounded-full bg-plexcrew-amber px-6 py-3 font-semibold text-plexcrew-ink transition-colors hover:bg-plexcrew-amber/90 disabled:opacity-60"
       >
-        {state === 'error' ? 'Réessayer' : 'Lancer le test'}
+        {state === 'error' ? t(locale, 'speedTest.retry') : t(locale, 'speedTest.start')}
       </button>
     </div>
   );

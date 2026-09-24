@@ -4,6 +4,7 @@ import { verifySession, SESSION_COOKIE_NAME } from '@/lib/session';
 import { loadConfig, isSetupComplete, assertConfigured } from '@/lib/config';
 import { getDb } from '@/lib/db';
 import { getLocale } from '@/lib/i18n/locale';
+import { t } from '@/lib/i18n/translate';
 import { getActivitySources, getActivitySourceFor } from '@/lib/activity/registry';
 import { AppSidebarServer } from '@/components/AppSidebarServer';
 import { HistoryLoadMore } from '@/components/HistoryLoadMore';
@@ -25,6 +26,8 @@ export default async function HistoryPage() {
   }
   const config = assertConfigured(rawConfig);
 
+  const locale = getLocale(sessionUser, getDb(), headers().get('accept-language'));
+
   let items: { title: string; type: 'movie' | 'episode'; thumbPath: string; watchedAt: string }[] = [];
   let total = 0;
   try {
@@ -40,14 +43,14 @@ export default async function HistoryPage() {
 
   return (
     <>
-      <AppSidebarServer locale={getLocale(sessionUser, getDb(), headers().get('accept-language'))} />
+      <AppSidebarServer locale={locale} />
       <main className="space-y-6 p-6 ml-16 sm:ml-40 sm:p-8">
         <header className="pc-glass-surface-strong sticky top-0 z-10 -mx-6 -mt-6 flex items-center justify-between gap-3 border-b border-plexcrew-teal/20 px-6 py-4 sm:-mx-8 sm:-mt-8 sm:px-8">
           <h1 className="font-display text-xl leading-none tracking-[0.06em] text-plexcrew-screen sm:text-3xl sm:tracking-[0.1em]">
-            Mon historique
+            {t(locale, 'history.title')}
           </h1>
         </header>
-        <HistoryLoadMore initialItems={items} initialTotal={total} />
+        <HistoryLoadMore initialItems={items} initialTotal={total} locale={locale} />
       </main>
     </>
   );

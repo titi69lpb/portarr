@@ -14,6 +14,8 @@ import {
   type FileEntry,
 } from '@/lib/file-explorer';
 import { formatFileSize } from '@/lib/file-size-formatter';
+import { dictionaries } from '@/lib/i18n/dictionaries';
+import { t } from '@/lib/i18n/translate';
 
 export const dynamic = 'force-dynamic';
 
@@ -45,8 +47,9 @@ export default async function FilesPage({
     notFound();
   }
 
+  const locale = getLocale(sessionUser, getDb(), headers().get('accept-language'));
   const relativePath = searchParams.path ?? '';
-  const breadcrumb = buildBreadcrumb(relativePath);
+  const breadcrumb = buildBreadcrumb(relativePath, locale);
 
   let entries: FileEntry[] = [];
   let dirNotFound = false;
@@ -65,11 +68,11 @@ export default async function FilesPage({
 
   return (
     <>
-      <AppSidebarServer locale={getLocale(sessionUser, getDb(), headers().get('accept-language'))} />
+      <AppSidebarServer locale={locale} />
       <main className="space-y-6 p-6 ml-16 sm:ml-40 sm:p-8">
         <header className="pc-glass-surface-strong sticky top-0 z-10 -mx-6 -mt-6 flex items-center justify-between gap-3 border-b border-plexcrew-teal/20 px-6 py-4 sm:-mx-8 sm:-mt-8 sm:px-8">
           <h1 className="font-display text-xl leading-none tracking-[0.06em] text-plexcrew-screen sm:text-3xl sm:tracking-[0.1em]">
-            Fichiers
+            {t(locale, 'files.title')}
           </h1>
         </header>
 
@@ -88,26 +91,24 @@ export default async function FilesPage({
         </nav>
 
         {unavailable ? (
-          <p className="text-sm text-plexcrew-ash">
-            Stockage temporairement indisponible. Réessayez dans quelques instants.
-          </p>
+          <p className="text-sm text-plexcrew-ash">{t(locale, 'files.unavailable')}</p>
         ) : dirNotFound ? (
           <p className="text-sm text-plexcrew-ash">
-            Dossier introuvable.{' '}
+            {t(locale, 'files.notFound')}{' '}
             <Link href="/files" className="text-plexcrew-teal hover:underline">
-              Retour à la racine
+              {t(locale, 'files.backToRoot')}
             </Link>
           </p>
         ) : entries.length === 0 ? (
-          <p className="text-sm text-plexcrew-ash">Dossier vide.</p>
+          <p className="text-sm text-plexcrew-ash">{t(locale, 'files.empty')}</p>
         ) : (
           <div className="pc-glass-surface overflow-x-auto rounded-lg p-4 ring-1 ring-plexcrew-teal/20">
             <table className="w-full text-left text-sm">
               <thead>
                 <tr className="border-b border-plexcrew-teal/20 text-xs font-semibold uppercase tracking-wider text-plexcrew-ash">
-                  <th className="py-2 pr-4">Nom</th>
-                  <th className="py-2 pr-4">Taille</th>
-                  <th className="py-2">Modifié le</th>
+                  <th className="py-2 pr-4">{t(locale, 'files.name')}</th>
+                  <th className="py-2 pr-4">{t(locale, 'files.size')}</th>
+                  <th className="py-2">{t(locale, 'files.modified')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -132,10 +133,10 @@ export default async function FilesPage({
                       )}
                     </td>
                     <td className="py-2 pr-4 font-mono text-xs text-plexcrew-ash">
-                      {entry.isDirectory ? '—' : formatFileSize(entry.sizeBytes)}
+                      {entry.isDirectory ? '—' : formatFileSize(entry.sizeBytes, locale)}
                     </td>
                     <td className="py-2 font-mono text-xs text-plexcrew-ash">
-                      {new Date(entry.modifiedAt).toLocaleString('fr-FR')}
+                      {new Date(entry.modifiedAt).toLocaleString(dictionaries[locale].files.localeCode)}
                     </td>
                   </tr>
                 ))}

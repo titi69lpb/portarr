@@ -2,8 +2,10 @@
 
 import { useState } from 'react';
 import type { RecentHistoryItem } from '@/lib/activity/tautulli-source';
+import { dictionaries, type Locale } from '@/lib/i18n/dictionaries';
+import { t } from '@/lib/i18n/translate';
 
-function HistoryTile({ item, index }: { item: RecentHistoryItem; index: number }) {
+function HistoryTile({ item, index, localeCode }: { item: RecentHistoryItem; index: number; localeCode: string }) {
   return (
     <div key={`${item.thumbPath}-${index}`} className="w-full">
       <img
@@ -12,7 +14,7 @@ function HistoryTile({ item, index }: { item: RecentHistoryItem; index: number }
         className="aspect-[2/3] w-full rounded-md object-cover ring-1 ring-plexcrew-teal/20"
       />
       <p className="mt-1.5 truncate text-xs text-plexcrew-screen/80">{item.title}</p>
-      <p className="text-[11px] text-plexcrew-ash">{new Date(item.watchedAt).toLocaleDateString('fr-FR')}</p>
+      <p className="text-[11px] text-plexcrew-ash">{new Date(item.watchedAt).toLocaleDateString(localeCode)}</p>
     </div>
   );
 }
@@ -20,9 +22,11 @@ function HistoryTile({ item, index }: { item: RecentHistoryItem; index: number }
 export function HistoryLoadMore({
   initialItems,
   initialTotal,
+  locale,
 }: {
   initialItems: RecentHistoryItem[];
   initialTotal: number;
+  locale: Locale;
 }) {
   const [items, setItems] = useState(initialItems);
   const [loading, setLoading] = useState(false);
@@ -46,14 +50,16 @@ export function HistoryLoadMore({
   }
 
   if (items.length === 0) {
-    return <p className="text-sm text-plexcrew-ash">Aucun historique de visionnage.</p>;
+    return <p className="text-sm text-plexcrew-ash">{t(locale, 'history.empty')}</p>;
   }
+
+  const localeCode = dictionaries[locale].history.localeCode;
 
   return (
     <>
       <div className="grid grid-cols-3 gap-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8">
         {items.map((item, i) => (
-          <HistoryTile key={`${item.thumbPath}-${i}`} item={item} index={i} />
+          <HistoryTile key={`${item.thumbPath}-${i}`} item={item} index={i} localeCode={localeCode} />
         ))}
       </div>
       {hasMore && (
@@ -63,9 +69,9 @@ export function HistoryLoadMore({
             disabled={loading}
             className="rounded-full bg-plexcrew-teal/20 px-5 py-2 text-sm font-medium text-plexcrew-screen ring-1 ring-plexcrew-teal/40 transition-colors hover:bg-plexcrew-teal/30 disabled:opacity-60"
           >
-            {loading ? 'Chargement…' : 'Charger plus'}
+            {loading ? t(locale, 'history.loading') : t(locale, 'history.loadMore')}
           </button>
-          {error && <p className="text-xs text-red-400">Échec du chargement, réessayez.</p>}
+          {error && <p className="text-xs text-red-400">{t(locale, 'history.error')}</p>}
         </div>
       )}
     </>

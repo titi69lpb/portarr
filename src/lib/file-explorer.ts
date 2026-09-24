@@ -1,5 +1,7 @@
 import { realpath as realpathAsync, readdir as readdirAsync, stat as statAsync } from 'fs/promises';
 import { join, relative, sep } from 'path';
+import { type Locale, DEFAULT_LOCALE } from './i18n/dictionaries';
+import { t } from './i18n/translate';
 
 export class UnsafePathError extends Error {}
 
@@ -137,9 +139,13 @@ export interface BreadcrumbItem {
   path: string;
 }
 
-export function buildBreadcrumb(relativePath: string): BreadcrumbItem[] {
+// locale defaults to 'fr' so existing callers/tests that don't care about
+// i18n keep working unchanged — the /files page passes the viewer's actual
+// locale so the root crumb matches the page title (files.title) instead of
+// always reading "Fichiers" for English viewers.
+export function buildBreadcrumb(relativePath: string, locale: Locale = DEFAULT_LOCALE): BreadcrumbItem[] {
   const cleaned = (relativePath ?? '').replace(/^\/+|\/+$/g, '');
-  const items: BreadcrumbItem[] = [{ name: 'Fichiers', path: '' }];
+  const items: BreadcrumbItem[] = [{ name: t(locale, 'files.title'), path: '' }];
   if (!cleaned) return items;
 
   let acc = '';
@@ -149,3 +155,4 @@ export function buildBreadcrumb(relativePath: string): BreadcrumbItem[] {
   }
   return items;
 }
+
