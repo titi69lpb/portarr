@@ -23,4 +23,13 @@ describe('t', () => {
     expect(t('fr', 'nope.missing')).toBe('nope.missing');
     spy.mockRestore();
   });
+
+  it('treats replacement patterns and regex chars literally', async () => {
+    const { dictionaries } = await import('../../../src/lib/i18n/dictionaries');
+    const c = dictionaries.fr.common as Record<string, string>;
+    c.tmpLit = 'A {{x}} B {{a.b}} C';
+    expect(t('fr', 'common.tmpLit', { x: "$& $' $$ $1", 'a.b': 'ok' })).toBe("A $& $' $$ $1 B ok C");
+    expect(t('fr', 'common.tmpLit', { x: '1', 'a.b': '2', 'a+b': '3' })).toBe('A 1 B 2 C');
+    delete c.tmpLit;
+  });
 });

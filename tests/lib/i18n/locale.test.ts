@@ -1,7 +1,7 @@
 import { describe, it, expect, afterEach } from 'vitest';
 import { getDb, resetDbForTests } from '../../../src/lib/db';
 import { setSetting } from '../../../src/lib/settings';
-import { getLocale, getLocaleByEmail, getUserPersonalLocale, pickBrowserLocale } from '../../../src/lib/i18n/locale';
+import { getLocale, getLocaleByEmail, getLocaleByIdentity, getUserPersonalLocale, pickBrowserLocale } from '../../../src/lib/i18n/locale';
 import { setUserLocale } from '../../../src/lib/user-locale';
 import type { SessionUser } from '../../../src/lib/session';
 
@@ -63,5 +63,31 @@ describe('getLocale', () => {
     setUserLocale(db, 'plex', 'u1', 'fr');
     expect(getLocaleByEmail('a@example.com', db)).toBe('fr');
     expect(getLocaleByEmail('unknown@example.com', db)).toBe('en');
+  });
+
+  it('getLocaleByEmail is case-insensitive', () => {
+    const db = seed();
+    setSetting(db, 'default_locale', 'fr');
+    setUserLocale(db, 'plex', 'u1', 'en');
+    expect(getLocaleByEmail('A@Example.COM', db)).toBe('en');
+  });
+
+  it('getLocaleByEmail picks the most recent login among providers and ignores null locales', () => {
+    const db = seed();
+    db.prepare("INSERT INTO users (provider, external_id, email, username, last_login) VALUES ('jellyfin','j1','a@example.com','a','z')").run();
+    setUserLocale(db, 'plex', 'u1', 'fr');
+    // most recent login (jellyfin, 'z') has no personal locale: fall through to plex
+    expect(getLocaleByEmail('a@example.com', db)).toBe('fr');
+    setUserLocale(db, 'jellyfin', 'j1', 'en');
+    expect(getLocaleByEmail('a@example.com', db)).toBe('en');
+  });
+
+  it('getLocaleByIdentity resolves by provider and external id, then default', () => {
+    const db = seed();
+    setSetting(db, 'default_locale', 'en');
+    expect(getLocaleByIdentity('plex', 'u1', db)).toBe('en');
+    setUserLocale(db, 'plex', 'u1', 'fr');
+    expect(getLocaleByIdentity('plex', 'u1', db)).toBe('fr');
+    expect(getLocaleByIdentity('plex', 'nobody', db)).toBe('en');
   });
 });

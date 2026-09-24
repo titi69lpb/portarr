@@ -28,13 +28,28 @@ export function getLocale(
   return getUserPersonalLocale(sessionUser, db) ?? getInstanceLocale(db, acceptLanguage);
 }
 
-// Outbound mail recipients are only known by email, never by a session.
+// Mailing-list rows are only known by email, never by a session. The most
+// recent login with a personal locale wins when the email spans providers.
 export function getLocaleByEmail(email: string, db: Database.Database): Locale {
-  const row = db.prepare('SELECT locale FROM users WHERE email = ?').get(email) as
-    | { locale: string | null }
-    | undefined;
+  const row = db
+    .prepare('SELECT locale FROM users WHERE lower(email) = lower(?) AND locale IS NOT NULL ORDER BY last_login DESC LIMIT 1')
+    .get(email) as { locale: string | null } | undefined;
   if (row && isLocale(row.locale)) return row.locale;
   return getInstanceLocale(db);
+}
+
+// Preferred for outbound mail when the member identity is known.
+export function getLocaleByIdentity(
+  provider: string,
+  externalId: string,
+  db: Database.Database,
+  acceptLanguage?: string | null
+): Locale {
+  const row = db
+    .prepare('SELECT locale FROM users WHERE provider = ? AND external_id = ?')
+    .get(provider, externalId) as { locale: string | null } | undefined;
+  if (row && isLocale(row.locale)) return row.locale;
+  return getInstanceLocale(db, acceptLanguage);
 }
 
 export function getInstanceLocale(db: Database.Database, acceptLanguage?: string | null): Locale {

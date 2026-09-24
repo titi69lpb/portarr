@@ -25,7 +25,7 @@ export function t(locale: Locale, key: string, vars?: Record<string, string | nu
 
   if (vars) {
     for (const [name, replacement] of Object.entries(vars)) {
-      result = result.replace(new RegExp(`{{${name}}}`, 'g'), String(replacement));
+      result = result.split(`{{${name}}}`).join(String(replacement));
     }
   }
 

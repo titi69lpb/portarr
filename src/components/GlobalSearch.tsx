@@ -84,7 +84,7 @@ export function GlobalSearch({ locale }: { locale: Locale }) {
       <button
         onClick={() => setOpen(true)}
         className="flex items-center gap-2 rounded-lg px-2 py-2 text-plexcrew-screen transition hover:bg-plexcrew-teal/10 hover:text-plexcrew-amber sm:w-full"
-        aria-label="Rechercher"
+        aria-label={t(locale, 'search.button')}
       >
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="h-5 w-5 flex-none">
           <circle cx="11" cy="11" r="7" />
