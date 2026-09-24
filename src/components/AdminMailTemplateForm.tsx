@@ -1,8 +1,10 @@
 'use client';
 
 import { useState, type FormEvent } from 'react';
+import type { Locale } from '@/lib/i18n/dictionaries';
+import { t } from '@/lib/i18n/translate';
 
-export function AdminMailTemplateForm() {
+export function AdminMailTemplateForm({ locale }: { locale: Locale }) {
   const [name, setName] = useState('');
   const [subject, setSubject] = useState('');
   const [bodyMarkdown, setBodyMarkdown] = useState('');
@@ -21,12 +23,12 @@ export function AdminMailTemplateForm() {
         body: JSON.stringify({ name, subject, bodyMarkdown }),
       });
       if (!res.ok) {
-        setError('Échec de la création du modèle');
+        setError(t(locale, 'admin.createTemplateError'));
         return;
       }
       window.location.reload();
     } catch {
-      setError('Échec de la création du modèle');
+      setError(t(locale, 'admin.createTemplateError'));
     } finally {
       setSubmitting(false);
     }
@@ -40,19 +42,19 @@ export function AdminMailTemplateForm() {
       <input
         value={name}
         onChange={(e) => setName(e.target.value)}
-        placeholder="Nom du modèle"
+        placeholder={t(locale, 'admin.templateNamePlaceholder')}
         className="w-full rounded-md border border-plexcrew-teal/30 bg-plexcrew-ink p-3 text-sm text-plexcrew-screen placeholder:text-plexcrew-ash focus:border-plexcrew-teal"
       />
       <input
         value={subject}
         onChange={(e) => setSubject(e.target.value)}
-        placeholder="Sujet"
+        placeholder={t(locale, 'admin.subjectPlaceholder')}
         className="w-full rounded-md border border-plexcrew-teal/30 bg-plexcrew-ink p-3 text-sm text-plexcrew-screen placeholder:text-plexcrew-ash focus:border-plexcrew-teal"
       />
       <textarea
         value={bodyMarkdown}
         onChange={(e) => setBodyMarkdown(e.target.value)}
-        placeholder="Corps (Markdown)"
+        placeholder={t(locale, 'admin.bodyPlaceholder')}
         rows={4}
         className="w-full rounded-md border border-plexcrew-teal/30 bg-plexcrew-ink p-3 font-mono text-sm leading-relaxed text-plexcrew-screen placeholder:text-plexcrew-ash focus:border-plexcrew-teal"
       />
@@ -62,7 +64,7 @@ export function AdminMailTemplateForm() {
         disabled={submitting}
         className="rounded-md bg-plexcrew-amber px-4 py-2 text-sm font-semibold text-plexcrew-ink transition-colors hover:bg-plexcrew-amber/90 disabled:opacity-50"
       >
-        Créer le modèle
+        {t(locale, 'admin.createTemplate')}
       </button>
     </form>
   );

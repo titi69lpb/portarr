@@ -1,7 +1,9 @@
 import type { VolumeStats } from '@/lib/storage';
+import { dictionaries, type Locale } from '@/lib/i18n/dictionaries';
+import { t } from '@/lib/i18n/translate';
 
-function formatGo(bytes: number): string {
-  return Math.round(bytes / 1024 ** 3).toLocaleString('fr-FR');
+function formatGo(bytes: number, localeCode: string): string {
+  return Math.round(bytes / 1024 ** 3).toLocaleString(localeCode);
 }
 
 function DriveIcon() {
@@ -23,10 +25,12 @@ export function DriveBar({
   totalBytes,
   freeBytes,
   emphasized = false,
-}: VolumeStats & { emphasized?: boolean }) {
+  locale,
+}: VolumeStats & { emphasized?: boolean; locale: Locale }) {
   const usedBytes = Math.max(0, totalBytes - freeBytes);
   const usedPercent = totalBytes > 0 ? Math.min(100, (usedBytes / totalBytes) * 100) : 0;
   const isLow = totalBytes > 0 && freeBytes / totalBytes < 0.1;
+  const localeCode = dictionaries[locale].admin.localeCode;
 
   return (
     <div
@@ -47,13 +51,12 @@ export function DriveBar({
         />
       </div>
       <p className={`mt-1.5 text-plexcrew-ash ${emphasized ? 'text-sm' : 'text-xs'}`}>
-        {totalBytes > 0 ? (
-          <>
-            {formatGo(freeBytes)} Go libres sur {formatGo(totalBytes)} Go
-          </>
-        ) : (
-          'Indisponible'
-        )}
+        {totalBytes > 0
+          ? t(locale, 'admin.storageFreeOf', {
+              free: formatGo(freeBytes, localeCode),
+              total: formatGo(totalBytes, localeCode),
+            })
+          : t(locale, 'admin.storageUnavailable')}
       </p>
     </div>
   );
@@ -62,16 +65,23 @@ export function DriveBar({
 export function AdminStorageBars({
   combined,
   volumes,
+  locale,
 }: {
   combined: VolumeStats;
   volumes: VolumeStats[];
+  locale: Locale;
 }) {
   return (
     <div className="space-y-3">
-      <DriveBar {...combined} name="Bibliothèques (Cube-SYNO + TFS-SYNO)" emphasized />
+      <DriveBar
+        {...combined}
+        name={t(locale, 'admin.storageLibraries', { names: 'Cube-SYNO + TFS-SYNO' })}
+        emphasized
+        locale={locale}
+      />
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         {volumes.map((v) => (
-          <DriveBar key={v.name} {...v} />
+          <DriveBar key={v.name} {...v} locale={locale} />
         ))}
       </div>
     </div>

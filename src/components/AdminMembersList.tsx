@@ -1,25 +1,29 @@
 import type { MemberOverview } from '@/lib/members';
 import { providerLabel } from '@/lib/media/labels';
+import { dictionaries, type Locale } from '@/lib/i18n/dictionaries';
+import { t } from '@/lib/i18n/translate';
 
-function formatDate(iso: string | null): string {
+function formatDate(iso: string | null, localeCode: string): string {
   if (!iso) return '—';
-  return new Date(iso).toLocaleString('fr-FR');
+  return new Date(iso).toLocaleString(localeCode);
 }
 
-export function AdminMembersList({ members }: { members: MemberOverview[] }) {
+export function AdminMembersList({ members, locale }: { members: MemberOverview[]; locale: Locale }) {
   if (members.length === 0) {
-    return <p className="text-sm text-plexcrew-ash">Personne ne s'est encore connecté au portail.</p>;
+    return <p className="text-sm text-plexcrew-ash">{t(locale, 'admin.noMembers')}</p>;
   }
+
+  const localeCode = dictionaries[locale].admin.localeCode;
 
   return (
     <div className="pc-glass-surface overflow-x-auto rounded-lg p-4 ring-1 ring-plexcrew-teal/20">
       <table className="w-full text-left text-sm">
         <thead>
           <tr className="border-b border-plexcrew-teal/20 text-xs font-semibold uppercase tracking-wider text-plexcrew-ash">
-            <th className="py-2 pr-4">Membre</th>
-            <th className="py-2 pr-4">Dernière connexion portail</th>
-            <th className="py-2 pr-4">Dernière activité</th>
-            <th className="py-2">Newsletter</th>
+            <th className="py-2 pr-4">{t(locale, 'admin.memberCol')}</th>
+            <th className="py-2 pr-4">{t(locale, 'admin.portalLastLoginCol')}</th>
+            <th className="py-2 pr-4">{t(locale, 'admin.tautulliLastSeenCol')}</th>
+            <th className="py-2">{t(locale, 'admin.newsletterCol')}</th>
           </tr>
         </thead>
         <tbody>
@@ -33,16 +37,16 @@ export function AdminMembersList({ members }: { members: MemberOverview[] }) {
                 <span className="ml-2 text-xs text-plexcrew-ash">{m.email}</span>
               </td>
               <td className="py-2 pr-4 font-mono text-xs text-plexcrew-ash">
-                {formatDate(m.portalLastLogin)}
+                {formatDate(m.portalLastLogin, localeCode)}
               </td>
               <td className="py-2 pr-4 font-mono text-xs text-plexcrew-ash">
-                {formatDate(m.lastSeen)}
+                {formatDate(m.lastSeen, localeCode)}
               </td>
               <td className="py-2 text-xs">
                 {m.newsletterOptedIn ? (
-                  <span className="text-plexcrew-teal">Abonné</span>
+                  <span className="text-plexcrew-teal">{t(locale, 'admin.subscribed')}</span>
                 ) : (
-                  <span className="text-plexcrew-ash">Désabonné</span>
+                  <span className="text-plexcrew-ash">{t(locale, 'admin.unsubscribed')}</span>
                 )}
               </td>
             </tr>

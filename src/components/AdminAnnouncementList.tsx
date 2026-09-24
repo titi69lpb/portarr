@@ -2,8 +2,16 @@
 
 import { useState } from 'react';
 import type { Announcement } from '@/lib/announcements';
+import type { Locale } from '@/lib/i18n/dictionaries';
+import { t } from '@/lib/i18n/translate';
 
-export function AdminAnnouncementList({ announcements }: { announcements: Announcement[] }) {
+export function AdminAnnouncementList({
+  announcements,
+  locale,
+}: {
+  announcements: Announcement[];
+  locale: Locale;
+}) {
   const [error, setError] = useState<string | null>(null);
 
   async function activate(id: number) {
@@ -14,12 +22,12 @@ export function AdminAnnouncementList({ announcements }: { announcements: Announ
         body: JSON.stringify({ active: true }),
       });
       if (!res.ok) {
-        setError("Échec de l'activation de l'annonce");
+        setError(t(locale, 'admin.activateAnnouncementError'));
         return;
       }
       window.location.reload();
     } catch {
-      setError("Échec de l'activation de l'annonce");
+      setError(t(locale, 'admin.activateAnnouncementError'));
     }
   }
 
@@ -31,12 +39,12 @@ export function AdminAnnouncementList({ announcements }: { announcements: Announ
         body: JSON.stringify({ active: false }),
       });
       if (!res.ok) {
-        setError("Échec de la désactivation de l'annonce");
+        setError(t(locale, 'admin.deactivateAnnouncementError'));
         return;
       }
       window.location.reload();
     } catch {
-      setError("Échec de la désactivation de l'annonce");
+      setError(t(locale, 'admin.deactivateAnnouncementError'));
     }
   }
 
@@ -44,17 +52,17 @@ export function AdminAnnouncementList({ announcements }: { announcements: Announ
     try {
       const res = await fetch(`/api/admin/announcements/${id}`, { method: 'DELETE' });
       if (!res.ok) {
-        setError("Échec de la suppression de l'annonce");
+        setError(t(locale, 'admin.deleteAnnouncementError'));
         return;
       }
       window.location.reload();
     } catch {
-      setError("Échec de la suppression de l'annonce");
+      setError(t(locale, 'admin.deleteAnnouncementError'));
     }
   }
 
   if (announcements.length === 0) {
-    return <p className="text-sm text-plexcrew-ash">Aucune annonce pour le moment.</p>;
+    return <p className="text-sm text-plexcrew-ash">{t(locale, 'admin.noAnnouncementsYet')}</p>;
   }
 
   return (
@@ -74,7 +82,7 @@ export function AdminAnnouncementList({ announcements }: { announcements: Announ
                   {/* One lit bulb — the marquee motif, turned down for the workspace. */}
                   <span className="pc-bulb-sm" aria-hidden="true" />
                   <span className="flex-none text-xs font-semibold uppercase tracking-wider text-plexcrew-amber">
-                    Active
+                    {t(locale, 'admin.active')}
                   </span>
                 </>
               )}
@@ -88,7 +96,7 @@ export function AdminAnnouncementList({ announcements }: { announcements: Announ
                   onClick={() => activate(a.id)}
                   className="rounded font-medium text-plexcrew-ash transition-colors hover:text-plexcrew-screen"
                 >
-                  Activer
+                  {t(locale, 'admin.activate')}
                 </button>
               )}
               {a.active && (
@@ -96,18 +104,18 @@ export function AdminAnnouncementList({ announcements }: { announcements: Announ
                   onClick={() => deactivate(a.id)}
                   className="rounded font-medium text-plexcrew-ash transition-colors hover:text-plexcrew-screen"
                 >
-                  Désactiver
+                  {t(locale, 'admin.deactivate')}
                 </button>
               )}
               <button
                 onClick={() => {
-                  if (window.confirm('Supprimer cette annonce ? Cette action est irréversible.')) {
+                  if (window.confirm(t(locale, 'admin.confirmDeleteAnnouncement'))) {
                     remove(a.id);
                   }
                 }}
                 className="rounded font-medium text-red-400 transition-colors hover:text-red-300"
               >
-                Supprimer
+                {t(locale, 'admin.delete')}
               </button>
             </span>
           </li>

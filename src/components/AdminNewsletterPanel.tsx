@@ -1,31 +1,33 @@
 'use client';
 
 import { useState } from 'react';
+import type { Locale } from '@/lib/i18n/dictionaries';
+import { t } from '@/lib/i18n/translate';
 
-export function AdminNewsletterPanel() {
+export function AdminNewsletterPanel({ locale }: { locale: Locale }) {
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   async function sendNow() {
-    if (!window.confirm('Envoyer la newsletter maintenant à tous les abonnés ?')) return;
+    if (!window.confirm(t(locale, 'admin.newsletterSendConfirm'))) return;
     setBusy(true);
     setError(null);
     setMessage(null);
     try {
       const res = await fetch('/api/admin/newsletter/send', { method: 'POST' });
       if (!res.ok) {
-        setError("Echec de l'envoi de la newsletter");
+        setError(t(locale, 'admin.newsletterSendError'));
         return;
       }
       const body = await res.json();
       if (body.skipped) {
-        setMessage('Aucun nouvel ajout dans la fenêtre — rien envoyé.');
+        setMessage(t(locale, 'admin.newsletterSkipped'));
       } else {
-        setMessage(`Envoyée à ${body.sent}/${body.total} destinataires.`);
+        setMessage(t(locale, 'admin.newsletterSent', { sent: body.sent, total: body.total }));
       }
     } catch {
-      setError("Echec de l'envoi de la newsletter");
+      setError(t(locale, 'admin.newsletterSendError'));
     } finally {
       setBusy(false);
     }
@@ -38,7 +40,7 @@ export function AdminNewsletterPanel() {
         disabled={busy}
         className="rounded-md bg-plexcrew-amber px-4 py-2 text-sm font-semibold text-plexcrew-ink transition-colors hover:bg-plexcrew-amber/90 disabled:opacity-50"
       >
-        Envoyer maintenant
+        {t(locale, 'admin.newsletterSendNow')}
       </button>
       {message && <p className="text-sm text-plexcrew-screen">{message}</p>}
       {error && <p className="text-sm text-red-400">{error}</p>}

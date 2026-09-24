@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react';
 import type { MailTemplate } from '@/lib/mail-templates';
 import type { RecipientParams } from '@/lib/mail-recipients';
+import type { Locale } from '@/lib/i18n/dictionaries';
+import { t } from '@/lib/i18n/translate';
 
 type TargetChoice = 'broadcast' | 'activeSince' | 'neverActive' | 'individual';
 
@@ -14,9 +16,11 @@ export interface MemberOption {
 export function AdminMailComposer({
   template,
   members = [],
+  locale,
 }: {
   template: MailTemplate;
   members?: MemberOption[];
+  locale: Locale;
 }) {
   const [targetChoice, setTargetChoice] = useState<TargetChoice>('broadcast');
   const [activeSinceDays, setActiveSinceDays] = useState(30);
@@ -83,14 +87,14 @@ export function AdminMailComposer({
         body: JSON.stringify({ templateId: template.id }),
       });
       if (!res.ok) {
-        setError("Échec de l'envoi du test");
+        setError(t(locale, 'admin.sendTestError'));
         return;
       }
       const body = await res.json();
       setTestedHash(body.hash);
-      setMessage('Test envoyé à votre adresse.');
+      setMessage(t(locale, 'admin.testSentToYou'));
     } catch {
-      setError("Échec de l'envoi du test");
+      setError(t(locale, 'admin.sendTestError'));
     } finally {
       setBusy(false);
     }
@@ -99,20 +103,18 @@ export function AdminMailComposer({
   async function sendMass() {
     if (!testedHash) return;
     if (targetChoice === 'individual' && selectedEmails.size === 0) {
-      setError('Sélectionnez au moins un membre.');
+      setError(t(locale, 'admin.selectAtLeastOne'));
       return;
     }
     const targetLabel =
       targetChoice === 'broadcast'
-        ? 'tout le monde'
+        ? t(locale, 'admin.targetEveryone')
         : targetChoice === 'activeSince'
-          ? `les utilisateurs actifs depuis ${activeSinceDays} jours`
+          ? t(locale, 'admin.targetActiveSinceDays', { days: activeSinceDays })
           : targetChoice === 'neverActive'
-            ? 'les utilisateurs jamais actifs'
-            : `${selectedEmails.size} membre(s) sélectionné(s)`;
-    if (
-      !window.confirm(`Envoyer cet email à ${targetLabel} ? Cette action ne peut pas être annulée.`)
-    ) {
+            ? t(locale, 'admin.targetNeverActiveLower')
+            : t(locale, 'admin.targetSelectedCount', { count: selectedEmails.size });
+    if (!window.confirm(t(locale, 'admin.sendConfirm', { target: targetLabel }))) {
       return;
     }
     setBusy(true);
@@ -125,15 +127,15 @@ export function AdminMailComposer({
         body: JSON.stringify({ templateId: template.id, testedHash, target: buildTarget() }),
       });
       if (!res.ok) {
-        setError("Le contenu a changé depuis le test, ou l'envoi a échoué. Retestez.");
+        setError(t(locale, 'admin.sendStaleError'));
         setTestedHash(null);
         return;
       }
       const body = await res.json();
-      setMessage(`Envoyé à ${body.sent}/${body.total} destinataires.`);
+      setMessage(t(locale, 'admin.sendResult', { sent: body.sent, total: body.total }));
       setTestedHash(null);
     } catch {
-      setError("Échec de l'envoi");
+      setError(t(locale, 'admin.sendError'));
     } finally {
       setBusy(false);
     }
@@ -153,10 +155,10 @@ export function AdminMailComposer({
           }}
           className="rounded-md border border-plexcrew-teal/30 bg-plexcrew-ink p-2 text-plexcrew-screen focus:border-plexcrew-teal"
         >
-          <option value="broadcast">Tout le monde</option>
-          <option value="activeSince">Actifs depuis N jours</option>
-          <option value="neverActive">Jamais actifs</option>
-          <option value="individual">Sélection individuelle</option>
+          <option value="broadcast">{t(locale, 'admin.targetBroadcast')}</option>
+          <option value="activeSince">{t(locale, 'admin.targetActiveSince')}</option>
+          <option value="neverActive">{t(locale, 'admin.targetNeverActive')}</option>
+          <option value="individual">{t(locale, 'admin.targetIndividual')}</option>
         </select>
         {targetChoice === 'activeSince' && (
           <input
@@ -173,17 +175,15 @@ export function AdminMailComposer({
             <input
               value={memberFilter}
               onChange={(e) => setMemberFilter(e.target.value)}
-              placeholder="Filtrer par nom ou email…"
+              placeholder={t(locale, 'admin.filterMembersPlaceholder')}
               className="flex-1 rounded-md border border-plexcrew-teal/30 bg-plexcrew-ink p-2 text-sm text-plexcrew-screen placeholder:text-plexcrew-ash focus:border-plexcrew-teal"
             />
             <span className="whitespace-nowrap text-xs text-plexcrew-ash">
-              {selectedEmails.size} sélectionné(s)
+              {t(locale, 'admin.selectedCount', { count: selectedEmails.size })}
             </span>
           </div>
           {members.length === 0 ? (
-            <p className="text-sm text-plexcrew-ash">
-              Aucun membre connu. Synchronisez les utilisateurs Plex depuis la section Membres.
-            </p>
+            <p className="text-sm text-plexcrew-ash">{t(locale, 'admin.noKnownMembers')}</p>
           ) : (
             <ul className="max-h-48 space-y-1 overflow-y-auto">
               {filteredMembers.map((m) => (
@@ -211,7 +211,7 @@ export function AdminMailComposer({
           disabled={busy}
           className="rounded-md border border-plexcrew-teal/30 px-4 py-2 text-sm font-medium text-plexcrew-screen transition-colors hover:border-plexcrew-teal disabled:opacity-50"
         >
-          Envoyer un test
+          {t(locale, 'admin.sendTest')}
         </button>
         <button
           onClick={sendMass}
@@ -219,9 +219,9 @@ export function AdminMailComposer({
             busy || !testedHash || (targetChoice === 'individual' && selectedEmails.size === 0)
           }
           className="rounded-md bg-plexcrew-amber px-4 py-2 text-sm font-semibold text-plexcrew-ink transition-colors hover:bg-plexcrew-amber/90 disabled:opacity-50"
-          title={testedHash ? undefined : 'Testez le contenu actuel avant envoi'}
+          title={testedHash ? undefined : t(locale, 'admin.testBeforeSend')}
         >
-          Envoyer
+          {t(locale, 'admin.send')}
         </button>
       </div>
       {message && <p className="text-sm text-plexcrew-screen">{message}</p>}

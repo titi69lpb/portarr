@@ -1,8 +1,10 @@
 'use client';
 
 import { useState, type FormEvent } from 'react';
+import type { Locale } from '@/lib/i18n/dictionaries';
+import { t } from '@/lib/i18n/translate';
 
-export function AdminAnnouncementForm() {
+export function AdminAnnouncementForm({ locale }: { locale: Locale }) {
   const [content, setContent] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -19,12 +21,12 @@ export function AdminAnnouncementForm() {
         body: JSON.stringify({ contentMarkdown: content }),
       });
       if (!res.ok) {
-        setError("Échec de la création de l'annonce");
+        setError(t(locale, 'admin.announcementCreateError'));
         return;
       }
       window.location.reload();
     } catch {
-      setError("Échec de la création de l'annonce");
+      setError(t(locale, 'admin.announcementCreateError'));
     } finally {
       setSubmitting(false);
     }
@@ -38,7 +40,7 @@ export function AdminAnnouncementForm() {
       <textarea
         value={content}
         onChange={(e) => setContent(e.target.value)}
-        placeholder="Nouvelle annonce (Markdown)"
+        placeholder={t(locale, 'admin.announcementPlaceholder')}
         rows={4}
         className="w-full rounded-md border border-plexcrew-teal/30 bg-plexcrew-ink p-3 font-mono text-sm leading-relaxed text-plexcrew-screen placeholder:text-plexcrew-ash focus:border-plexcrew-teal"
       />
@@ -48,7 +50,7 @@ export function AdminAnnouncementForm() {
         disabled={submitting}
         className="rounded-md bg-plexcrew-amber px-4 py-2 text-sm font-semibold text-plexcrew-ink transition-colors hover:bg-plexcrew-amber/90 disabled:opacity-50"
       >
-        Publier
+        {t(locale, 'admin.publish')}
       </button>
     </form>
   );
