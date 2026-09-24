@@ -182,7 +182,7 @@ Référence complète avec commentaires : [`.env.example`](.env.example).
 
 ### Langue
 
-Portarr est disponible en français et en anglais. La langue affichée est déterminée dans cet ordre : préférence personnelle du membre (page `/profile`), puis langue par défaut de l'instance (choisie par l'admin dans l'assistant de configuration, où la langue du navigateur est présélectionnée, et modifiable dans les réglages), puis français. La langue du navigateur n'est utilisée qu'à cette présélection : elle ne s'applique pas ensuite à l'exécution. Les installations existantes restent en français tant qu'aucune langue par défaut n'est définie.
+Portarr est disponible en français et en anglais. La langue affichée est déterminée dans cet ordre : préférence personnelle du membre (page `/profile`), puis langue par défaut de l'instance (choisie dans l'assistant de configuration, où la langue du navigateur est présélectionnée, et modifiable dans les réglages d'administration), puis français. La langue du navigateur n'est utilisée qu'à cette présélection : elle ne s'applique pas ensuite à l'exécution. Les installations existantes restent en français tant qu'aucune langue par défaut n'est définie.
 
 ### Jellyfin (optionnel)
 
@@ -441,7 +441,7 @@ Full reference with inline comments: [`.env.example`](.env.example).
 
 ### Language
 
-Portarr is available in French and English. The displayed language is resolved in this order: the member's personal preference (`/profile` page), then the instance default language (admin settings), then the instance default language (chosen by the admin in the setup wizard, where the browser language is preselected, and editable in settings), then French. The browser language is only used to preselect that choice; it is not applied at runtime afterwards. Existing installs stay in French until an instance default is set.
+Portarr is available in French and English. The displayed language is resolved in this order: the member's personal preference (`/profile` page), then the instance default language (chosen in the setup wizard, where the browser language is preselected, and editable in admin settings), then French. The browser language is only used to preselect that choice; it is not applied at runtime afterwards. Existing installs stay in French until an instance default is set.
 
 ### Jellyfin (optional)
 
