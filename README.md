@@ -129,7 +129,7 @@ Des modèles de mail réutilisables, un historique d'envoi, et la newsletter aut
 - **Newsletter** — récap automatique des nouveautés, opt-in/opt-out par utilisateur, archive web publique, déclenchement cron ou manuel.
 - **Notifications de disponibilité** — email automatique quand une demande Overseerr approuvée devient disponible.
 - **Assistant de configuration** — premier lancement guidé (`/setup`) : configurez Plex+Tautulli et/ou Jellyfin, Sonarr/Radarr/Overseerr/SMTP/URL publique depuis le navigateur, sans éditer `.env`. Chaque étape teste la vraie connexion avant d'enregistrer. Modifiable ensuite depuis `/admin/settings` (accès propriétaire).
-- **Langues** — interface en français et en anglais. Chaque membre choisit sa langue sur `/profile`, l'admin fixe la langue par défaut de l'instance dans les réglages, et l'assistant de configuration demande la langue au premier lancement (par défaut, celle du navigateur).
+- **Langues** — interface en français et en anglais. Chaque membre choisit sa langue sur `/profile`, l'admin fixe la langue par défaut de l'instance dans les réglages, et l'assistant de configuration demande la langue au premier lancement (la langue du navigateur est présélectionnée).
 - **Panneau d'administration** — annonces, modèles de mail + historique, vue des membres, synchronisation Plex manuelle, usage du stockage, réglages des services.
 
 ## Stack technique
@@ -182,7 +182,7 @@ Référence complète avec commentaires : [`.env.example`](.env.example).
 
 ### Langue
 
-Portarr est disponible en français et en anglais. La langue affichée est déterminée dans cet ordre : préférence personnelle du membre (page `/profile`), puis langue par défaut de l'instance (réglages d'administration), puis langue du navigateur pour les nouvelles installations (l'assistant de configuration la propose au premier lancement), puis français. Les installations existantes restent en français tant qu'aucune langue par défaut n'est définie.
+Portarr est disponible en français et en anglais. La langue affichée est déterminée dans cet ordre : préférence personnelle du membre (page `/profile`), puis langue par défaut de l'instance (choisie par l'admin dans l'assistant de configuration, où la langue du navigateur est présélectionnée, et modifiable dans les réglages), puis français. La langue du navigateur n'est utilisée qu'à cette présélection : elle ne s'applique pas ensuite à l'exécution. Les installations existantes restent en français tant qu'aucune langue par défaut n'est définie.
 
 ### Jellyfin (optionnel)
 
@@ -388,7 +388,7 @@ Reusable mail templates, a send history, and the automated newsletter, all in on
 - **Newsletter** — automated "what's new" recap, opt-in/opt-out per user, a public web archive, cron-triggered or manual.
 - **Availability notifications** — emails a user automatically when their approved Overseerr request becomes available.
 - **Setup wizard** — a guided first-run flow (`/setup`): configure Plex+Tautulli and/or Jellyfin, Sonarr/Radarr/Overseerr/SMTP/public URL from the browser, no `.env` editing required. Each step tests the real connection before saving. Editable afterward from `/admin/settings` (owner access).
-- **Languages** — French and English interface. Each member picks their own language on `/profile`, the admin sets the instance default in settings, and the setup wizard asks for the language on first run (defaults to the browser language).
+- **Languages** — French and English interface. Each member picks their own language on `/profile`, the admin sets the instance default in settings, and the setup wizard asks for the language on first run (the browser language is preselected).
 - **Admin panel** — announcements, mail templates + history, members view, manual Plex sync, storage usage, service settings.
 
 ## Stack
@@ -441,7 +441,7 @@ Full reference with inline comments: [`.env.example`](.env.example).
 
 ### Language
 
-Portarr is available in French and English. The displayed language is resolved in this order: the member's personal preference (`/profile` page), then the instance default language (admin settings), then the browser language on new installs (the setup wizard offers it on first run), then French. Existing installs stay in French until an instance default is set.
+Portarr is available in French and English. The displayed language is resolved in this order: the member's personal preference (`/profile` page), then the instance default language (admin settings), then the instance default language (chosen by the admin in the setup wizard, where the browser language is preselected, and editable in settings), then French. The browser language is only used to preselect that choice; it is not applied at runtime afterwards. Existing installs stay in French until an instance default is set.
 
 ### Jellyfin (optional)
 
