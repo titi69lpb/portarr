@@ -1,5 +1,16 @@
 <div align="center">
-  <img src="docs/screenshots/logo-full.jpg" alt="Portarr" width="360">
+  <h1>
+    <img src="docs/screenshots/logo-full.jpg" alt="Portarr" width="360"><br>
+    Portarr
+  </h1>
+
+  <p>
+    <a href="https://github.com/titi69lpb/portarr/releases/latest"><img alt="Latest release" src="https://img.shields.io/github/v/release/titi69lpb/portarr?style=for-the-badge"></a>&nbsp;
+    <a href="https://github.com/titi69lpb/portarr/releases"><img alt="Release downloads" src="https://img.shields.io/github/downloads/titi69lpb/portarr/total?style=for-the-badge"></a>&nbsp;
+    <a href="https://github.com/titi69lpb/portarr/actions/workflows/docker-publish.yml"><img alt="Workflow status" src="https://img.shields.io/github/actions/workflow/status/titi69lpb/portarr/docker-publish.yml?style=for-the-badge"></a>&nbsp;
+    <a href="https://github.com/titi69lpb/portarr/blob/main/LICENSE"><img alt="License MIT" src="https://img.shields.io/badge/license-MIT-blue?style=for-the-badge"></a>&nbsp;
+    <a href="https://github.com/titi69lpb/portarr/pkgs/container/portarr"><img alt="GHCR image" src="https://img.shields.io/badge/ghcr.io-titi69lpb%2Fportarr-2ea44f?style=for-the-badge&logo=docker&logoColor=white"></a>
+  </p>
 
   <h3>A lightweight, modern portal for your Plex and Jellyfin community — the friendly Organizr replacement.</h3>
 
@@ -15,6 +26,26 @@
 <a id="français"></a>
 
 <p align="right"><a href="#english">🇬🇧 Read this in English</a></p>
+
+<p align="center">
+Un portail léger et moderne pour votre communauté Plex et Jellyfin, le remplaçant convivial d'Organizr.<br>
+Connexion avec le compte de chaque membre, dashboard personnalisé, demandes, statistiques, mailing et administration, dans une seule interface.
+</p>
+
+## Table des matières
+
+- [Pourquoi Portarr](#pourquoi-portarr)
+- [Captures d'écran](#captures-décran)
+- [Fonctionnalités](#fonctionnalités)
+- [Stack technique](#stack-technique)
+- [Prérequis](#prérequis)
+- [Configuration](#configuration)
+  - [Langue](#langue)
+  - [Jellyfin (optionnel)](#jellyfin-optionnel)
+- [Lancer en local](#lancer-en-local)
+- [Tests & build](#tests--build)
+- [Déploiement (Docker)](#déploiement-docker)
+- [Licence](#licence)
 
 ## Pourquoi Portarr
 
@@ -98,6 +129,7 @@ Des modèles de mail réutilisables, un historique d'envoi, et la newsletter aut
 - **Newsletter** — récap automatique des nouveautés, opt-in/opt-out par utilisateur, archive web publique, déclenchement cron ou manuel.
 - **Notifications de disponibilité** — email automatique quand une demande Overseerr approuvée devient disponible.
 - **Assistant de configuration** — premier lancement guidé (`/setup`) : configurez Plex+Tautulli et/ou Jellyfin, Sonarr/Radarr/Overseerr/SMTP/URL publique depuis le navigateur, sans éditer `.env`. Chaque étape teste la vraie connexion avant d'enregistrer. Modifiable ensuite depuis `/admin/settings` (accès propriétaire).
+- **Langues** — interface en français et en anglais. Chaque membre choisit sa langue sur `/profile`, l'admin fixe la langue par défaut de l'instance dans les réglages, et l'assistant de configuration demande la langue au premier lancement (par défaut, celle du navigateur).
 - **Panneau d'administration** — annonces, modèles de mail + historique, vue des membres, synchronisation Plex manuelle, usage du stockage, réglages des services.
 
 ## Stack technique
@@ -147,6 +179,10 @@ Deux façons de configurer Portarr, au choix :
 | `KUMA_URL`, `KUMA_API_KEY` | optionnel | Un badge de statut "tout est en ligne" / "N services en panne" sur le dashboard, alimenté par [Uptime Kuma](https://github.com/louislam/uptime-kuma) |
 
 Référence complète avec commentaires : [`.env.example`](.env.example).
+
+### Langue
+
+Portarr est disponible en français et en anglais. La langue affichée est déterminée dans cet ordre : préférence personnelle du membre (page `/profile`), puis langue par défaut de l'instance (réglages d'administration), puis langue du navigateur pour les nouvelles installations (l'assistant de configuration la propose au premier lancement), puis français. Les installations existantes restent en français tant qu'aucune langue par défaut n'est définie.
 
 ### Jellyfin (optionnel)
 
@@ -250,6 +286,26 @@ MIT — voir [LICENSE](LICENSE).
 
 <p align="right"><a href="#français">🇫🇷 Lire en français</a></p>
 
+<p align="center">
+A lightweight, modern portal for your Plex and Jellyfin community, the friendly Organizr replacement.<br>
+Per-member sign-in, a personalized dashboard, requests, stats, mailing and administration, all in one interface.
+</p>
+
+## Table of Contents
+
+- [Why Portarr](#why-portarr)
+- [Screenshots](#screenshots)
+- [Features](#features)
+- [Stack](#stack)
+- [Requirements](#requirements)
+- [Configuration](#configuration-1)
+  - [Language](#language)
+  - [Jellyfin (optional)](#jellyfin-optional)
+- [Run locally](#run-locally)
+- [Tests & build](#tests--build-1)
+- [Deploy (Docker)](#deploy-docker)
+- [License](#license)
+
 ## Why Portarr
 
 If you're running Plex for family or friends, you've probably reached for [Organizr](https://organizr.app) to give them one nice landing page instead of five bookmarks. Portarr is what that page can look like when it's built specifically for a Plex community instead of being a generic dashboard: it knows about your library, your requests, and your users — because it talks to Plex, Sonarr, Radarr, Overseerr and Tautulli directly, not through iframes.
@@ -332,6 +388,7 @@ Reusable mail templates, a send history, and the automated newsletter, all in on
 - **Newsletter** — automated "what's new" recap, opt-in/opt-out per user, a public web archive, cron-triggered or manual.
 - **Availability notifications** — emails a user automatically when their approved Overseerr request becomes available.
 - **Setup wizard** — a guided first-run flow (`/setup`): configure Plex+Tautulli and/or Jellyfin, Sonarr/Radarr/Overseerr/SMTP/public URL from the browser, no `.env` editing required. Each step tests the real connection before saving. Editable afterward from `/admin/settings` (owner access).
+- **Languages** — French and English interface. Each member picks their own language on `/profile`, the admin sets the instance default in settings, and the setup wizard asks for the language on first run (defaults to the browser language).
 - **Admin panel** — announcements, mail templates + history, members view, manual Plex sync, storage usage, service settings.
 
 ## Stack
@@ -381,6 +438,10 @@ Two ways to configure Portarr, your choice:
 | `KUMA_URL`, `KUMA_API_KEY` | optional | An "all up" / "N down" status badge on the dashboard, backed by [Uptime Kuma](https://github.com/louislam/uptime-kuma) |
 
 Full reference with inline comments: [`.env.example`](.env.example).
+
+### Language
+
+Portarr is available in French and English. The displayed language is resolved in this order: the member's personal preference (`/profile` page), then the instance default language (admin settings), then the browser language on new installs (the setup wizard offers it on first run), then French. Existing installs stay in French until an instance default is set.
 
 ### Jellyfin (optional)
 
