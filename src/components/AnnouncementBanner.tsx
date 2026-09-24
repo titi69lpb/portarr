@@ -1,14 +1,17 @@
+import type { Locale } from '@/lib/i18n/dictionaries';
+import { t } from '@/lib/i18n/translate';
+
 /**
  * Twelve bulbs on narrow screens, twenty-four once there's room — the odd ones
  * drop out below `sm` so the spacing never collapses on a phone.
  */
 const BULBS = Array.from({ length: 24 }, (_, i) => i);
 
-export function AnnouncementBanner({ html }: { html: string | null }) {
+export function AnnouncementBanner({ html, locale }: { html: string | null; locale: Locale }) {
   if (!html) return null;
   return (
     <section
-      aria-label="Annonce"
+      aria-label={t(locale, 'announcement.ariaLabel')}
       className="pc-glass-surface overflow-hidden rounded-t-2xl rounded-b-md shadow-lg shadow-black/40 ring-1 ring-plexcrew-teal/20"
     >
       {/* The lit top edge of the sign: amber rule, then the bulb strip. */}

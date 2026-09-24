@@ -1,16 +1,7 @@
 import type { GlobalStat, StatCategory } from '@/lib/activity/tautulli-source';
 import { StatCard } from './StatCard';
-
-const CARD_TITLES: Record<StatCategory, string> = {
-  topMovies: 'Most Watched Movies',
-  popularMovies: 'Most Popular Movies',
-  topTv: 'Most Watched Shows',
-  popularTv: 'Most Popular Shows',
-  topLibraries: 'Most Active Libraries',
-  topUsers: 'Most Active Users',
-  topPlatforms: 'Most Active Platforms',
-  mostConcurrent: 'Most Concurrent Streams',
-};
+import type { Locale } from '@/lib/i18n/dictionaries';
+import { t } from '@/lib/i18n/translate';
 
 // 'topPlatforms' and 'mostConcurrent' are deliberately excluded here per user
 // feedback (not useful for a member-facing dashboard) — the data is still
@@ -25,17 +16,28 @@ const CARD_ORDER: StatCategory[] = [
   'topUsers',
 ];
 
-export function StatsGlobal({ extended }: { extended: Record<StatCategory, GlobalStat[]> }) {
+export function StatsGlobal({
+  extended,
+  locale,
+}: {
+  extended: Record<StatCategory, GlobalStat[]>;
+  locale: Locale;
+}) {
   return (
     <section>
       <div className="flex items-center gap-2">
         <span aria-hidden="true" className="h-6 w-1.5 flex-none rounded-full bg-plexcrew-teal" />
-        <h2 className="pc-eyebrow">Box Office</h2>
+        <h2 className="pc-eyebrow">{t(locale, 'statsGlobal.title')}</h2>
       </div>
       <div className="pc-rule" />
       <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {CARD_ORDER.map((category) => (
-          <StatCard key={category} title={CARD_TITLES[category]} items={extended[category]} />
+          <StatCard
+            key={category}
+            title={t(locale, `statsGlobal.cardTitles.${category}`)}
+            items={extended[category]}
+            locale={locale}
+          />
         ))}
       </div>
     </section>

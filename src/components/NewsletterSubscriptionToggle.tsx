@@ -1,8 +1,10 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import type { Locale } from '@/lib/i18n/dictionaries';
+import { t } from '@/lib/i18n/translate';
 
-export function NewsletterSubscriptionToggle() {
+export function NewsletterSubscriptionToggle({ locale }: { locale: Locale }) {
   const [subscribed, setSubscribed] = useState<boolean | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -44,9 +46,9 @@ export function NewsletterSubscriptionToggle() {
       onClick={toggle}
       disabled={busy}
       className="rounded text-sm font-medium text-plexcrew-ash transition-colors hover:text-plexcrew-screen disabled:opacity-50"
-      title={subscribed ? 'Se désabonner de la newsletter' : "S'abonner à la newsletter"}
+      title={subscribed ? t(locale, 'newsletter.unsubscribeTitle') : t(locale, 'newsletter.subscribeTitle')}
     >
-      {subscribed ? 'Newsletter : abonné' : 'Newsletter : désabonné'}
+      {subscribed ? t(locale, 'newsletter.subscribed') : t(locale, 'newsletter.unsubscribed')}
     </button>
   );
 }

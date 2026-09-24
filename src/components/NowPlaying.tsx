@@ -2,12 +2,14 @@
 
 import type { ActiveSession } from '@/lib/activity/tautulli-source';
 import { formatTimeLeft, calculateProgress } from '@/lib/now-playing-format';
+import type { Locale } from '@/lib/i18n/dictionaries';
+import { t } from '@/lib/i18n/translate';
 
 function formatBandwidth(kbps: number): string {
   return `${(kbps / 1000).toFixed(1)} Mbps`;
 }
 
-function SessionCard({ session }: { session: ActiveSession }) {
+function SessionCard({ session, locale }: { session: ActiveSession; locale: Locale }) {
   const progress = calculateProgress(session.viewOffsetMs, session.durationMs);
   const isPaused = session.state === 'paused';
   const posterUrl = `/api/newsletter/poster?path=${encodeURIComponent(session.posterPath)}`;
@@ -53,7 +55,7 @@ function SessionCard({ session }: { session: ActiveSession }) {
               {formatBandwidth(session.bandwidthKbps)}
             </span>
             <span className="text-[12px] font-bold leading-none text-plexcrew-screen">
-              {formatTimeLeft(session.viewOffsetMs, session.durationMs)}
+              {formatTimeLeft(session.viewOffsetMs, session.durationMs, locale)}
             </span>
           </div>
         </div>
@@ -72,20 +74,20 @@ function SessionCard({ session }: { session: ActiveSession }) {
   );
 }
 
-export function NowPlaying({ sessions }: { sessions: ActiveSession[] }) {
+export function NowPlaying({ sessions, locale }: { sessions: ActiveSession[]; locale: Locale }) {
   return (
     <section>
       <div className="flex items-center gap-2">
         <span aria-hidden="true" className="h-6 w-1.5 flex-none rounded-full bg-plexcrew-amber" />
-        <h2 className="pc-eyebrow">Now Playing</h2>
+        <h2 className="pc-eyebrow">{t(locale, 'nowPlaying.title')}</h2>
       </div>
       <div className="pc-rule" />
       {sessions.length === 0 ? (
-        <p className="mt-5 text-sm text-plexcrew-ash">Personne ne regarde quelque chose en ce moment.</p>
+        <p className="mt-5 text-sm text-plexcrew-ash">{t(locale, 'nowPlaying.empty')}</p>
       ) : (
         <div className="mt-5 space-y-3">
           {sessions.map((session, i) => (
-            <SessionCard key={`${session.user}-${session.title}-${i}`} session={session} />
+            <SessionCard key={`${session.user}-${session.title}-${i}`} session={session} locale={locale} />
           ))}
         </div>
       )}

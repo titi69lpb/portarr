@@ -1,4 +1,6 @@
 import type { GlobalStat } from '@/lib/activity/tautulli-source';
+import type { Locale } from '@/lib/i18n/dictionaries';
+import { t } from '@/lib/i18n/translate';
 
 const RANK_COLORS = ['text-plexcrew-amber', 'text-plexcrew-screen', 'text-plexcrew-ash'];
 
@@ -47,14 +49,22 @@ function StatRow({ item, rank }: { item: GlobalStat; rank: number }) {
   );
 }
 
-export function StatCard({ title, items }: { title: string; items: GlobalStat[] }) {
+export function StatCard({
+  title,
+  items,
+  locale,
+}: {
+  title: string;
+  items: GlobalStat[];
+  locale: Locale;
+}) {
   return (
     <div className="rounded-2xl border border-plexcrew-teal/20 bg-plexcrew-charcoal/40 p-4 backdrop-blur-md">
       <h3 className="border-b border-plexcrew-teal/20 pb-3 text-xs font-bold uppercase tracking-widest text-plexcrew-screen">
         {title}
       </h3>
       {items.length === 0 ? (
-        <p className="mt-4 text-xs text-plexcrew-ash">Aucune donnée.</p>
+        <p className="mt-4 text-xs text-plexcrew-ash">{t(locale, 'statsGlobal.noData')}</p>
       ) : (
         <ol className="pc-scrollbar mt-3 max-h-[320px] space-y-2 overflow-y-auto pr-1.5">
           {items.map((item, i) => (

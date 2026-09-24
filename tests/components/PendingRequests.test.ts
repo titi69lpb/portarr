@@ -9,18 +9,25 @@ describe('requestedAgoLabel', () => {
   const now = new Date('2026-09-08T12:00:00.000Z').getTime();
 
   it("labels a request made today as Aujourd'hui", () => {
-    expect(requestedAgoLabel('2026-09-08T09:00:00.000Z', now)).toBe("Aujourd'hui");
+    expect(requestedAgoLabel('2026-09-08T09:00:00.000Z', 'fr', now)).toBe("Aujourd'hui");
   });
 
   it('labels a request made yesterday as Hier', () => {
-    expect(requestedAgoLabel('2026-09-07T09:00:00.000Z', now)).toBe('Hier');
+    expect(requestedAgoLabel('2026-09-07T09:00:00.000Z', 'fr', now)).toBe('Hier');
   });
 
   it('labels a request a few days old in days', () => {
-    expect(requestedAgoLabel('2026-09-03T09:00:00.000Z', now)).toBe('Il y a 5 j');
+    expect(requestedAgoLabel('2026-09-03T09:00:00.000Z', 'fr', now)).toBe('Il y a 5 j');
   });
 
   it('labels a request older than a month in months', () => {
-    expect(requestedAgoLabel('2026-06-01T09:00:00.000Z', now)).toBe('Il y a 3 mois');
+    expect(requestedAgoLabel('2026-06-01T09:00:00.000Z', 'fr', now)).toBe('Il y a 3 mois');
+  });
+
+  it('labels in English when locale is en', () => {
+    expect(requestedAgoLabel('2026-09-08T09:00:00.000Z', 'en', now)).toBe('Today');
+    expect(requestedAgoLabel('2026-09-07T09:00:00.000Z', 'en', now)).toBe('Yesterday');
+    expect(requestedAgoLabel('2026-09-03T09:00:00.000Z', 'en', now)).toBe('5d ago');
+    expect(requestedAgoLabel('2026-06-01T09:00:00.000Z', 'en', now)).toBe('3mo ago');
   });
 });

@@ -1,4 +1,4 @@
-import { cookies } from 'next/headers';
+import { cookies, headers } from 'next/headers';
 import Link from 'next/link';
 import { NowPlaying } from '@/components/NowPlaying';
 import { RecentlyAdded } from '@/components/RecentlyAdded';
@@ -28,6 +28,7 @@ import { getActiveAnnouncement } from '@/lib/announcements';
 import { renderMarkdown } from '@/lib/markdown';
 import { getKumaStatus, type KumaStatus } from '@/lib/kuma';
 import { KumaStatusBadge } from '@/components/KumaStatusBadge';
+import { getLocale } from '@/lib/i18n/locale';
 
 // Every widget below used to be its own `/api/dashboard/*` route, self-fetched
 // over HTTP by this page (localhost round-trip, cookie forwarded by hand) —
@@ -81,6 +82,7 @@ export default async function DashboardPage() {
   const token = cookies().get(SESSION_COOKIE_NAME)?.value;
   const sessionUser = token ? await verifySession(token, rawConfig.session.secret) : null;
   const isOwner = sessionUser?.isOwner ?? false;
+  const locale = getLocale(sessionUser, getDb(), headers().get('accept-language'));
 
   if (!isSetupComplete(rawConfig)) {
     redirect('/setup');
@@ -126,7 +128,7 @@ export default async function DashboardPage() {
 
   return (
     <>
-      <AppSidebarServer />
+      <AppSidebarServer locale={locale} />
       <main className="space-y-10 p-6 ml-16 sm:ml-40 sm:p-8">
         <header className="pc-glass-surface-strong sticky top-0 z-10 -mx-6 -mt-6 flex flex-wrap items-center justify-between gap-x-3 gap-y-2 border-b border-plexcrew-teal/20 px-6 py-4 sm:-mx-8 sm:-mt-8 sm:px-8">
           <div className="flex min-w-0 items-center gap-3">
@@ -135,7 +137,7 @@ export default async function DashboardPage() {
               <h1 className="font-display text-xl leading-none tracking-[0.06em] text-plexcrew-screen sm:text-3xl sm:tracking-[0.1em]">
                 Portarr
               </h1>
-              <KumaStatusBadge status={kumaStatus} />
+              <KumaStatusBadge status={kumaStatus} locale={locale} />
             </div>
           </div>
           {/* w-full on wrap (narrow viewports where the title alone already
@@ -152,21 +154,28 @@ export default async function DashboardPage() {
                 Admin
               </Link>
             )}
-            <NewsletterSubscriptionToggle />
-            <LogoutButton />
+            <NewsletterSubscriptionToggle locale={locale} />
+            <LogoutButton locale={locale} />
           </div>
         </header>
-        <AnnouncementBanner html={announcementData.announcement?.contentHtml ?? null} />
+        <AnnouncementBanner html={announcementData.announcement?.contentHtml ?? null} locale={locale} />
         <DashboardSections
+          locale={locale}
           sections={[
-            { id: 'now-playing', node: <NowPlaying sessions={nowPlaying} /> },
+            { id: 'now-playing', node: <NowPlaying sessions={nowPlaying} locale={locale} /> },
             {
               id: 'recently-added',
-              node: <RecentlyAdded movies={recentlyAdded.movies} episodes={recentlyAdded.episodes} />,
+              node: (
+                <RecentlyAdded
+                  movies={recentlyAdded.movies}
+                  episodes={recentlyAdded.episodes}
+                  locale={locale}
+                />
+              ),
             },
-            { id: 'calendar', node: <ReleaseCalendar items={calendar} /> },
-            { id: 'stats-global', node: <StatsGlobal extended={stats.extended} /> },
-            { id: 'pending-requests', node: <PendingRequests requests={pendingRequests} /> },
+            { id: 'calendar', node: <ReleaseCalendar items={calendar} locale={locale} /> },
+            { id: 'stats-global', node: <StatsGlobal extended={stats.extended} locale={locale} /> },
+            { id: 'pending-requests', node: <PendingRequests requests={pendingRequests} locale={locale} /> },
             {
               id: 'stats-personal',
               node: (
@@ -174,6 +183,7 @@ export default async function DashboardPage() {
                   stats={stats.personal}
                   byType={stats.personalByType}
                   recentHistory={stats.recentHistory}
+                  locale={locale}
                 />
               ),
             },

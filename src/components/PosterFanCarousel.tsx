@@ -11,6 +11,8 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import gsap from 'gsap';
+import type { Locale } from '@/lib/i18n/dictionaries';
+import { t } from '@/lib/i18n/translate';
 
 export interface PosterCard {
   title: string;
@@ -62,7 +64,7 @@ function prefersReducedMotion(): boolean {
   return typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 }
 
-export function PosterFanCarousel({ cards }: { cards: PosterCard[] }) {
+export function PosterFanCarousel({ cards, locale }: { cards: PosterCard[]; locale: Locale }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const isAnimating = useRef(false);
   const hasEntered = useRef(false);
@@ -320,7 +322,7 @@ export function PosterFanCarousel({ cards }: { cards: PosterCard[] }) {
 
       {needsPagination && (
         <div className="z-30 mt-4 flex items-center justify-center gap-4">
-          <button className={`${ARROW_CLASSES} h-9 w-9 sm:h-10 sm:w-10`} onClick={() => cycle('left')} aria-label="Précédent">
+          <button className={`${ARROW_CLASSES} h-9 w-9 sm:h-10 sm:w-10`} onClick={() => cycle('left')} aria-label={t(locale, 'common.previous')}>
             {chevron('left')}
           </button>
           <div className="flex items-center gap-1.5">
@@ -333,7 +335,7 @@ export function PosterFanCarousel({ cards }: { cards: PosterCard[] }) {
               />
             ))}
           </div>
-          <button className={`${ARROW_CLASSES} h-9 w-9 sm:h-10 sm:w-10`} onClick={() => cycle('right')} aria-label="Suivant">
+          <button className={`${ARROW_CLASSES} h-9 w-9 sm:h-10 sm:w-10`} onClick={() => cycle('right')} aria-label={t(locale, 'common.next')}>
             {chevron('right')}
           </button>
         </div>

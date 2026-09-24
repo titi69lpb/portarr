@@ -3,8 +3,8 @@
 import { useMemo, useState } from 'react';
 import type { CalendarItem } from '@/lib/calendar';
 import { buildDayEntryMap, dayKey } from '@/lib/calendar-grouping';
-
-const WEEKDAY_LABELS = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
+import { dictionaries, type Locale } from '@/lib/i18n/dictionaries';
+import { t } from '@/lib/i18n/translate';
 
 function startOfMonthGrid(year: number, month: number): Date {
   const firstOfMonth = new Date(year, month, 1);
@@ -14,7 +14,9 @@ function startOfMonthGrid(year: number, month: number): Date {
   return gridStart;
 }
 
-export function ReleaseCalendar({ items }: { items: CalendarItem[] }) {
+export function ReleaseCalendar({ items, locale }: { items: CalendarItem[]; locale: Locale }) {
+  const weekdayLabels = dictionaries[locale].calendar.weekdayLabels;
+  const localeCode = dictionaries[locale].calendar.localeCode;
   const today = new Date();
   const [viewYear, setViewYear] = useState(today.getFullYear());
   const [viewMonth, setViewMonth] = useState(today.getMonth());
@@ -43,30 +45,30 @@ export function ReleaseCalendar({ items }: { items: CalendarItem[] }) {
     <section>
       <div className="flex items-center gap-2">
         <span aria-hidden="true" className="h-6 w-1.5 flex-none rounded-full bg-plexcrew-teal" />
-        <h2 className="pc-eyebrow">Coming Soon</h2>
+        <h2 className="pc-eyebrow">{t(locale, 'calendar.title')}</h2>
       </div>
       <div className="pc-rule" />
       <div className="mt-5 flex items-center justify-between">
         <button
           onClick={goToPreviousMonth}
-          aria-label="Mois précédent"
+          aria-label={t(locale, 'calendar.prevMonth')}
           className="rounded px-2 py-1 text-plexcrew-ash hover:text-plexcrew-screen"
         >
           ←
         </button>
         <span className="font-display text-sm uppercase tracking-widest text-plexcrew-screen">
-          {new Date(viewYear, viewMonth, 1).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })}
+          {new Date(viewYear, viewMonth, 1).toLocaleDateString(localeCode, { month: 'long', year: 'numeric' })}
         </span>
         <button
           onClick={goToNextMonth}
-          aria-label="Mois suivant"
+          aria-label={t(locale, 'calendar.nextMonth')}
           className="rounded px-2 py-1 text-plexcrew-ash hover:text-plexcrew-screen"
         >
           →
         </button>
       </div>
       <div className="mt-3 grid grid-cols-7 gap-1 text-center text-[10px] uppercase tracking-wider text-plexcrew-ash">
-        {WEEKDAY_LABELS.map((label) => (
+        {weekdayLabels.map((label) => (
           <div key={label}>{label}</div>
         ))}
       </div>
@@ -100,16 +102,20 @@ export function ReleaseCalendar({ items }: { items: CalendarItem[] }) {
                         : 'bg-plexcrew-amber/10 text-plexcrew-amber'
                     }`}
                     title={
-                      entry.kind === 'episode' && entry.episodeCount > 1
-                        ? `${entry.title} — Saison ${entry.seasonNumber} (${entry.episodeCount} épisodes)`
+                      entry.kind === 'episode' && entry.seasonNumber !== null && entry.episodeCount > 1
+                        ? t(locale, 'calendar.seasonEpisodesTitle', {
+                            title: entry.title,
+                            season: entry.seasonNumber,
+                            count: entry.episodeCount,
+                          })
                         : entry.title
                     }
                   >
                     <span aria-hidden="true">{entry.kind === 'episode' ? '📺' : '🎬'}</span>{' '}
                     {entry.kind === 'episode' && entry.seasonNumber !== null
                       ? entry.episodeCount > 1
-                        ? `S${entry.seasonNumber} (${entry.episodeCount} épisodes) `
-                        : `S${entry.seasonNumber} `
+                        ? t(locale, 'calendar.seasonMultiEpisode', { season: entry.seasonNumber, count: entry.episodeCount })
+                        : t(locale, 'calendar.seasonSingle', { season: entry.seasonNumber })
                       : ''}
                     {entry.title}
                   </div>

@@ -9,6 +9,8 @@
 // a plain vertical-list reorder.
 
 import { useState, useEffect, useMemo, useRef, type ReactNode } from 'react';
+import type { Locale } from '@/lib/i18n/dictionaries';
+import { t } from '@/lib/i18n/translate';
 
 export interface DashboardSection {
   id: string;
@@ -52,7 +54,7 @@ export function applyStoredOrder(defaultIds: string[], stored: string[] | null):
   return [...ordered, ...missing];
 }
 
-export function DashboardSections({ sections }: { sections: DashboardSection[] }) {
+export function DashboardSections({ sections, locale }: { sections: DashboardSection[]; locale: Locale }) {
   const defaultIds = useMemo(() => sections.map((s) => s.id), [sections]);
   const [order, setOrder] = useState<string[]>(defaultIds);
   const [hydrated, setHydrated] = useState(false);
@@ -100,7 +102,7 @@ export function DashboardSections({ sections }: { sections: DashboardSection[] }
           }}
           className="text-xs text-plexcrew-ash hover:text-plexcrew-amber hover:underline"
         >
-          Réinitialiser l&apos;ordre des sections
+          {t(locale, 'dashboardSections.resetOrder')}
         </button>
       )}
       {visibleOrder.map((id, index) => {
@@ -133,7 +135,7 @@ export function DashboardSections({ sections }: { sections: DashboardSection[] }
             <div
               className="absolute -left-6 top-0 hidden cursor-grab select-none pt-1 text-plexcrew-ash/50 transition hover:text-plexcrew-amber active:cursor-grabbing group-hover:block sm:block"
               aria-hidden="true"
-              title="Glisser pour réorganiser"
+              title={t(locale, 'dashboardSections.dragToReorder')}
             >
               <svg viewBox="0 0 24 24" fill="currentColor" className="h-4 w-4">
                 <circle cx="9" cy="6" r="1.3" />

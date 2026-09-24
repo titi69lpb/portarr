@@ -40,3 +40,11 @@ describe('calculateProgress', () => {
     expect(calculateProgress(1000, 0)).toBe(0);
   });
 });
+
+describe('formatTimeLeft (en)', () => {
+  it('formats minutes, hours and unknown duration in English', () => {
+    expect(formatTimeLeft(0, 30 * 60000, 'en')).toBe('30m left');
+    expect(formatTimeLeft(0, 90 * 60000, 'en')).toBe('1h 30m left');
+    expect(formatTimeLeft(1000, 0, 'en')).toBe('Duration unknown');
+  });
+});

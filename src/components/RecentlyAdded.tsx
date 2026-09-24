@@ -1,5 +1,7 @@
 import type { RecentlyAddedItem, RecentlyAddedSplit } from '@/lib/media/types';
 import { PosterFanCarousel, type PosterCard } from '@/components/PosterFanCarousel';
+import type { Locale } from '@/lib/i18n/dictionaries';
+import { t } from '@/lib/i18n/translate';
 
 // Kept as a plain exported function (no JSX, no client-only deps) so the
 // security invariant it encodes — every poster src goes through the proxy,
@@ -20,10 +22,12 @@ function RecentlyAddedSection({
   title,
   accentClassName,
   items,
+  locale,
 }: {
   title: string;
   accentClassName: string;
   items: RecentlyAddedItem[];
+  locale: Locale;
 }) {
   if (items.length === 0) return null;
   return (
@@ -33,17 +37,27 @@ function RecentlyAddedSection({
         <h2 className="pc-eyebrow">{title}</h2>
       </div>
       <div className="pc-rule" />
-      <PosterFanCarousel cards={buildPosterCards(items)} />
+      <PosterFanCarousel cards={buildPosterCards(items)} locale={locale} />
     </section>
   );
 }
 
-export function RecentlyAdded({ movies, episodes }: RecentlyAddedSplit) {
+export function RecentlyAdded({ movies, episodes, locale }: RecentlyAddedSplit & { locale: Locale }) {
   if (movies.length === 0 && episodes.length === 0) return null;
   return (
     <div className="grid grid-cols-1 gap-10 lg:grid-cols-2 lg:gap-6">
-      <RecentlyAddedSection title="Films récents" accentClassName="bg-plexcrew-teal" items={movies} />
-      <RecentlyAddedSection title="Séries récentes" accentClassName="bg-plexcrew-amber" items={episodes} />
+      <RecentlyAddedSection
+        title={t(locale, 'recentlyAdded.movies')}
+        accentClassName="bg-plexcrew-teal"
+        items={movies}
+        locale={locale}
+      />
+      <RecentlyAddedSection
+        title={t(locale, 'recentlyAdded.shows')}
+        accentClassName="bg-plexcrew-amber"
+        items={episodes}
+        locale={locale}
+      />
     </div>
   );
 }

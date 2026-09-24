@@ -65,14 +65,14 @@ describe('buildPosterCards', () => {
 
 describe('RecentlyAdded', () => {
   it('renders nothing when both movies and episodes are empty', () => {
-    expect(RecentlyAdded({ movies: [], episodes: [] })).toBeNull();
+    expect(RecentlyAdded({ movies: [], episodes: [], locale: 'fr' })).toBeNull();
   });
 
   it('renders when only movies are present', () => {
-    expect(RecentlyAdded({ movies: [item({ title: 'A Movie' })], episodes: [] })).not.toBeNull();
+    expect(RecentlyAdded({ movies: [item({ title: 'A Movie' })], episodes: [], locale: 'fr' })).not.toBeNull();
   });
 
   it('renders when only episodes are present', () => {
-    expect(RecentlyAdded({ movies: [], episodes: [item({ title: 'An Episode', type: 'episode' })] })).not.toBeNull();
+    expect(RecentlyAdded({ movies: [], episodes: [item({ title: 'An Episode', type: 'episode' })], locale: 'fr' })).not.toBeNull();
   });
 });

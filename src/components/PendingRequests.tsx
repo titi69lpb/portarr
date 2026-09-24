@@ -1,28 +1,30 @@
 import type { PendingRequest } from '@/lib/overseerr';
+import type { Locale } from '@/lib/i18n/dictionaries';
+import { t } from '@/lib/i18n/translate';
 
 const TMDB_IMAGE_BASE = 'https://image.tmdb.org/t/p/w300';
 
 const DAY_MS = 86_400_000;
 
-export function requestedAgoLabel(requestedAt: string, now: number = Date.now()): string {
+export function requestedAgoLabel(requestedAt: string, locale: Locale, now: number = Date.now()): string {
   const days = Math.floor((now - new Date(requestedAt).getTime()) / DAY_MS);
-  if (days <= 0) return "Aujourd'hui";
-  if (days === 1) return 'Hier';
-  if (days < 30) return `Il y a ${days} j`;
+  if (days <= 0) return t(locale, 'pendingRequests.today');
+  if (days === 1) return t(locale, 'pendingRequests.yesterday');
+  if (days < 30) return t(locale, 'pendingRequests.daysAgo', { days });
   const months = Math.floor(days / 30);
-  return `Il y a ${months} mois`;
+  return t(locale, 'pendingRequests.monthsAgo', { months });
 }
 
-export function PendingRequests({ requests }: { requests: PendingRequest[] }) {
+export function PendingRequests({ requests, locale }: { requests: PendingRequest[]; locale: Locale }) {
   return (
     <section>
       <div className="flex items-center gap-2">
         <span aria-hidden="true" className="h-6 w-1.5 flex-none rounded-full bg-plexcrew-amber" />
-        <h2 className="pc-eyebrow">Demandes en cours</h2>
+        <h2 className="pc-eyebrow">{t(locale, 'pendingRequests.title')}</h2>
       </div>
       <div className="pc-rule" />
       {requests.length === 0 ? (
-        <p className="mt-5 text-sm text-plexcrew-ash">Aucune demande en cours de traitement.</p>
+        <p className="mt-5 text-sm text-plexcrew-ash">{t(locale, 'pendingRequests.empty')}</p>
       ) : (
         // Deliberately dense (small tiles, tight gap) so the whole backlog
         // fits without scrolling — each tile scales up on hover instead of
@@ -62,11 +64,11 @@ export function PendingRequests({ requests }: { requests: PendingRequest[] }) {
                     r.type === 'movie' ? 'bg-plexcrew-teal text-plexcrew-screen' : 'bg-plexcrew-amber text-plexcrew-ink'
                   }`}
                 >
-                  {r.type === 'movie' ? 'Film' : 'Série'}
+                  {r.type === 'movie' ? t(locale, 'common.movieLabel') : t(locale, 'common.showLabel')}
                 </span>
                 <p className="truncate text-[11px] font-medium leading-tight text-plexcrew-screen">{r.title}</p>
                 <p className="truncate text-[9px] leading-tight text-plexcrew-ash">
-                  {r.requestedByUsername} · {requestedAgoLabel(r.requestedAt)}
+                  {r.requestedByUsername} · {requestedAgoLabel(r.requestedAt, locale)}
                 </p>
               </div>
             </div>

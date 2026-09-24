@@ -15,32 +15,37 @@ function collectText(node: unknown): string {
 
 describe('KumaStatusBadge', () => {
   it('renders nothing when status is null', () => {
-    expect(KumaStatusBadge({ status: null })).toBeNull();
+    expect(KumaStatusBadge({ status: null, locale: 'fr' })).toBeNull();
   });
 
   it('renders nothing when total is 0', () => {
-    expect(KumaStatusBadge({ status: { total: 0, down: 0 } })).toBeNull();
+    expect(KumaStatusBadge({ status: { total: 0, down: 0 }, locale: 'fr' })).toBeNull();
   });
 
   it('shows "all up" text and no count when nothing is down', () => {
-    const element = KumaStatusBadge({ status: { total: 5, down: 0 } });
+    const element = KumaStatusBadge({ status: { total: 5, down: 0 }, locale: 'fr' });
     const text = collectText(element);
     expect(text).toContain('opérationnels');
     expect(text).not.toMatch(/\d/);
   });
 
   it('shows the down count (singular) for exactly one down monitor', () => {
-    const text = collectText(KumaStatusBadge({ status: { total: 5, down: 1 } }));
+    const text = collectText(KumaStatusBadge({ status: { total: 5, down: 1 }, locale: 'fr' }));
     expect(text).toBe('1 service indisponible');
   });
 
   it('shows the down count (plural) for more than one down monitor', () => {
-    const text = collectText(KumaStatusBadge({ status: { total: 5, down: 3 } }));
+    const text = collectText(KumaStatusBadge({ status: { total: 5, down: 3 }, locale: 'fr' }));
     expect(text).toBe('3 services indisponibles');
   });
 
+  it('renders English text when locale is en', () => {
+    expect(collectText(KumaStatusBadge({ status: { total: 5, down: 1 }, locale: 'en' }))).toBe('1 service down');
+    expect(collectText(KumaStatusBadge({ status: { total: 5, down: 3 }, locale: 'en' }))).toBe('3 services down');
+  });
+
   it('never leaks per-monitor detail — only a plain count, per explicit scope', () => {
-    const text = collectText(KumaStatusBadge({ status: { total: 5, down: 2 } }));
+    const text = collectText(KumaStatusBadge({ status: { total: 5, down: 2 }, locale: 'fr' }));
     expect(text).not.toMatch(/monitor|http|plex\.bricefeniello/i);
   });
 });
