@@ -1,4 +1,4 @@
-import { cookies, headers } from 'next/headers';
+import { cookies } from 'next/headers';
 import Link from 'next/link';
 import { NowPlaying } from '@/components/NowPlaying';
 import { RecentlyAdded } from '@/components/RecentlyAdded';
@@ -28,7 +28,7 @@ import { getActiveAnnouncement } from '@/lib/announcements';
 import { renderMarkdown } from '@/lib/markdown';
 import { getKumaStatus, type KumaStatus } from '@/lib/kuma';
 import { KumaStatusBadge } from '@/components/KumaStatusBadge';
-import { getLocale } from '@/lib/i18n/locale';
+import { getRequestLocale } from '@/lib/i18n/request-locale';
 
 // Every widget below used to be its own `/api/dashboard/*` route, self-fetched
 // over HTTP by this page (localhost round-trip, cookie forwarded by hand) —
@@ -82,7 +82,7 @@ export default async function DashboardPage() {
   const token = cookies().get(SESSION_COOKIE_NAME)?.value;
   const sessionUser = token ? await verifySession(token, rawConfig.session.secret) : null;
   const isOwner = sessionUser?.isOwner ?? false;
-  const locale = getLocale(sessionUser, getDb(), headers().get('accept-language'));
+  const locale = getRequestLocale(sessionUser, getDb());
 
   if (!isSetupComplete(rawConfig)) {
     redirect('/setup');

@@ -85,6 +85,16 @@ export function AppSidebar({
           </svg>
           <span className="hidden truncate text-xs font-medium sm:inline">{t(locale, 'sidebar.speedTest')}</span>
         </Link>
+        <Link
+          href="/profile"
+          className="flex items-center gap-2 rounded-lg px-2 py-2 text-plexcrew-screen transition hover:bg-plexcrew-teal/10 hover:text-plexcrew-amber"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="h-5 w-5 flex-none">
+            <circle cx="12" cy="8" r="3.5" />
+            <path d="M5 20c0-3.5 3-6 7-6s7 2.5 7 6" />
+          </svg>
+          <span className="hidden truncate text-xs font-medium sm:inline">{t(locale, 'sidebar.profile')}</span>
+        </Link>
       </div>
     </aside>
   );

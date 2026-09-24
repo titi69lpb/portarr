@@ -11,7 +11,7 @@ import { AdminMailTemplateForm } from '@/components/AdminMailTemplateForm';
 import { AdminMailTemplateList } from '@/components/AdminMailTemplateList';
 import { AdminMailHistory } from '@/components/AdminMailHistory';
 import { AdminNewsletterPanel } from '@/components/AdminNewsletterPanel';
-import { getLocale } from '@/lib/i18n/locale';
+import { getRequestLocale } from '@/lib/i18n/request-locale';
 import { t } from '@/lib/i18n/translate';
 
 export const dynamic = 'force-dynamic';
@@ -32,7 +32,7 @@ export default async function AdminMailingsPage() {
   }
 
   const db = getDb();
-  const locale = getLocale(sessionUser, db);
+  const locale = getRequestLocale(sessionUser, db);
   const mailTemplates = listMailTemplates(db);
   const mailLog = listMailLog(db);
   // A plain DB read (no Tautulli round-trip) is all the target picker needs —

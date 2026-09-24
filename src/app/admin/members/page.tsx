@@ -8,7 +8,7 @@ import { getMemberOverview } from '@/lib/members';
 import { getActivitySources } from '@/lib/activity/registry';
 import { AdminMembersList } from '@/components/AdminMembersList';
 import { AdminMemberSync } from '@/components/AdminMemberSync';
-import { getLocale } from '@/lib/i18n/locale';
+import { getRequestLocale } from '@/lib/i18n/request-locale';
 import { t } from '@/lib/i18n/translate';
 
 export const dynamic = 'force-dynamic';
@@ -30,7 +30,7 @@ export default async function AdminMembersPage() {
   const config = assertConfigured(rawConfig);
 
   const db = getDb();
-  const locale = getLocale(sessionUser, db);
+  const locale = getRequestLocale(sessionUser, db);
   const members = await getMemberOverview(db, getActivitySources(config));
 
   return (

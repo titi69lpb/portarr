@@ -1,11 +1,10 @@
-import { headers } from 'next/headers';
 import { loadConfig, isSetupComplete } from '@/lib/config';
 import { getDb } from '@/lib/db';
 import { getActiveProviders } from '@/lib/media/registry';
 import type { ProviderId } from '@/lib/media/types';
 import { PlexLoginButton } from '@/components/PlexLoginButton';
 import { JellyfinLoginForm } from '@/components/JellyfinLoginForm';
-import { getLocale } from '@/lib/i18n/locale';
+import { getRequestLocale } from '@/lib/i18n/request-locale';
 import { t } from '@/lib/i18n/translate';
 import type { Locale } from '@/lib/i18n/dictionaries';
 
@@ -21,7 +20,7 @@ export default function LoginPage() {
     const db = getDb();
     const config = loadConfig(process.env, db);
     // Login is unauthenticated: instance default / browser language / FR.
-    locale = getLocale(null, db, headers().get('accept-language'));
+    locale = getRequestLocale(null, db);
     if (isSetupComplete(config)) active = getActiveProviders(config).map((p) => p.id);
   } catch {
     // Unconfigured (no SESSION_SECRET / no DB): still offer the Plex button, as this page did before it

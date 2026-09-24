@@ -1,9 +1,9 @@
-import { cookies, headers } from 'next/headers';
+import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { verifySession, SESSION_COOKIE_NAME } from '@/lib/session';
 import { loadConfig, isSetupComplete, assertConfigured } from '@/lib/config';
 import { getDb } from '@/lib/db';
-import { getLocale } from '@/lib/i18n/locale';
+import { getRequestLocale } from '@/lib/i18n/request-locale';
 import { t } from '@/lib/i18n/translate';
 import { getActivitySources, getActivitySourceFor } from '@/lib/activity/registry';
 import { AppSidebarServer } from '@/components/AppSidebarServer';
@@ -26,7 +26,7 @@ export default async function HistoryPage() {
   }
   const config = assertConfigured(rawConfig);
 
-  const locale = getLocale(sessionUser, getDb(), headers().get('accept-language'));
+  const locale = getRequestLocale(sessionUser, getDb());
 
   let items: { title: string; type: 'movie' | 'episode'; thumbPath: string; watchedAt: string }[] = [];
   let total = 0;

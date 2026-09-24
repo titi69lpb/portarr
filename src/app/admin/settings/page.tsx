@@ -6,7 +6,9 @@ import { loadConfig, isSetupComplete, getConfigSources, resolveConfigValue } fro
 import { getDb } from '@/lib/db';
 import { SERVICE_FIELDS } from '@/lib/settings-schema';
 import { AdminSettingsPanel } from '@/components/AdminSettingsPanel';
-import { getLocale } from '@/lib/i18n/locale';
+import { AdminLanguageSetting } from '@/components/AdminLanguageSetting';
+import { getInstanceLocale, getUserPersonalLocale } from '@/lib/i18n/locale';
+import { getRequestLocale } from '@/lib/i18n/request-locale';
 import { t } from '@/lib/i18n/translate';
 
 export const dynamic = 'force-dynamic';
@@ -27,7 +29,7 @@ export default async function AdminSettingsPage() {
     redirect('/setup');
   }
 
-  const locale = getLocale(sessionUser, db, headers().get('accept-language'));
+  const locale = getRequestLocale(sessionUser, db);
   const sources = getConfigSources(process.env, db);
 
   // Pre-fill text fields (URLs, names — never secrets) with their currently
@@ -55,6 +57,16 @@ export default async function AdminSettingsPage() {
           {t(locale, 'settings.back')}
         </Link>
       </header>
+      <section className="space-y-5">
+        <h2 className="text-xs font-semibold uppercase tracking-wider text-plexcrew-ash">
+          {t(locale, 'admin.language')}
+        </h2>
+        <AdminLanguageSetting
+          currentDefault={getInstanceLocale(db, headers().get('accept-language'))}
+          locale={locale}
+          hasPersonalOverride={getUserPersonalLocale(sessionUser, db) !== null}
+        />
+      </section>
       <AdminSettingsPanel sources={sources} initialValues={initialValues} locale={locale} />
     </main>
   );

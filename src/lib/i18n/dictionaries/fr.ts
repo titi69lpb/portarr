@@ -18,6 +18,17 @@ export const fr = {
     profile: 'Profil',
     logout: 'Déconnexion',
   },
+  languageSwitcher: {
+    updateError: 'Échec de la mise à jour de la langue',
+    followDefault: "Suivre le défaut de l'instance",
+  },
+  profile: {
+    title: 'Profil',
+    language: 'Langue',
+    languageDescription:
+      "Votre préférence personnelle est prioritaire sur le défaut de l'instance. Sans préférence, le portail suit la langue choisie par l'administrateur.",
+    moreSoon: "D'autres réglages arriveront bientôt ici.",
+  },
   dashboard: {
     logout: 'Déconnexion',
   },
@@ -151,6 +162,12 @@ export const fr = {
     ariaLabel: 'Annonce',
   },
   admin: {
+    language: 'Langue',
+    languageDescription:
+      "Langue par défaut de l'instance, utilisée par les membres sans préférence personnelle. Votre propre préférence (réglable dans Profil) reste prioritaire pour votre compte.",
+    languageOverrideHint:
+      "Vous avez une préférence personnelle ({{language}}) : elle reste prioritaire pour votre compte, ce réglage ne change donc pas l'affichage de votre session. Il s'applique aux autres membres.",
+    languageUpdateError: 'Échec de la mise à jour de la langue',
     title: 'Administration',
     backToAdmin: "← Retour à l'administration",
     backToPortal: '← Retour au portail',
@@ -309,6 +326,10 @@ export const fr = {
     },
   },
   setup: {
+    languageTitle: 'Langue / Language',
+    languageHint: "Langue par défaut de l'instance. Modifiable ensuite dans l'administration.",
+    languageContinue: 'Continuer',
+    languageError: 'Échec de l\'enregistrement de la langue',
     steps: {
       publicBaseUrl: 'URL publique',
       plex: 'Plex (optionnel si Jellyfin)',

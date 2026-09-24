@@ -22,6 +22,17 @@ export const en: Dictionary<typeof fr> = {
     profile: 'Profile',
     logout: 'Log out',
   },
+  languageSwitcher: {
+    updateError: 'Failed to update the language',
+    followDefault: 'Follow instance default',
+  },
+  profile: {
+    title: 'Profile',
+    language: 'Language',
+    languageDescription:
+      'Your personal preference takes priority over the instance default. Without one, the portal follows the language chosen by the administrator.',
+    moreSoon: 'More settings will land here soon.',
+  },
   dashboard: {
     logout: 'Logout',
   },
@@ -155,6 +166,12 @@ export const en: Dictionary<typeof fr> = {
     ariaLabel: 'Announcement',
   },
   admin: {
+    language: 'Language',
+    languageDescription:
+      'Instance default language, used by members without a personal preference. Your own preference (set in Profile) still takes priority for your account.',
+    languageOverrideHint:
+      'You have a personal preference ({{language}}): it still takes priority for your account, so this setting will not change how your own session looks. It applies to other members.',
+    languageUpdateError: 'Failed to update the language',
     title: 'Administration',
     backToAdmin: '← Back to administration',
     backToPortal: '← Back to portal',
@@ -313,6 +330,10 @@ export const en: Dictionary<typeof fr> = {
     },
   },
   setup: {
+    languageTitle: 'Langue / Language',
+    languageHint: 'Default language of the instance. You can change it later in the admin area.',
+    languageContinue: 'Continue',
+    languageError: 'Failed to save the language',
     steps: {
       publicBaseUrl: 'Public URL',
       plex: 'Plex (optional if Jellyfin)',

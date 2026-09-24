@@ -6,7 +6,7 @@ import { loadConfig, isSetupComplete } from '@/lib/config';
 import { getDb } from '@/lib/db';
 import { listAnnouncements } from '@/lib/announcements';
 import { getVolumeStats, combineVolumeStats } from '@/lib/storage';
-import { getLocale } from '@/lib/i18n/locale';
+import { getRequestLocale } from '@/lib/i18n/request-locale';
 import { t } from '@/lib/i18n/translate';
 import { AdminAnnouncementForm } from '@/components/AdminAnnouncementForm';
 import { AdminAnnouncementList } from '@/components/AdminAnnouncementList';
@@ -42,7 +42,7 @@ export default async function AdminPage() {
   }
 
   const db = getDb();
-  const locale = getLocale(sessionUser, db);
+  const locale = getRequestLocale(sessionUser, db);
   const announcements = listAnnouncements(db);
   const volumeStats = await getVolumeStats(config.storageVolumes, config.fsTimeoutMs);
   const combinedStorage = combineVolumeStats(volumeStats);

@@ -1,9 +1,9 @@
-import { cookies, headers } from 'next/headers';
+import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { verifySession, SESSION_COOKIE_NAME } from '@/lib/session';
 import { loadConfig, isSetupComplete } from '@/lib/config';
 import { getDb } from '@/lib/db';
-import { getLocale } from '@/lib/i18n/locale';
+import { getRequestLocale } from '@/lib/i18n/request-locale';
 import { AppSidebarServer } from '@/components/AppSidebarServer';
 import { SpeedTestRunner } from '@/components/SpeedTestRunner';
 import { t } from '@/lib/i18n/translate';
@@ -22,7 +22,7 @@ export default async function SpeedTestPage() {
     redirect('/setup');
   }
 
-  const locale = getLocale(sessionUser, getDb(), headers().get('accept-language'));
+  const locale = getRequestLocale(sessionUser, getDb());
 
   return (
     <>

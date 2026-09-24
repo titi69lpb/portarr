@@ -37,7 +37,7 @@ export function getLocaleByEmail(email: string, db: Database.Database): Locale {
   return getInstanceLocale(db);
 }
 
-function getInstanceLocale(db: Database.Database, acceptLanguage?: string | null): Locale {
+export function getInstanceLocale(db: Database.Database, acceptLanguage?: string | null): Locale {
   const defaultLocale = getSetting(db, 'default_locale');
   if (isLocale(defaultLocale)) return defaultLocale;
   if (getSetting(db, 'locale_auto') === '1') return pickBrowserLocale(acceptLanguage ?? null);

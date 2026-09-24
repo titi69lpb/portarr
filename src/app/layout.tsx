@@ -1,7 +1,7 @@
 import './globals.css';
 import type { Metadata, Viewport } from 'next';
 import type { ReactNode } from 'react';
-import { headers, cookies } from 'next/headers';
+import { cookies } from 'next/headers';
 import type Database from 'better-sqlite3';
 import { Bebas_Neue, Manrope, IBM_Plex_Mono } from 'next/font/google';
 import { ServiceWorkerRegister } from '@/components/ServiceWorkerRegister';
@@ -9,7 +9,7 @@ import { getDb } from '@/lib/db';
 import { loadConfig, isSetupComplete, type AppConfig } from '@/lib/config';
 import { getOrCreateSetupToken } from '@/lib/setup';
 import { verifySession, SESSION_COOKIE_NAME } from '@/lib/session';
-import { getLocale } from '@/lib/i18n/locale';
+import { getRequestLocale } from '@/lib/i18n/request-locale';
 
 // The root layout is the one place guaranteed to run on every request to
 // every page (unlike middleware.ts, which explicitly cannot touch the DB —
@@ -101,7 +101,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
 
   const token = cookies().get(SESSION_COOKIE_NAME)?.value;
   const sessionUser = token ? await verifySession(token, config.session.secret) : null;
-  const locale = getLocale(sessionUser, db, headers().get('accept-language'));
+  const locale = getRequestLocale(sessionUser, db);
 
   return (
     <html

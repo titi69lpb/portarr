@@ -1,10 +1,10 @@
-import { cookies, headers } from 'next/headers';
+import { cookies } from 'next/headers';
 import { redirect, notFound } from 'next/navigation';
 import Link from 'next/link';
 import { verifySession, SESSION_COOKIE_NAME } from '@/lib/session';
 import { loadConfig, isSetupComplete } from '@/lib/config';
 import { getDb } from '@/lib/db';
-import { getLocale } from '@/lib/i18n/locale';
+import { getRequestLocale } from '@/lib/i18n/request-locale';
 import { AppSidebarServer } from '@/components/AppSidebarServer';
 import {
   listDirectory,
@@ -47,7 +47,7 @@ export default async function FilesPage({
     notFound();
   }
 
-  const locale = getLocale(sessionUser, getDb(), headers().get('accept-language'));
+  const locale = getRequestLocale(sessionUser, getDb());
   const relativePath = searchParams.path ?? '';
   const breadcrumb = buildBreadcrumb(relativePath, locale);
 
