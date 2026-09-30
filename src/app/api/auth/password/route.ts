@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { loadConfig, isSetupComplete, assertConfigured } from '@/lib/config';
 import { getDb } from '@/lib/db';
 import { getActiveProviders, getPasswordAuth } from '@/lib/media/registry';
-import { completeLogin, resolveLoginEmail } from '@/lib/login';
+import { completeLogin, isSecureRequest, resolveLoginEmail } from '@/lib/login';
 import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
 
 // Portarr must not become a password-guessing relay in front of Jellyfin:
@@ -68,7 +68,7 @@ export async function POST(request: NextRequest) {
 
     const db = getDb();
     const member = await resolveLoginEmail(db, result.user, config.overseerr);
-    return await completeLogin(db, config.session.secret, member, result.isOwner);
+    return await completeLogin(db, config.session.secret, member, result.isOwner, isSecureRequest(request));
   } catch (err) {
     // Only the message: never the request, the body or the password.
     console.error('Failed to verify password login:', err instanceof Error ? err.message : 'unknown error');

@@ -4,13 +4,23 @@ import { createSession, SESSION_COOKIE_NAME } from './session';
 import { enrichMembersWithEmail, fetchSeerrUsers } from './media/seerr-emails';
 import type { MediaMember } from './media/types';
 
+// Behind a TLS-terminating proxy the app itself sees plain HTTP, so trust
+// x-forwarded-proto first. A Secure cookie set over plain HTTP (LAN/IP access,
+// no proxy) is dropped by the browser and the login silently loops back.
+export function isSecureRequest(request: Request): boolean {
+  const forwarded = request.headers.get('x-forwarded-proto')?.split(',')[0].trim().toLowerCase();
+  if (forwarded) return forwarded === 'https';
+  return new URL(request.url).protocol === 'https:';
+}
+
 // The one place a successful login turns into a `users` row and a session
 // cookie, shared by every provider (Plex PIN poll, Jellyfin password).
 export async function completeLogin(
   db: Database.Database,
   sessionSecret: string,
   user: MediaMember,
-  isOwner: boolean
+  isOwner: boolean,
+  secure = true
 ): Promise<NextResponse> {
   // Jellyfin members have no email of their own, so a login with an empty email
   // must not erase one already filled by the member sync or a Seerr lookup.
@@ -26,7 +36,7 @@ export async function completeLogin(
   const response = NextResponse.json({ status: 'ok' });
   response.cookies.set(SESSION_COOKIE_NAME, token, {
     httpOnly: true,
-    secure: true,
+    secure,
     sameSite: 'lax',
     path: '/',
     maxAge: 60 * 60 * 24 * 30,

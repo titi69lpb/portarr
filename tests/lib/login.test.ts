@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { getDb, resetDbForTests } from '../../src/lib/db';
-import { completeLogin, resolveLoginEmail } from '../../src/lib/login';
+import { completeLogin, isSecureRequest, resolveLoginEmail } from '../../src/lib/login';
 import { verifySession, SESSION_COOKIE_NAME } from '../../src/lib/session';
 import type { MediaMember } from '../../src/lib/media/types';
 
@@ -92,5 +92,27 @@ describe('resolveLoginEmail', () => {
     }) as unknown as typeof fetch;
     expect((await resolveLoginEmail(db, jf(''), { url: 'http://s', apiKey: 'k' }, failing)).email).toBe('');
     expect((await resolveLoginEmail(db, jf(''), null, seerrOk())).email).toBe('');
+  });
+});
+
+describe('isSecureRequest', () => {
+  it('is false for plain HTTP without a proxy', () => {
+    expect(isSecureRequest(new Request('http://192.168.1.10:3000/api/auth/poll'))).toBe(false);
+  });
+  it('is true for an https URL', () => {
+    expect(isSecureRequest(new Request('https://portal.example.com/api/auth/poll'))).toBe(true);
+  });
+  it('trusts x-forwarded-proto behind a TLS proxy', () => {
+    const https = new Request('http://app:3000/x', { headers: { 'x-forwarded-proto': 'https' } });
+    const http = new Request('https://app/x', { headers: { 'x-forwarded-proto': 'http' } });
+    expect(isSecureRequest(https)).toBe(true);
+    expect(isSecureRequest(http)).toBe(false);
+  });
+});
+
+describe('completeLogin cookie', () => {
+  it('omits the Secure flag when asked, so plain-HTTP installs keep the session', async () => {
+    const res = await completeLogin(getDb(), SECRET, jf('a@b.com'), false, false);
+    expect(res.headers.get('set-cookie')).not.toMatch(/secure/i);
   });
 });

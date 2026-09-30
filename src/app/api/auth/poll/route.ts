@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { completeLogin } from '@/lib/login';
+import { completeLogin, isSecureRequest } from '@/lib/login';
 import { loadConfig, isSetupComplete, assertConfigured } from '@/lib/config';
 import { getDb } from '@/lib/db';
 import { getPinAuth } from '@/lib/media/registry';
@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ status: result.status });
     }
 
-    return await completeLogin(getDb(), config.session.secret, result.user, result.isOwner);
+    return await completeLogin(getDb(), config.session.secret, result.user, result.isOwner, isSecureRequest(request));
   } catch (err) {
     console.error('Failed to verify login status:', err);
     return NextResponse.json({ error: 'Failed to verify login status' }, { status: 502 });
