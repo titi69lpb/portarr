@@ -240,6 +240,46 @@ docker run -d \
 
 Placez un reverse proxy (Traefik, Caddy, nginx...) devant pour le TLS ; l'app elle-même ne parle qu'en HTTP simple sur le port 3000. Le cookie de session n'est `Secure` que si la requête est en HTTPS : le proxy doit transmettre `X-Forwarded-Proto` (Traefik et Caddy le font par défaut, nginx demande `proxy_set_header X-Forwarded-Proto $scheme;` ; sans lui, un accès en HTTP simple fonctionne mais sans cookie `Secure`).
 
+### Docker Compose
+
+Créez un `docker-compose.yml` à côté de votre `.env` (voir `.env.example`), puis `docker compose up -d` :
+
+```yaml
+services:
+  portarr:
+    image: ghcr.io/titi69lpb/portarr:latest
+    container_name: portarr
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      - HOSTNAME=0.0.0.0
+    volumes:
+      - ./data:/app/data
+    ports:
+      - "3000:3000"
+```
+
+Le dossier `./data` contient la base SQLite et le secret de session généré au premier démarrage : gardez-le (et sauvegardez-le). Au premier lancement, récupérez le lien de configuration avec `docker compose logs portarr`. Pour mettre à jour : `docker compose pull && docker compose up -d`.
+
+Derrière un reverse proxy, retirez `ports` et rattachez le service au réseau du proxy. Exemple avec Traefik (remplacez le domaine, le réseau et le resolver par les vôtres) :
+
+```yaml
+    networks:
+      - traefik
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=traefik"
+      - "traefik.http.routers.portarr.rule=Host(`portarr.example.com`)"
+      - "traefik.http.routers.portarr.entrypoints=websecure"
+      - "traefik.http.routers.portarr.tls.certresolver=letsencrypt"
+      - "traefik.http.services.portarr.loadbalancer.server.port=3000"
+
+networks:
+  traefik:
+    external: true
+```
+
 ### Mise à jour depuis la 1.4
 
 Au premier démarrage de la 1.5, Portarr migre automatiquement sa base SQLite (les utilisateurs et abonnements deviennent propres à chaque serveur : Plex ou Jellyfin) et copie d'abord la base vers `<DATABASE_PATH>.pre-provider-migration`. **Une image antérieure ne sait pas relire la nouvelle base : cette copie est votre retour arrière.** Si la copie ne peut pas être écrite, le démarrage s'arrête avec un message clair et la base reste intacte. Les cookies de session et les liens de désinscription déjà émis restent valides.
@@ -498,6 +538,46 @@ docker run -d \
 `HOSTNAME=0.0.0.0` is required — without it, the Next.js standalone server binds to the container's internal IP and its own internal API self-fetches (used by a couple of routes) break.
 
 Put a reverse proxy (Traefik, Caddy, nginx...) in front for TLS; the app itself only speaks plain HTTP on port 3000. The session cookie is only flagged `Secure` when the request is HTTPS: the proxy must forward `X-Forwarded-Proto` (Traefik and Caddy do by default, nginx needs `proxy_set_header X-Forwarded-Proto $scheme;`; plain-HTTP access still works, just without the `Secure` flag).
+
+### Docker Compose
+
+Create a `docker-compose.yml` next to your `.env` (see `.env.example`), then run `docker compose up -d`:
+
+```yaml
+services:
+  portarr:
+    image: ghcr.io/titi69lpb/portarr:latest
+    container_name: portarr
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      - HOSTNAME=0.0.0.0
+    volumes:
+      - ./data:/app/data
+    ports:
+      - "3000:3000"
+```
+
+The `./data` folder holds the SQLite database and the session secret generated on first boot: keep it (and back it up). On first launch, grab the setup link with `docker compose logs portarr`. To update: `docker compose pull && docker compose up -d`.
+
+Behind a reverse proxy, drop `ports` and attach the service to the proxy's network. Traefik example (replace the domain, network and resolver with yours):
+
+```yaml
+    networks:
+      - traefik
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=traefik"
+      - "traefik.http.routers.portarr.rule=Host(`portarr.example.com`)"
+      - "traefik.http.routers.portarr.entrypoints=websecure"
+      - "traefik.http.routers.portarr.tls.certresolver=letsencrypt"
+      - "traefik.http.services.portarr.loadbalancer.server.port=3000"
+
+networks:
+  traefik:
+    external: true
+```
 
 ### Upgrading from 1.4
 
