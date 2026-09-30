@@ -238,7 +238,7 @@ docker run -d \
 
 `HOSTNAME=0.0.0.0` est obligatoire — sans ça, le serveur Next.js standalone bind sur l'IP interne du conteneur et casse ses propres self-fetches internes vers ses routes API (utilisées par certaines routes).
 
-Placez un reverse proxy (Traefik, Caddy, nginx...) devant pour le TLS ; l'app elle-même ne parle qu'en HTTP simple sur le port 3000.
+Placez un reverse proxy (Traefik, Caddy, nginx...) devant pour le TLS ; l'app elle-même ne parle qu'en HTTP simple sur le port 3000. Le cookie de session n'est `Secure` que si la requête est en HTTPS : le proxy doit transmettre `X-Forwarded-Proto` (Traefik et Caddy le font par défaut, nginx demande `proxy_set_header X-Forwarded-Proto $scheme;` ; sans lui, un accès en HTTP simple fonctionne mais sans cookie `Secure`).
 
 ### Mise à jour depuis la 1.4
 
@@ -497,7 +497,7 @@ docker run -d \
 
 `HOSTNAME=0.0.0.0` is required — without it, the Next.js standalone server binds to the container's internal IP and its own internal API self-fetches (used by a couple of routes) break.
 
-Put a reverse proxy (Traefik, Caddy, nginx...) in front for TLS; the app itself only speaks plain HTTP on port 3000.
+Put a reverse proxy (Traefik, Caddy, nginx...) in front for TLS; the app itself only speaks plain HTTP on port 3000. The session cookie is only flagged `Secure` when the request is HTTPS: the proxy must forward `X-Forwarded-Proto` (Traefik and Caddy do by default, nginx needs `proxy_set_header X-Forwarded-Proto $scheme;`; plain-HTTP access still works, just without the `Secure` flag).
 
 ### Upgrading from 1.4
 
